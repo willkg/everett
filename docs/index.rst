@@ -10,6 +10,7 @@ Contents
    configuration
    components
    library
+   dev
 
 
 Indices and tables
