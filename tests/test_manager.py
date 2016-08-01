@@ -7,14 +7,13 @@ import os
 import mock
 import pytest
 
-from configmanlite import NO_VALUE
+from configmanlite import NO_VALUE, ConfigurationError
 from configmanlite.manager import (
     config_override,
     ConfigDictEnv,
     ConfigIniEnv,
     ConfigOSEnv,
     ConfigManager,
-    ConfigurationError,
     get_parser,
     parse_bool,
     parse_class,
@@ -161,7 +160,24 @@ def test_default_must_be_string():
         assert config('DOESNOTEXIST', default=True)
 
 
-# FIXME: .with_options()
+def test_with_namespace():
+    config = ConfigManager([
+        ConfigDictEnv({
+            'FOO_BAR': 'foobaz',
+            'BAR': 'baz',
+            'BAT': 'bat',
+        })
+    ])
 
+    # Verify the values first
+    assert config('bar', namespace=['foo']) == 'foobaz'
+    assert config('bar') == 'baz'
+    assert config('bat') == 'bat'
 
-# FIXME: .with_namespace()
+    # Create the namespaced config
+    config_with_namespace = config.with_namespace('foo')
+    assert config_with_namespace('bar') == 'foobaz'
+
+    # Verify 'bat' is not available because it's not in the namespace
+    with pytest.raises(ConfigurationError):
+        config_with_namespace('bat')

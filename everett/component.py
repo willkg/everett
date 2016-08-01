@@ -77,74 +77,38 @@ the ``user`` key in the ``foo`` namespace in the ``bar`` namespace.
 
 """
 
-from configmanlite import NO_VALUE, ConfigurationError
+from collections import OrderedDict
 
-
-class ClassifiedConfigManager(object):
-    def __init__(self, options, config_manager, namespace=None):
-        self.options = options
-        self.config_manager = config_manager
-        if namespace:
-            namespace = '_'.join(namespace)
-        self.namespace = namespace
-
-    def __call__(self, key, raise_error=True):
-        try:
-            option = self.options[key]
-        except KeyError:
-            if raise_error:
-                raise ConfigurationError(
-                    '%s is not a valid key for this component' % (key,)
-                )
-            return None
-
-        return self.config_manager(
-            key, self.namespace, default=option.default,
-            parser=option.parser, raise_error=raise_error
-        )
-
-
-def create_instance(cls, config, namespace=None, **kwargs):
-    # Generate a ``ClassifiedConfigManager`` which takes a namespace (if there
-    # is one) and a ``ConfigOptions`` and applies that to a ``ConfigManager``
-    # so we're calling ``config()`` correctly.
-    classifiedcm = ClassifiedConfigManager(cls, config, namespace)
-
-    # Create the instance passing in the ``ClassifiedConfigManager`` instance
-    # and kwargs.
-    instance = cls(classifiedcm, **kwargs)
-
-    return instance
+from configmanlite import NO_VALUE
 
 
 class Option(object):
-    def __init__(self, key, default, parser, raise_error):
+    def __init__(self, key, default, doc, parser):
         self.key = key
         self.default = default
+        self.doc = doc
         self.parser = parser
-        self.raise_error = raise_error
 
 
 class ConfigOptions(object):
     def __init__(self):
-        self.options = []
-        self.option_lookkup = {}
+        self.options = OrderedDict()
 
-    def add_option(self, key, default=NO_VALUE, doc='', parser=str,
-                   raise_error=True):
-        option = Option(key, default, doc, parser, raise_error)
-        self._add_option(option)
+    def add_option(self, key, default=NO_VALUE, doc='', parser=str):
+        option = Option(key, default, doc, parser)
+        self.options[key] = option
 
-    def _add_option(self, option):
-        self.options.append(option)
-        self.option_lookup[option.key] = option
+    def update(self, new_options):
+        for option in new_options:
+            if option.key in self.options:
+                del self.options[option.key]
+            self.options[option.key] = option
 
-    def update(self, class_config):
-        for option in class_config.option_lookup.values():
-            self._add_option(option)
+    def __iter__(self):
+        return iter(self.options.values())
 
-    def __getitem__(self, key):
-        return self.option_lookup[key]
+    # def __getitem__(self, key):
+    #     return self.option_lookup[key]
 
 
 class RequiredConfigMixin(object):
