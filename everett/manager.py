@@ -130,8 +130,10 @@ Then you end up with ``SOURCE_DB_USERNAME`` and friends and
 import importlib
 import inspect
 import os
-from ConfigParser import SafeConfigParser as ConfigParser
 from functools import wraps
+
+import six
+from six.moves import configparser
 
 from everett import NO_VALUE, ConfigurationError
 
@@ -362,7 +364,7 @@ class ConfigIniEnv(object):
             path = os.path.abspath(os.path.expanduser(path.strip()))
             if path and os.path.exists(path) and os.path.isfile(path):
                 # FIXME: log which path we used?
-                self._parser = ConfigParser()
+                self._parser = configparser.SafeConfigParser()
                 self._parser.readfp(open(path, 'r'))
                 break
 
@@ -498,7 +500,7 @@ class ConfigManager(ConfigManagerBase):
                                    parser=ListOf(str))
 
         """
-        if not (default is NO_VALUE or isinstance(default, basestring)):
+        if not (default is NO_VALUE or isinstance(default, six.string_types)):
             raise ConfigurationError(
                 'default value %r is not a string' % (default,)
             )
