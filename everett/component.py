@@ -107,8 +107,8 @@ class ConfigOptions(object):
     def __iter__(self):
         return iter(self.options.values())
 
-    # def __getitem__(self, key):
-    #     return self.option_lookup[key]
+    def __getitem__(self, key):
+        return self.options.__getitem__(key)
 
 
 class RequiredConfigMixin(object):

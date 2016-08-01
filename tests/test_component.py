@@ -2,7 +2,9 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-from configmanlite import NO_VALUE, ConfigurationError
+import pytest
+
+from configmanlite import ConfigurationError
 from configmanlite.component import (
     RequiredConfigMixin,
     ConfigOptions,
@@ -11,6 +13,7 @@ from configmanlite.manager import ConfigManager, ConfigDictEnv
 
 
 def test_get_required_config():
+    """Verify that get_required_config works for a trivial component"""
     class Component(RequiredConfigMixin):
         required_config = ConfigOptions()
         required_config.add_option('user', doc='no help')
@@ -23,6 +26,12 @@ def test_get_required_config():
 
 
 def test_get_required_config_complex_mro():
+    """Verify get_required_config with an MRO that has a diamond shape to it.
+
+    The goal here is to make sure the C class has the right options from the
+    right components and in the right order.
+
+    """
     class ComponentBase(RequiredConfigMixin):
         def __init__(self, config):
             self.config = config.with_options(self)
@@ -51,7 +60,80 @@ def test_get_required_config_complex_mro():
     ]
 
 
-# FIXME: test .with_options
+def test_with_options():
+    """Verify .with_options() restricts configuration"""
+    config = ConfigManager([
+        ConfigDictEnv({
+            'FOO_BAR': 'a',
+            'FOO_BAZ': 'b',
+
+            'BAR': 'c',
+            'BAZ': 'd',
+        })
+    ])
+
+    class SomeComponent(RequiredConfigMixin):
+        required_config = ConfigOptions()
+        required_config.add_option(
+            'baz',
+            default='',
+            doc='some help here',
+            parser=str
+        )
+
+        def __init__(self, config):
+            self.config = config.with_options(self)
+
+    # Create the component with regular config
+    comp = SomeComponent(config)
+    assert comp.config('baz') == 'd'
+    with pytest.raises(ConfigurationError):
+        # This is not a valid option for this component
+        comp.config('bar')
+
+    # Create the component with config in the "foo" namespace
+    comp2 = SomeComponent(config.with_namespace('foo'))
+    assert comp2.config('baz') == 'b'
+    with pytest.raises(ConfigurationError):
+        # This is not a valid option for this component
+        comp2.config('bar')
 
 
-# FIXME: test config() call picks up default and parsing correctly
+def test_default_comes_from_options():
+    """Verify that the default is picked up from options"""
+    config = ConfigManager([])
+
+    class SomeComponent(RequiredConfigMixin):
+        required_config = ConfigOptions()
+        required_config.add_option(
+            'foo',
+            default='abc'
+        )
+
+        def __init__(self, config):
+            self.config = config.with_options(self)
+
+    comp = SomeComponent(config)
+    assert comp.config('foo') == 'abc'
+
+
+def test_parser_comes_from_options():
+    """Verify the parser is picked up from options"""
+    config = ConfigManager([
+        ConfigDictEnv({
+            'FOO': '1'
+        })
+    ])
+
+    class SomeComponent(RequiredConfigMixin):
+        required_config = ConfigOptions()
+        required_config.add_option(
+            'foo',
+            parser=int
+        )
+
+        def __init__(self, config):
+            self.config = config.with_options(self)
+
+    comp = SomeComponent(config)
+    assert comp.config('foo') == 1
