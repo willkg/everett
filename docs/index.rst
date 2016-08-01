@@ -1,7 +1,3 @@
-=======
-Everett
-=======
-
 .. include:: ../README.rst
 
 
