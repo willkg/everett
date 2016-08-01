@@ -5,126 +5,6 @@
 """This module contains the configuration infrastructure allowing for deriving
 configuration from specified sources in the order you specify.
 
-Possible sources:
-
-1. .ini file located in one or more specified locations including environment
-   variable
-2. configuration dict
-3. environment
-
-Example of usage::
-
-    from everett.manager import ConfigManager
-
-    config = ConfigManager([
-        ConfigOSEnv(),
-        ConfigIniEnv([
-            os.environ.get('MYSOFTWARE_INI'),
-            '~/.mysoftware.ini',
-            '/etc/mysoftware.ini'
-        ]),
-    ])
-
-    DEBUG = config('DEBUG', default='True', parser=bool)
-
-
-Parsers and default values
-==========================
-
-The default value should always be a string that is parseable by the parser.
-This simplifies some things because then default values are **always** strings
-and parseable by parsers. It's not the case that in some places they're strings
-and some places they're parsed values.
-
-The parser can be any callable that takes a string value and returns a parsed
-value.
-
-
-Required values
-===============
-
-How does this work with required values the software cannot run without?
-
-Example for secrets::
-
-    from everett.manager import ConfigManager
-
-    config = ConfigManager()
-
-    SECRET_KEY = config('SECRET_KEY')
-
-
-If the ``SECRET_KEY`` is not provided, then this will raise a configuration
-error.
-
-
-Overriding configuration in tests
-=================================
-
-This module also makes it easy to do testing using the ``config_override``
-class and function decorator::
-
-    from everett.manager import config_override
-
-    @config_override(FOO='bar', BAZ='bat')
-    def test_this():
-        ...
-
-    @config_override(FOO='bar')
-    class TestSomeClass():
-        ...
-
-``config_override`` also works as a context manager::
-
-    from everett.manager import config_override
-
-    def test_something():
-        with config_override(FOO='bar'):
-            ...
-
-
-Namespaces
-==========
-
-This configuration allows for namespaces for grouping related configuration
-values. It also provides a way to focus on configuration in a specified
-namespace.
-
-For example, say you had database code that required a username, password
-and port. You could do something like this::
-
-    def open_db_connection(config):
-        username = config('username', namespace='db')
-        password = config('password', namespace='db')
-        port = config('port', namespace='db', default=5432, parser=int)
-
-
-    conn = open_db_connection(config)
-
-
-These variables in the environment would be ``DB_USERNAME``, ``DB_PASSWORD``
-and ``DB_PORT``.
-
-This is helpful when you need to create two of the same thing, but using
-separate configuration. Extending this example, you could pass the namespace as
-an argument.
-
-For example, say you wanted to use ``open_db_connection`` for a source
-db and for a dest db.
-
-    def open_db_connection(config, namespace):
-        username = config('username', namespace=namespace)
-        password = config('password', namespace=namespace)
-        port = config('port', namespace=namespace, default=5432, parser=int)
-
-
-    source = open_db_connection(config, 'source_db')
-    dest = open_db_connection(config, 'dest_db')
-
-
-Then you end up with ``SOURCE_DB_USERNAME`` and friends and
-``DEST_DB_USERNAME`` and friends.
-
 """
 
 import importlib
@@ -467,7 +347,17 @@ class NamespacedConfig(ConfigManagerBase):
 
 class ConfigManager(ConfigManagerBase):
     """Manages multiple configuration environment layers"""
+
     def __init__(self, environments, with_override=True):
+        """Instantiates a ConfigManager
+
+        :arg environents: list of configuration sources to look through in
+            the order they should be looked through
+        :arg with_override: whether or not to insert the special override
+            environment used for testing as the first environment in the list
+            of sources
+
+        """
         if with_override:
             environments.insert(0, ConfigOverrideEnv())
 
@@ -498,6 +388,15 @@ class ConfigManager(ConfigManagerBase):
             from everett.manager import ListOf
             ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost',
                                    parser=ListOf(str))
+
+
+        The default value should always be a string that is parseable by the
+        parser. This simplifies some things because then default values are
+        **always** strings and parseable by parsers. It's not the case that in
+        some places they're strings and some places they're parsed values.
+
+        The parser can be any callable that takes a string value and returns a
+        parsed value.
 
         """
         if not (default is NO_VALUE or isinstance(default, six.string_types)):

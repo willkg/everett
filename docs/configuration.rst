@@ -46,18 +46,21 @@ ConfigOSEnv
 -----------
 
 .. autoclass:: everett.manager.ConfigOSEnv
+   :noindex:
 
 
 ConfigIniEnv
 ------------
 
 .. autoclass:: everett.manager.ConfigIniEnv
+   :noindex:
 
 
 ConfigDictEnv
 -------------
 
 .. autoclass:: everett.manager.ConfigDictEnv
+   :noindex:
 
 
 Implementing your own sources
@@ -103,6 +106,8 @@ Some examples:
     There is no default value provided so if "password" isn't provided in any of
     the configuration sources, then this will raise a
     ``everett.ConfigurationError``.
+
+    This is what you want to do to require that a configuration value exist.
 
 ``config('name', raise_rror=False)``
     The key is "name".
@@ -198,6 +203,7 @@ for "true" and "false":
 * false: f, false, no, n, 0 (and uppercase versions)
 
 .. autofunction:: everett.manager.parse_bool
+   :noindex:
 
 
 classes
@@ -207,6 +213,7 @@ Everett provides a ``everett.manager.parse_class`` that takes a
 string specifying a module and class and returns the class.
 
 .. autofunction:: everett.manager.parse_class
+   :noindex:
 
 
 ListOf
@@ -219,6 +226,7 @@ parses a list of some other type. For example::
     ListOf(int)  # comma-delimited list of ints
 
 .. autofunction:: everett.manager.ListOf
+   :noindex:
 
 
 Implementing your own parsers
