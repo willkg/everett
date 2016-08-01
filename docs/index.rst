@@ -1,5 +1,6 @@
-Welcome to configmanlite's documentation!
-=========================================
+=======
+Everett
+=======
 
 Goals
 =====
@@ -38,7 +39,7 @@ file.
 
 First, you set up your ``ConfigManager``::
 
-    from configmanlite.manager import ConfigManager
+    from everett.manager import ConfigManager
 
     def get_config():
         return ConfigManager([
@@ -63,7 +64,7 @@ Second, you set up your app::
 
 Then you want to write a test for your app::
 
-    from configmanlite.manager import config_override
+    from everett.manager import config_override
 
     def test_debug():
         with config_override(DEBUG='true'):

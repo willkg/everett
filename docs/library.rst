@@ -2,13 +2,13 @@
 Library
 =======
 
-configmanlite.manager
-=====================
+everett.manager
+===============
 
-.. automodule:: configmanlite.manager
+.. automodule:: everett.manager
 
 
-configmanlite.component
-=======================
+everett.component
+=================
 
-.. automodule:: configmanlite.component
+.. automodule:: everett.component

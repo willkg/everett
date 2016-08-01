@@ -17,7 +17,7 @@ For example::
 
     import os
 
-    from configmanlite.manager import (
+    from everett.manager import (
         ConfigManager,
         ConfigOSEnv,
         ConfigIniEnv
@@ -45,19 +45,19 @@ Configuration sources
 ConfigOSEnv
 -----------
 
-.. autoclass:: configmanlite.manager.ConfigOSEnv
+.. autoclass:: everett.manager.ConfigOSEnv
 
 
 ConfigIniEnv
 ------------
 
-.. autoclass:: configmanlite.manager.ConfigIniEnv
+.. autoclass:: everett.manager.ConfigIniEnv
 
 
 ConfigDictEnv
 -------------
 
-.. autoclass:: configmanlite.manager.ConfigDictEnv
+.. autoclass:: everett.manager.ConfigDictEnv
 
 
 Implementing your own sources
@@ -66,7 +66,7 @@ Implementing your own sources
 You can implement your own sources. They just need to implement the ``.get()``
 method. A no-op implementation is this::
 
-    from configmanlite import NO_VALUE
+    from everett import NO_VALUE
 
     class NoOpEnv(object):
         def get(self, key, namespace=None):
@@ -90,7 +90,7 @@ configuration values from it.
 Configuration must have a key. Other than that, everything is optionally
 specified.
 
-.. automethod:: configmanlite.manager.ConfigManager.__call__
+.. automethod:: everett.manager.ConfigManager.__call__
 
 
 Some examples:
@@ -102,7 +102,7 @@ Some examples:
 
     There is no default value provided so if "password" isn't provided in any of
     the configuration sources, then this will raise a
-    ``configmanlite.ConfigurationError``.
+    ``everett.ConfigurationError``.
 
 ``config('name', raise_rror=False)``
     The key is "name".
@@ -111,12 +111,12 @@ Some examples:
 
     There is no default value provided and raise_error is set to False, so if
     this configuration variable isn't set anywhere, the result of this will be
-    ``configmanlite.NO_VALUE``.
+    ``everett.NO_VALUE``.
 
 ``config('debug', default='false', parser=bool)``
     The key is "debug".
 
-    The value is parsed using the special configmanlite bool parser.
+    The value is parsed using the special Everett bool parser.
 
     There is a default provided, so if this configuration variable isn't set in
     the specified sources, the default will be false.
@@ -129,13 +129,13 @@ Some examples:
 
     There's no default, so if there's no "username" in namespace "db"
     configuration variable set in the sources, this will raise a
-    ``configmanlite.ConfigurationError``.
+    ``everett.ConfigurationError``.
 
 
 Namespaces
 ==========
 
-configmanlite has namespaces for grouping related configuration values.
+Everett has namespaces for grouping related configuration values.
 
 For example, say you had database code that required a username, password
 and port. You could do something like this::
@@ -191,34 +191,34 @@ parsers:
 bools
 -----
 
-configmanlite provides a special bool parser that handles more explicit values
+Everett provides a special bool parser that handles more explicit values
 for "true" and "false":
 
 * true: t, true, yes, y, 1 (and uppercase versions)
 * false: f, false, no, n, 0 (and uppercase versions)
 
-.. autofunction:: configmanlite.manager.parse_bool
+.. autofunction:: everett.manager.parse_bool
 
 
 classes
 -------
 
-configmanlite provides a ``configmanlite.manager.parse_class`` that takes a
+Everett provides a ``everett.manager.parse_class`` that takes a
 string specifying a module and class and returns the class.
 
-.. autofunction:: configmanlite.manager.parse_class
+.. autofunction:: everett.manager.parse_class
 
 
 ListOf
 ------
 
-configmanlite provides a special ``configmanlite.manager.ListOf`` parser which
+Everett provides a special ``everett.manager.ListOf`` parser which
 parses a list of some other type. For example::
 
     ListOf(str)  # comma-delimited list of strings
     ListOf(int)  # comma-delimited list of ints
 
-.. autofunction:: configmanlite.manager.ListOf
+.. autofunction:: everett.manager.ListOf
 
 
 Implementing your own parsers

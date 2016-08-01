@@ -79,7 +79,7 @@ the ``user`` key in the ``foo`` namespace in the ``bar`` namespace.
 
 from collections import OrderedDict
 
-from configmanlite import NO_VALUE
+from everett import NO_VALUE
 
 
 class Option(object):

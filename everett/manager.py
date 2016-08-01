@@ -14,7 +14,7 @@ Possible sources:
 
 Example of usage::
 
-    from configmanlite.manager import ConfigManager
+    from everett.manager import ConfigManager
 
     config = ConfigManager([
         ConfigOSEnv(),
@@ -47,7 +47,7 @@ How does this work with required values the software cannot run without?
 
 Example for secrets::
 
-    from configmanlite.manager import ConfigManager
+    from everett.manager import ConfigManager
 
     config = ConfigManager()
 
@@ -64,7 +64,7 @@ Overriding configuration in tests
 This module also makes it easy to do testing using the ``config_override``
 class and function decorator::
 
-    from configmanlite.manager import config_override
+    from everett.manager import config_override
 
     @config_override(FOO='bar', BAZ='bat')
     def test_this():
@@ -76,7 +76,7 @@ class and function decorator::
 
 ``config_override`` also works as a context manager::
 
-    from configmanlite.manager import config_override
+    from everett.manager import config_override
 
     def test_something():
         with config_override(FOO='bar'):
@@ -133,7 +133,7 @@ import os
 from ConfigParser import SafeConfigParser as ConfigParser
 from functools import wraps
 
-from configmanlite import NO_VALUE, ConfigurationError
+from everett import NO_VALUE, ConfigurationError
 
 
 # This is a stack of overrides to be examined in reverse order
@@ -240,7 +240,7 @@ class ConfigDictEnv(object):
 
         For example::
 
-            from configmanlite.manager import ConfigDictEnv, ConfigManager
+            from everett.manager import ConfigDictEnv, ConfigManager
 
             config = ConfigManager([
                 ConfigDictEnv({
@@ -283,7 +283,7 @@ class ConfigOSEnv(object):
 
     To use, instantiate and toss in the source list::
 
-        from configmanlite.manager import ConfigOSEnv, ConfigManager
+        from everett.manager import ConfigOSEnv, ConfigManager
 
         config = ConfigManager([
             ConfigOSEnv()
@@ -317,7 +317,7 @@ class ConfigIniEnv(object):
     variable ``FOO_INI`` and then the ``.antenna.ini`` in the user's home
     directory::
 
-        from configmanlite.manager import ConfigIniEnv, ConfigManager
+        from everett.manager import ConfigIniEnv, ConfigManager
 
         config = ConfigManager([
             ConfigIniEnv([
@@ -344,7 +344,7 @@ class ConfigIniEnv(object):
         user=someval
 
 
-    configmanlite doesn't support multi-tiered hierarchies, so a key in a
+    Everett doesn't support multi-tiered hierarchies, so a key in a
     namespace in another namespace is a key in a section formed by
     concatenating all the namespaces. For example, the key "user" in namespace
     "foo" which is in namespace "bar" ends up like this::
@@ -480,10 +480,10 @@ class ConfigManager(ConfigManagerBase):
             use this differently
         :arg default: the default value (if any); must be a string that is
             parseable by the specified parser; if no default is provided, this
-            will return ``configmanlite.NO_VALUE``
+            will return ``everett.NO_VALUE``
         :arg parser: the parser for converting this value to a Python object
         :arg raise_error: True if you want a lack of value to raise a
-            ``configmanlite.ConfigurationError``
+            ``everett.ConfigurationError``
 
         Examples::
 
@@ -493,7 +493,7 @@ class ConfigManager(ConfigManagerBase):
             DEBUG = config('DEBUG', default='True', parser=bool)
 
             # Use the list of parser
-            from configmanlite.manager import ListOf
+            from everett.manager import ListOf
             ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost',
                                    parser=ListOf(str))
 

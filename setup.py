@@ -17,18 +17,18 @@ def get_file(fn):
 # pull that in without the hashes.
 
 setup(
-    name='configmanlite',
+    name='everett',
     version='0.1.0',
     description='Lite configuration management for a component architecture',
     long_description=get_file('README.rst'),
     author="Will Kahn-Greene",
     author_email='willkg@mozilla.com',
-    url='https://github.com/willkg/configmanlite',
+    url='https://github.com/willkg/everett',
     packages=[
-        'configmanlite',
+        'everett',
     ],
     package_dir={
-        'configmanlite': 'configmanlite'
+        'everett': 'everett'
     },
     include_package_data=True,
     license="MPLv2",

@@ -4,12 +4,12 @@
 
 import pytest
 
-from configmanlite import ConfigurationError
-from configmanlite.component import (
+from everett import ConfigurationError
+from everett.component import (
     RequiredConfigMixin,
     ConfigOptions,
 )
-from configmanlite.manager import ConfigManager, ConfigDictEnv
+from everett.manager import ConfigManager, ConfigDictEnv
 
 
 def test_get_required_config():

@@ -7,8 +7,8 @@ import os
 import mock
 import pytest
 
-from configmanlite import NO_VALUE, ConfigurationError
-from configmanlite.manager import (
+from everett import NO_VALUE, ConfigurationError
+from everett.manager import (
     config_override,
     ConfigDictEnv,
     ConfigIniEnv,

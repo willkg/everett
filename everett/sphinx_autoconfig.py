@@ -8,18 +8,18 @@ with configuration.
 The ``autoconfig`` declaration will pull out the class docstring as well as
 configuration requirements, throw it all in a blender and spit it out.
 
-To configure Sphinx, add ``'configmanlite.sphinx_autoconfig'`` to the
+To configure Sphinx, add ``'everett.sphinx_autoconfig'`` to the
 ``extensions`` in ``conf.py``::
 
     extensions = [
         ...
-        'configmanlite.sphinx_autoconfig'
+        'everett.sphinx_autoconfig'
     ]
 
 
 .. Note::
 
-   You need to make sure that configmanlite is installed in the environment
+   You need to make sure that Everett is installed in the environment
    that Sphinx is being run in.
 
 
@@ -36,7 +36,7 @@ from docutils.parsers.rst import Directive
 from docutils.statemachine import ViewList
 from sphinx.util.docstrings import prepare_docstring
 
-from configmanlite import NO_VALUE
+from everett import NO_VALUE
 
 
 def split_clspath(clspath):
