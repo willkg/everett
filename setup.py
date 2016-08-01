@@ -5,7 +5,16 @@
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 
+import os
+import re
 from setuptools import setup
+
+
+def get_version():
+    fn = os.path.join('everett', '__init__.py')
+    vsre = r"""^__version__ = ['"]([^'"]*)['"]"""
+    version_file = open(fn, 'rt').read()
+    return re.search(vsre, version_file, re.M).group(1)
 
 
 def get_file(fn):
@@ -18,12 +27,17 @@ def get_file(fn):
 
 setup(
     name='everett',
-    version='0.1.0',
-    description='Lite configuration management for a component architecture',
-    long_description=get_file('README.rst'),
+    version=get_version(),
+    description='Configuration library for Python applications',
+    long_description=(
+        get_file('README.rst') + '\n\n' + get_file('HISTORY.rst')
+    ),
     author="Will Kahn-Greene",
     author_email='willkg@mozilla.com',
     url='https://github.com/willkg/everett',
+    install_requires=[
+        'six'
+    ],
     packages=[
         'everett',
     ],
