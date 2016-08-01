@@ -3,28 +3,47 @@
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 """This module contains the configuration infrastructure allowing for deriving
-configuration from a .ini file and the process environment.
+configuration from specified sources in the order you specify.
 
-In order of precedence:
+Possible sources:
 
-1. settings overrides (usually only applies when running tests)
-2. process environment
-3. .ini file specified by environment variable
+1. .ini file located in one or more specified locations including environment
+   variable
+2. configuration dict
+3. environment
 
 Example of usage::
 
     from configmanlite.manager import ConfigManager
 
-    config = ConfigManager()
+    config = ConfigManager([
+        ConfigOSEnv(),
+        ConfigIniEnv([
+            os.environ.get('MYSOFTWARE_INI'),
+            '~/.mysoftware.ini',
+            '/etc/mysoftware.ini'
+        ]),
+    ])
 
     DEBUG = config('DEBUG', default='True', parser=bool)
 
 
-Things of note:
+Parsers and default values
+==========================
 
-1. The default value should always be a string that is parseable by the parser.
-2. The parser can be any function that takes a string value and returns a
-   parsed value.
+The default value should always be a string that is parseable by the parser.
+This simplifies some things because then default values are **always** strings
+and parseable by parsers. It's not the case that in some places they're strings
+and some places they're parsed values.
+
+The parser can be any callable that takes a string value and returns a parsed
+value.
+
+
+Required values
+===============
+
+How does this work with required values the software cannot run without?
 
 Example for secrets::
 
@@ -38,18 +57,21 @@ Example for secrets::
 If the ``SECRET_KEY`` is not provided, then this will raise a configuration
 error.
 
-If you specify a environment variable with a path to your ini file, then that
-will be used. Otherwise, this only looks at the environment. Note that
-configuratino specified in the environment always takes precedence over
-configuration specified in the ini file.
 
-This module also makes it easy to do testing using the ``settings_override``
+Overriding configuration in tests
+=================================
+
+This module also makes it easy to do testing using the ``config_override``
 class and function decorator::
 
     from configmanlite.manager import config_override
 
     @config_override(FOO='bar', BAZ='bat')
     def test_this():
+        ...
+
+    @config_override(FOO='bar')
+    class TestSomeClass():
         ...
 
 ``config_override`` also works as a context manager::
@@ -59,6 +81,49 @@ class and function decorator::
     def test_something():
         with config_override(FOO='bar'):
             ...
+
+
+Namespaces
+==========
+
+This configuration allows for namespaces for grouping related configuration
+values. It also provides a way to focus on configuration in a specified
+namespace.
+
+For example, say you had database code that required a username, password
+and port. You could do something like this::
+
+    def open_db_connection(config):
+        username = config('username', namespace='db')
+        password = config('password', namespace='db')
+        port = config('port', namespace='db', default=5432, parser=int)
+
+
+    conn = open_db_connection(config)
+
+
+These variables in the environment would be ``DB_USERNAME``, ``DB_PASSWORD``
+and ``DB_PORT``.
+
+This is helpful when you need to create two of the same thing, but using
+separate configuration. Extending this example, you could pass the namespace as
+an argument.
+
+For example, say you wanted to use ``open_db_connection`` for a source
+db and for a dest db.
+
+    def open_db_connection(config, namespace):
+        username = config('username', namespace=namespace)
+        password = config('password', namespace=namespace)
+        port = config('port', namespace=namespace, default=5432, parser=int)
+
+
+    source = open_db_connection(config, 'source_db')
+    dest = open_db_connection(config, 'dest_db')
+
+
+Then you end up with ``SOURCE_DB_USERNAME`` and friends and
+``DEST_DB_USERNAME`` and friends.
 
 """
 
@@ -125,6 +190,22 @@ def get_parser(parser):
 
 
 class ListOf(object):
+    """Parses a comma-separated list of things
+
+    >>> ListOf(str)('a,b,c,d')
+    ['a', 'b', 'c', 'd']
+    >>> ListOf(int)('1,2,3,4')
+    [1, 2, 3, 4]
+
+    Note: This doesn't handle quotes or backslashes or any complicated string
+    parsing.
+
+    For example:
+
+    >>> ListOf(str)('"a,b",c,d')
+    ['"a', 'b"', 'c', 'd']
+
+    """
     def __init__(self, parser, delimiter=','):
         self.sub_parser = parser
         self.delimiter = delimiter
@@ -150,9 +231,23 @@ class ConfigOverrideEnv(object):
 
 
 class ConfigDictEnv(object):
-    """dict-based configuration layer
+    """Source for pulling configuration out of a dict
+
+    This is handy for testing. You might also use it if you wanted to move all
+    your defaults values into one centralized place.
 
     Namespace is prefixed, so key "foo" in namespace "bar" is ``FOO_BAR``.
+
+        For example::
+
+            from configmanlite.manager import ConfigDictEnv, ConfigManager
+
+            config = ConfigManager([
+                ConfigDictEnv({
+                    'FOO_BAR': 'someval',
+                    'BAT': '1',
+                })
+            ])
 
     """
     def __init__(self, cfg):
@@ -171,12 +266,28 @@ class ConfigDictEnv(object):
 
 
 class ConfigOSEnv(object):
-    """os.environ derived configuration layer
+    """Source for pulling configuration out of the environment
 
-    Namespace is prefixed, so key "foo" in namespace "bar" is ``BAR_FOO`` in
-    the ``os.environ``.
+    This source lets you specify configuration in the environment. This is
+    useful for infrastructure related configuration like usernames and ports
+    and secret configuration like passwords.
+
+    Keys are prefixed by namespaces and the whole thing is uppercased.
+
+    For example, key "foo" will be ``FOO`` in the environment.
+
+    For example, namespace "bar" for key "foo" becomes ``BAR_FOO`` in the
+    environment.
 
     Key and namespace can consist of alphanumeric characters and ``_``.
+
+    To use, instantiate and toss in the source list::
+
+        from configmanlite.manager import ConfigOSEnv, ConfigManager
+
+        config = ConfigManager([
+            ConfigOSEnv()
+        ])
 
     """
     def get(self, key, namespace=[]):
@@ -192,23 +303,42 @@ class ConfigOSEnv(object):
 
 
 class ConfigIniEnv(object):
-    """.ini style configuration layer
+    """Source for pulling configuration from INI files
 
-    Takes a list of ``possible_paths`` and uses the first one it finds.
+    Takes a list of ``possible_paths`` to look for the INI file and uses the
+    first one it finds.
 
-    You can support INI files specified in an environment variable by
-    passing in ``os.environ.get('SOMEFILENAME_INI')``.
+    If it finds no INI files in the possible paths, then this configuration
+    source will be a no-op.
+
+    This will expand ``~`` and work relative to the current working directory.
 
     Here's an example that looks for a filename specified in the environment
-    variable ``ANTENNA_INI`` and then the ``.antenna.ini`` in the user's home
+    variable ``FOO_INI`` and then the ``.antenna.ini`` in the user's home
     directory::
 
-        ConfigIniEnv([
-            os.environ.get('ANTENNA_INI'),
-            '~/.antenna.ini'
-        )
+        from configmanlite.manager import ConfigIniEnv, ConfigManager
 
-    Namespace is a config section. So "user" in namespace "foo" is::
+        config = ConfigManager([
+            ConfigIniEnv([
+                os.environ.get('FOO_INI'),
+                '~/.antenna.ini'
+            ])
+        ])
+
+
+    In this example, if there is no ``FOO_INI`` specified in the environment,
+    then that path will be ignored.
+
+    INI files must have a "main" section. This is where keys that aren't in a
+    namespace are placed.
+
+    Minimal INI file::
+
+        [main]
+
+
+    In the INI file, namespace is a section. So "user" in namespace "foo" is::
 
         [foo]
         user=someval
@@ -220,12 +350,6 @@ class ConfigIniEnv(object):
     "foo" which is in namespace "bar" ends up like this::
 
         [bar_foo]
-        user=someval
-
-    The top-level section (i.e. keys that aren't in a namespace) are in the
-    "main" section"::
-
-        [main]
         user=someval
 
     """
@@ -355,19 +479,21 @@ class ConfigManager(ConfigManagerBase):
         :arg namespace: the namespace for the key--different environments
             use this differently
         :arg default: the default value (if any); must be a string that is
-            parseable by the specified parser
+            parseable by the specified parser; if no default is provided, this
+            will return ``configmanlite.NO_VALUE``
         :arg parser: the parser for converting this value to a Python object
         :arg raise_error: True if you want a lack of value to raise a
-            ``ConfigurationError``
+            ``configmanlite.ConfigurationError``
 
         Examples::
 
-            config = ConfigManager()
+            config = ConfigManager([])
 
             # Use the special bool parser
             DEBUG = config('DEBUG', default='True', parser=bool)
 
-            from antenna.config_util import ListOf
+            # Use the list of parser
+            from configmanlite.manager import ListOf
             ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost',
                                    parser=ListOf(str))
 
