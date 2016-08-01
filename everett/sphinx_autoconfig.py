@@ -2,14 +2,14 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-"""Contains the Sphinx extension for auto-documenting configuration for
-components.
+"""Contains the autoconfig Sphinx extension for auto-documenting components
+with configuration.
 
-It'll pull out the class docstring as well as configuration requirements, throw
-it all in a blender and spit it out.
+The ``autoconfig`` declaration will pull out the class docstring as well as
+configuration requirements, throw it all in a blender and spit it out.
 
-To configure Sphinx, add ``'configmanlite.sphinx'`` to the ``extensions`` in
-``conf.py``::
+To configure Sphinx, add ``'configmanlite.sphinx_autoconfig'`` to the
+``extensions`` in ``conf.py``::
 
     extensions = [
         ...
@@ -17,7 +17,13 @@ To configure Sphinx, add ``'configmanlite.sphinx'`` to the ``extensions`` in
     ]
 
 
-Can be used in an ``.rst`` file to document a specific class. For example::
+.. Note::
+
+   You need to make sure that configmanlite is installed in the environment
+   that Sphinx is being run in.
+
+
+Use it like this in an ``.rst`` file to document a component::
 
     .. autoconfig:: collector.external.boto.crashstorage.BotoS3CrashStorage
 
