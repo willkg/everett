@@ -56,7 +56,7 @@ file.
 
 First, you set up your ``ConfigManager`` in your webapp::
 
-    from everett.manager import ConfigManager
+    from everett.manager import ConfigManager, ConfigOSEnv, ConfigIniEnv
 
 
     class MyWSGIApp(SomeFrameworkApp):
