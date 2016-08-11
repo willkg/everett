@@ -372,7 +372,8 @@ class ConfigManager(ConfigManagerBase):
             use this differently
         :arg default: the default value (if any); must be a string that is
             parseable by the specified parser; if no default is provided, this
-            will return ``everett.NO_VALUE``
+            will raise an error or return ``everett.NO_VALUE`` depending on
+            the value of ``raise_error``
         :arg parser: the parser for converting this value to a Python object
         :arg raise_error: True if you want a lack of value to raise a
             ``everett.ConfigurationError``
@@ -423,8 +424,8 @@ class ConfigManager(ConfigManagerBase):
                     key, namespace, parser)
             )
 
-        # Otherwise return None
-        return
+        # Otherwise return NO_VALUE
+        return NO_VALUE
 
 
 class ConfigOverride(object):

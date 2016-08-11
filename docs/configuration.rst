@@ -118,6 +118,15 @@ Some examples:
     this configuration variable isn't set anywhere, the result of this will be
     ``everett.NO_VALUE``.
 
+    .. Note::
+
+       ``everett.NO_VALUE`` is a falsy value so you can use it in comparative
+       contexts::
+
+           debug = config('DEBUG', parser=bool, raise_error=False)
+           if not debug:
+               pass
+
 ``config('debug', default='false', parser=bool)``
     The key is "debug".
 
