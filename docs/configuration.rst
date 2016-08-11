@@ -25,7 +25,7 @@ For example::
 
 
     config = ConfigManager([
-        ConfigOSEnv,
+        ConfigOSEnv(),
         ConfigIniEnv([
             os.environ.get('FOO_INI'),
         ])
