@@ -11,6 +11,7 @@ from everett import NO_VALUE, ConfigurationError
 from everett.manager import (
     config_override,
     ConfigDictEnv,
+    ConfigEnvFileEnv,
     ConfigIniEnv,
     ConfigOSEnv,
     ConfigManager,
@@ -129,6 +130,23 @@ def test_ConfigIniEnv(datadir):
 
     cie = ConfigIniEnv(['/a/b/c/bogus/filename'])
     assert cie.get('foo') == NO_VALUE
+
+
+def test_ConfigEnvFileEnv(datadir):
+    env_filename = os.path.join(datadir, '.env')
+    cefe = ConfigEnvFileEnv(env_filename)
+    assert cefe.get('not_a', ['youre']) == 'golfer'
+    assert cefe.get('loglevel') == 'walter'
+    assert cefe.get('missing') is NO_VALUE
+    assert cefe.data == {
+        'LOGLEVEL': 'walter',
+        'DEBUG': 'True',
+        'YOURE_NOT_A': 'golfer',
+        'DATABASE_URL': 'sqlite:///kahlua.db',
+    }
+
+    cefe = ConfigEnvFileEnv('/does/not/exist/.env')
+    assert cefe.get('loglevel') is NO_VALUE
 
 
 def test_config():

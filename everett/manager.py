@@ -10,6 +10,7 @@ configuration from specified sources in the order you specify.
 import importlib
 import inspect
 import os
+import re
 from functools import wraps
 
 import six
@@ -144,6 +145,72 @@ class ConfigDictEnv(object):
 
         if key in self.cfg:
             return self.cfg[key]
+        return NO_VALUE
+
+
+class ConfigEnvFileEnv(object):
+    """Source for pulling configuration out of .env files
+
+    This source lets you specify configuration in an .env file. This
+    is useful for local development when in production you use values
+    in environment variables.
+
+    Keys are prefixed by namespaces and the whole thing is uppercased.
+
+    For example, key "foo" will be ``FOO`` in the file.
+
+    For example, namespace "bar" for key "foo" becomes ``BAR_FOO`` in the
+    file.
+
+    Key and namespace can consist of alphanumeric characters and ``_``.
+
+    To use, instantiate and toss in the source list::
+
+        from everett.manager import ConfigEnvFileEnv, ConfigManager
+
+        config = ConfigManager([
+            ConfigEnvFileEnv('.env')
+        ])
+    """
+    data = None
+    key_re = re.compile(r'^[a-z][a-z0-9_]*$', flags=re.IGNORECASE)
+
+    def __init__(self, path):
+        self.parse(path)
+
+    def parse(self, path):
+        path = os.path.abspath(os.path.expanduser(path.strip()))
+        if not (path and os.path.exists(path) and os.path.isfile(path)):
+            return
+
+        data = {}
+        with open(path) as envfile:
+            for line in envfile:
+                line = line.strip()
+                if not line or line.startswith('#') or '=' not in line:
+                    continue
+                k, v = line.split('=', 1)
+                k = k.strip()
+                if not self.key_re.match(k):
+                    continue
+                v = v.strip().strip('\'"')
+                data[k] = v
+
+        if data:
+            self.data = data
+
+    def get(self, key, namespace=None):
+        if not self.data:
+            return NO_VALUE
+
+        if namespace:
+            key = list(namespace) + [key]
+            key = '_'.join(key)
+
+        key = key.upper()
+        if key in self.data:
+            return self.data[key]
+
         return NO_VALUE
 
 
