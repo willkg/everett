@@ -21,6 +21,7 @@ from everett import NO_VALUE, ConfigurationError
 
 # This is a stack of overrides to be examined in reverse order
 _CONFIG_OVERRIDE = []
+ENV_KEY_RE = re.compile(r'^[a-z][a-z0-9_]*$', flags=re.IGNORECASE)
 
 
 def parse_bool(val):
@@ -47,6 +48,30 @@ def parse_bool(val):
     raise ValueError('%s is not a valid bool value' % val)
 
 
+def parse_env_file(envfile):
+    """Parse the content of an iterable of lines as .env
+
+    Return a dict of config variables.
+
+    >>> parse_env_file(['DUDE=Abides'])
+    {'DUDE': 'Abides'}
+
+    """
+    data = {}
+    for line in envfile:
+        line = line.strip()
+        if not line or line.startswith('#') or '=' not in line:
+            continue
+        k, v = line.split('=', 1)
+        k = k.strip()
+        if not ENV_KEY_RE.match(k):
+            continue
+        v = v.strip().strip('\'"')
+        data[k] = v
+
+    return data
+
+
 def parse_class(val):
     """Parses a string, imports the module and returns the class
 
@@ -70,6 +95,26 @@ def get_parser(parser):
     if parser is bool:
         return parse_bool
     return parser
+
+
+def get_key_from_dict(configs, key, namespace=None):
+    """Return the value of a key from the given dict respecting namespaces.
+
+    Data can also be a list of data dicts.
+    """
+    # if it barks like a dict, make it a list
+    if hasattr(configs, 'get'):
+        configs = [configs]
+
+    if namespace:
+        key = '_'.join(list(namespace) + [key])
+
+    key = key.upper()
+    for env in configs:
+        if key in env:
+            return env[key]
+
+    return NO_VALUE
 
 
 class ListOf(object):
@@ -101,16 +146,7 @@ class ListOf(object):
 class ConfigOverrideEnv(object):
     """Override configuration layer for testing"""
     def get(self, key, namespace=None):
-        if namespace:
-            key = list(namespace) + [key]
-            key = '_'.join(key)
-
-        key = key.upper()
-
-        for env in reversed(_CONFIG_OVERRIDE):
-            if key in env:
-                return env[key]
-        return NO_VALUE
+        return get_key_from_dict(reversed(_CONFIG_OVERRIDE), key, namespace)
 
 
 class ConfigDictEnv(object):
@@ -137,15 +173,7 @@ class ConfigDictEnv(object):
         self.cfg = cfg
 
     def get(self, key, namespace=None):
-        if namespace:
-            key = list(namespace) + [key]
-            key = '_'.join(key)
-
-        key = key.upper()
-
-        if key in self.cfg:
-            return self.cfg[key]
-        return NO_VALUE
+        return get_key_from_dict(self.cfg, key, namespace)
 
 
 class ConfigEnvFileEnv(object):
@@ -173,45 +201,18 @@ class ConfigEnvFileEnv(object):
         ])
     """
     data = None
-    key_re = re.compile(r'^[a-z][a-z0-9_]*$', flags=re.IGNORECASE)
 
     def __init__(self, path):
-        self.parse(path)
-
-    def parse(self, path):
         path = os.path.abspath(os.path.expanduser(path.strip()))
-        if not (path and os.path.exists(path) and os.path.isfile(path)):
-            return
-
-        data = {}
-        with open(path) as envfile:
-            for line in envfile:
-                line = line.strip()
-                if not line or line.startswith('#') or '=' not in line:
-                    continue
-                k, v = line.split('=', 1)
-                k = k.strip()
-                if not self.key_re.match(k):
-                    continue
-                v = v.strip().strip('\'"')
-                data[k] = v
-
-        if data:
-            self.data = data
+        if path and os.path.exists(path) and os.path.isfile(path):
+            with open(path) as envfile:
+                self.data = parse_env_file(envfile)
 
     def get(self, key, namespace=None):
         if not self.data:
             return NO_VALUE
 
-        if namespace:
-            key = list(namespace) + [key]
-            key = '_'.join(key)
-
-        key = key.upper()
-        if key in self.data:
-            return self.data[key]
-
-        return NO_VALUE
+        return get_key_from_dict(self.data, key, namespace)
 
 
 class ConfigOSEnv(object):
@@ -239,16 +240,8 @@ class ConfigOSEnv(object):
         ])
 
     """
-    def get(self, key, namespace=[]):
-        if namespace:
-            key = list(namespace) + [key]
-            key = '_'.join(key)
-
-        key = key.upper()
-        if key in os.environ:
-            return os.environ[key]
-
-        return NO_VALUE
+    def get(self, key, namespace=None):
+        return get_key_from_dict(os.environ, key, namespace)
 
 
 class ConfigIniEnv(object):
