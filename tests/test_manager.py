@@ -21,6 +21,11 @@ from everett.manager import (
 )
 
 
+def test_no_value():
+    assert bool(NO_VALUE) is False
+    assert not NO_VALUE is True
+
+
 def test_parse_bool_error():
     with pytest.raises(ValueError):
         parse_bool('')
@@ -129,7 +134,7 @@ def test_ConfigIniEnv(datadir):
 def test_config():
     config = ConfigManager([])
 
-    assert config('DOESNOTEXISTNOWAY', raise_error=False) is None
+    assert config('DOESNOTEXISTNOWAY', raise_error=False) is NO_VALUE
     with pytest.raises(ConfigurationError):
         config('DOESNOTEXISTNOWAY')
     with pytest.raises(ConfigurationError):
@@ -141,7 +146,7 @@ def test_config_override():
     config = ConfigManager([])
 
     # Make sure the key doesn't exist
-    assert config('DOESNOTEXISTNOWAY', raise_error=False) is None
+    assert config('DOESNOTEXISTNOWAY', raise_error=False) is NO_VALUE
 
     # Try one override
     with config_override(DOESNOTEXISTNOWAY='bar'):
