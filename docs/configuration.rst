@@ -229,6 +229,28 @@ parses a list of some other type. For example::
    :noindex:
 
 
+dj_database_url
+---------------
+
+Everett works great with `dj-database-url
+<https://github.com/kennethreitz/dj-database-url>`_.
+
+For example::
+
+    import dj_database_url
+    from everett.manager import ConfigManager, ConfigOSEnv
+
+    config = ConfigManager([ConfigOSEnv()])
+    DATABASE = {
+        'default': config('DATABASE_URL', parser=dj_database_url.parse)
+    }
+
+
+That'll pull the ``DATABASE_URL`` value from the environment (it throws an error
+if it's not there) and runs it through ``dj_database_url`` which parses it and
+returns what Django needs.
+
+
 Implementing your own parsers
 -----------------------------
 
@@ -237,4 +259,25 @@ takes a string and returns the Python value you want.
 
 If the value is not parseable, then it should raise a ``ValueError``.
 
-For example, say we wanted to implement 
+For example, say we wanted to implement a parser that returned yes/no/no-answer::
+
+    def parse_yes_no_no_answer(val):
+        """Returns True, False or None"""
+        val = val.strip().lower()
+        if not val:
+            return None
+
+        return val[0] == 'y'
+
+
+Say you wanted to make a parser class that's line delimited::
+
+    from everett.manager import get_parser
+
+    class Lines(object):
+        def __init__(self, parser):
+            self.sub_pasrser = parser
+
+        def __call__(self, val):
+            parser = get_parser(self.sub_parser)
+            return [parser(line.strip()) for line in val.splitlines()]
