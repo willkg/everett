@@ -24,7 +24,7 @@ from everett.manager import (
 
 def test_no_value():
     assert bool(NO_VALUE) is False
-    assert not NO_VALUE is True
+    assert NO_VALUE is not True
 
 
 def test_parse_bool_error():
