@@ -36,8 +36,8 @@ def parse_bool(val):
     False
 
     """
-    true_vals = ('t', 'true', 'yes', 'y', '1')
-    false_vals = ('f', 'false', 'no', 'n', '0')
+    true_vals = ('t', 'true', 'yes', 'y', '1', 'on')
+    false_vals = ('f', 'false', 'no', 'n', '0', 'off')
 
     val = val.lower()
     if val in true_vals:
