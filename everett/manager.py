@@ -60,12 +60,16 @@ def parse_env_file(envfile):
     data = {}
     for line in envfile:
         line = line.strip()
-        if not line or line.startswith('#') or '=' not in line:
+        if not line or line.startswith('#'):
             continue
+        if '=' not in line:
+            raise ConfigurationError('Env file line missing = operator')
         k, v = line.split('=', 1)
         k = k.strip()
         if not ENV_KEY_RE.match(k):
-            continue
+            raise ConfigurationError(
+                'Invalid variable name %s in env file' % k
+            )
         v = v.strip().strip('\'"')
         data[k] = v
 
@@ -97,20 +101,24 @@ def get_parser(parser):
     return parser
 
 
-def get_key_from_dict(configs, key, namespace=None):
+def get_key_from_envs(envs, key, namespace=None):
     """Return the value of a key from the given dict respecting namespaces.
 
     Data can also be a list of data dicts.
     """
     # if it barks like a dict, make it a list
-    if hasattr(configs, 'get'):
-        configs = [configs]
+    # have to use `get` since dicts and lists
+    # both have __getitem__
+    if hasattr(envs, 'get'):
+        envs = [envs]
 
     if namespace:
-        key = '_'.join(list(namespace) + [key])
+        if not isinstance(namespace, six.string_types):
+            namespace = '_'.join(namespace)
+        key = '_'.join([namespace, key])
 
     key = key.upper()
-    for env in configs:
+    for env in envs:
         if key in env:
             return env[key]
 
@@ -146,7 +154,7 @@ class ListOf(object):
 class ConfigOverrideEnv(object):
     """Override configuration layer for testing"""
     def get(self, key, namespace=None):
-        return get_key_from_dict(reversed(_CONFIG_OVERRIDE), key, namespace)
+        return get_key_from_envs(reversed(_CONFIG_OVERRIDE), key, namespace)
 
 
 class ConfigDictEnv(object):
@@ -173,7 +181,7 @@ class ConfigDictEnv(object):
         self.cfg = cfg
 
     def get(self, key, namespace=None):
-        return get_key_from_dict(self.cfg, key, namespace)
+        return get_key_from_envs(self.cfg, key, namespace)
 
 
 class ConfigEnvFileEnv(object):
@@ -202,17 +210,25 @@ class ConfigEnvFileEnv(object):
     """
     data = None
 
-    def __init__(self, path):
-        path = os.path.abspath(os.path.expanduser(path.strip()))
-        if path and os.path.exists(path) and os.path.isfile(path):
-            with open(path) as envfile:
-                self.data = parse_env_file(envfile)
+    def __init__(self, possible_paths):
+        if isinstance(possible_paths, six.string_types):
+            possible_paths = [possible_paths]
+
+        for path in possible_paths:
+            if not path:
+                continue
+
+            path = os.path.abspath(os.path.expanduser(path.strip()))
+            if path and os.path.isfile(path):
+                with open(path) as envfile:
+                    self.data = parse_env_file(envfile)
+                    break
 
     def get(self, key, namespace=None):
         if not self.data:
             return NO_VALUE
 
-        return get_key_from_dict(self.data, key, namespace)
+        return get_key_from_envs(self.data, key, namespace)
 
 
 class ConfigOSEnv(object):
@@ -241,7 +257,7 @@ class ConfigOSEnv(object):
 
     """
     def get(self, key, namespace=None):
-        return get_key_from_dict(os.environ, key, namespace)
+        return get_key_from_envs(os.environ, key, namespace)
 
 
 class ConfigIniEnv(object):
@@ -297,12 +313,15 @@ class ConfigIniEnv(object):
     """
     def __init__(self, possible_paths):
         self._parser = None
+        if isinstance(possible_paths, six.string_types):
+            possible_paths = [possible_paths]
+
         for path in possible_paths:
             if not path:
                 continue
 
             path = os.path.abspath(os.path.expanduser(path.strip()))
-            if path and os.path.exists(path) and os.path.isfile(path):
+            if path and os.path.isfile(path):
                 # FIXME: log which path we used?
                 self._parser = configparser.SafeConfigParser()
                 self._parser.readfp(open(path, 'r'))
@@ -311,7 +330,7 @@ class ConfigIniEnv(object):
     def get(self, key, namespace=None):
         if not namespace:
             namespace = 'main'
-        else:
+        elif not isinstance(namespace, six.string_types):
             namespace = '_'.join(namespace)
 
         if self._parser and self._parser.has_option(namespace, key):

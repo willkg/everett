@@ -19,7 +19,7 @@ from everett.manager import (
     parse_bool,
     parse_class,
     ListOf,
-)
+    parse_env_file, get_key_from_envs)
 
 
 def test_no_value():
@@ -125,7 +125,7 @@ def test_ConfigIniEnv(datadir):
     ini_filename = os.path.join(datadir, 'config_test.ini')
     cie = ConfigIniEnv([ini_filename])
     assert cie.get('foo') == 'bar'
-    assert cie.get('foo', namespace=['namespacebaz']) == 'bat'
+    assert cie.get('foo', namespace='namespacebaz') == 'bat'
     # FIXME: Add multi-tier namespace
 
     cie = ConfigIniEnv(['/a/b/c/bogus/filename'])
@@ -134,8 +134,8 @@ def test_ConfigIniEnv(datadir):
 
 def test_ConfigEnvFileEnv(datadir):
     env_filename = os.path.join(datadir, '.env')
-    cefe = ConfigEnvFileEnv(env_filename)
-    assert cefe.get('not_a', ['youre']) == 'golfer'
+    cefe = ConfigEnvFileEnv(['/does/not/exist/.env', env_filename])
+    assert cefe.get('not_a', namespace='youre') == 'golfer'
     assert cefe.get('loglevel') == 'walter'
     assert cefe.get('missing') is NO_VALUE
     assert cefe.data == {
@@ -147,6 +147,41 @@ def test_ConfigEnvFileEnv(datadir):
 
     cefe = ConfigEnvFileEnv('/does/not/exist/.env')
     assert cefe.get('loglevel') is NO_VALUE
+
+
+def test_parse_env_file():
+    assert parse_env_file(['PLAN9=outerspace']) == {'PLAN9': 'outerspace'}
+    with pytest.raises(ConfigurationError):
+        parse_env_file(['3AMIGOS=infamous'])
+    with pytest.raises(ConfigurationError):
+        parse_env_file(['INVALID-CHAR=value'])
+    with pytest.raises(ConfigurationError):
+        parse_env_file(['MISSING-equals'])
+
+
+def test_get_key_from_envs():
+    assert get_key_from_envs({'K': 'v'}, 'k') == 'v'
+    assert get_key_from_envs([{'K': 'v'},
+                              {'L': 'w'}], 'l') == 'w'
+    assert get_key_from_envs({'T_T': 'sad'},
+                             't', namespace='t') == 'sad'
+    assert get_key_from_envs({'O_A_O': 'strange'},
+                             'o', namespace=['o', 'a']) == 'strange'
+    assert get_key_from_envs({'K': 'v'}, 'q') is NO_VALUE
+    # first match wins
+    assert get_key_from_envs([
+        {'K': 'v'},
+        {'L': 'w'},
+        {'K': 'z'},
+    ], 'k') == 'v'
+    # works with reversed iterator
+    assert get_key_from_envs(reversed([
+        {'L': 'v'}, {'L': 'w'},
+    ]), 'l') == 'w'
+    # works with os.environ
+    os.environ['DUDE_ABIDES'] = 'yeah, man'
+    assert get_key_from_envs(os.environ,
+                             'abides', namespace='dude') == 'yeah, man'
 
 
 def test_config():
