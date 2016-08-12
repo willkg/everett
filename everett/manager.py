@@ -10,6 +10,7 @@ configuration from specified sources in the order you specify.
 import importlib
 import inspect
 import os
+import re
 from functools import wraps
 
 import six
@@ -20,6 +21,7 @@ from everett import NO_VALUE, ConfigurationError
 
 # This is a stack of overrides to be examined in reverse order
 _CONFIG_OVERRIDE = []
+ENV_KEY_RE = re.compile(r'^[a-z][a-z0-9_]*$', flags=re.IGNORECASE)
 
 
 def parse_bool(val):
@@ -46,6 +48,34 @@ def parse_bool(val):
     raise ValueError('%s is not a valid bool value' % val)
 
 
+def parse_env_file(envfile):
+    """Parse the content of an iterable of lines as .env
+
+    Return a dict of config variables.
+
+    >>> parse_env_file(['DUDE=Abides'])
+    {'DUDE': 'Abides'}
+
+    """
+    data = {}
+    for line in envfile:
+        line = line.strip()
+        if not line or line.startswith('#'):
+            continue
+        if '=' not in line:
+            raise ConfigurationError('Env file line missing = operator')
+        k, v = line.split('=', 1)
+        k = k.strip()
+        if not ENV_KEY_RE.match(k):
+            raise ConfigurationError(
+                'Invalid variable name %s in env file' % k
+            )
+        v = v.strip().strip('\'"')
+        data[k] = v
+
+    return data
+
+
 def parse_class(val):
     """Parses a string, imports the module and returns the class
 
@@ -69,6 +99,30 @@ def get_parser(parser):
     if parser is bool:
         return parse_bool
     return parser
+
+
+def get_key_from_envs(envs, key, namespace=None):
+    """Return the value of a key from the given dict respecting namespaces.
+
+    Data can also be a list of data dicts.
+    """
+    # if it barks like a dict, make it a list
+    # have to use `get` since dicts and lists
+    # both have __getitem__
+    if hasattr(envs, 'get'):
+        envs = [envs]
+
+    if namespace:
+        if not isinstance(namespace, six.string_types):
+            namespace = '_'.join(namespace)
+        key = '_'.join([namespace, key])
+
+    key = key.upper()
+    for env in envs:
+        if key in env:
+            return env[key]
+
+    return NO_VALUE
 
 
 class ListOf(object):
@@ -100,16 +154,7 @@ class ListOf(object):
 class ConfigOverrideEnv(object):
     """Override configuration layer for testing"""
     def get(self, key, namespace=None):
-        if namespace:
-            key = list(namespace) + [key]
-            key = '_'.join(key)
-
-        key = key.upper()
-
-        for env in reversed(_CONFIG_OVERRIDE):
-            if key in env:
-                return env[key]
-        return NO_VALUE
+        return get_key_from_envs(reversed(_CONFIG_OVERRIDE), key, namespace)
 
 
 class ConfigDictEnv(object):
@@ -136,15 +181,54 @@ class ConfigDictEnv(object):
         self.cfg = cfg
 
     def get(self, key, namespace=None):
-        if namespace:
-            key = list(namespace) + [key]
-            key = '_'.join(key)
+        return get_key_from_envs(self.cfg, key, namespace)
 
-        key = key.upper()
 
-        if key in self.cfg:
-            return self.cfg[key]
-        return NO_VALUE
+class ConfigEnvFileEnv(object):
+    """Source for pulling configuration out of .env files
+
+    This source lets you specify configuration in an .env file. This
+    is useful for local development when in production you use values
+    in environment variables.
+
+    Keys are prefixed by namespaces and the whole thing is uppercased.
+
+    For example, key "foo" will be ``FOO`` in the file.
+
+    For example, namespace "bar" for key "foo" becomes ``BAR_FOO`` in the
+    file.
+
+    Key and namespace can consist of alphanumeric characters and ``_``.
+
+    To use, instantiate and toss in the source list::
+
+        from everett.manager import ConfigEnvFileEnv, ConfigManager
+
+        config = ConfigManager([
+            ConfigEnvFileEnv('.env')
+        ])
+    """
+    data = None
+
+    def __init__(self, possible_paths):
+        if isinstance(possible_paths, six.string_types):
+            possible_paths = [possible_paths]
+
+        for path in possible_paths:
+            if not path:
+                continue
+
+            path = os.path.abspath(os.path.expanduser(path.strip()))
+            if path and os.path.isfile(path):
+                with open(path) as envfile:
+                    self.data = parse_env_file(envfile)
+                    break
+
+    def get(self, key, namespace=None):
+        if not self.data:
+            return NO_VALUE
+
+        return get_key_from_envs(self.data, key, namespace)
 
 
 class ConfigOSEnv(object):
@@ -172,16 +256,8 @@ class ConfigOSEnv(object):
         ])
 
     """
-    def get(self, key, namespace=[]):
-        if namespace:
-            key = list(namespace) + [key]
-            key = '_'.join(key)
-
-        key = key.upper()
-        if key in os.environ:
-            return os.environ[key]
-
-        return NO_VALUE
+    def get(self, key, namespace=None):
+        return get_key_from_envs(os.environ, key, namespace)
 
 
 class ConfigIniEnv(object):
@@ -237,12 +313,15 @@ class ConfigIniEnv(object):
     """
     def __init__(self, possible_paths):
         self._parser = None
+        if isinstance(possible_paths, six.string_types):
+            possible_paths = [possible_paths]
+
         for path in possible_paths:
             if not path:
                 continue
 
             path = os.path.abspath(os.path.expanduser(path.strip()))
-            if path and os.path.exists(path) and os.path.isfile(path):
+            if path and os.path.isfile(path):
                 # FIXME: log which path we used?
                 self._parser = configparser.SafeConfigParser()
                 self._parser.readfp(open(path, 'r'))
@@ -251,7 +330,7 @@ class ConfigIniEnv(object):
     def get(self, key, namespace=None):
         if not namespace:
             namespace = 'main'
-        else:
+        elif not isinstance(namespace, six.string_types):
             namespace = '_'.join(namespace)
 
         if self._parser and self._parser.has_option(namespace, key):

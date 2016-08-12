@@ -49,6 +49,13 @@ ConfigOSEnv
    :noindex:
 
 
+ConfigEnvFileEnv
+----------------
+
+.. autoclass:: everett.manager.ConfigEnvFileEnv
+   :noindex:
+
+
 ConfigIniEnv
 ------------
 
