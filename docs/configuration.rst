@@ -26,9 +26,7 @@ For example::
 
     config = ConfigManager([
         ConfigOSEnv(),
-        ConfigIniEnv([
-            os.environ.get('FOO_INI'),
-        ])
+        ConfigIniEnv(os.environ.get('FOO_INI'))
     ])
         
 
@@ -77,18 +75,26 @@ You can implement your own sources. They just need to implement the ``.get()``
 method. A no-op implementation is this::
 
     from everett import NO_VALUE
+    from everett.manager import listify
+
 
     class NoOpEnv(object):
         def get(self, key, namespace=None):
-            # The namespace is either None or a list of strings specifying
-            # the namespace.
-            if namespace is None:
-                namespace = []
+            # The namespace is either None, a string or a list of strings.
+            if namespace:
+                # This forces the namespace value to always be a list of
+                # strings
+                namespace = listify(namespace)
 
+            # Code to extract key in namespace here if possible.
+
+            # That key in namespace doesn't exist in this environment, so
+            # we return ``everett.NO_VALUE``.
             return NO_VALUE
 
 
-You might want to pull configuration from a database or Redis or something.
+For example, maybe you want to pull configuration from a database or Redis or a
+post-it note on the refrigerator.
 
 
 Extracting values
@@ -261,10 +267,64 @@ For example::
         'default': config('DATABASE_URL', parser=dj_database_url.parse)
     }
 
-
 That'll pull the ``DATABASE_URL`` value from the environment (it throws an error
 if it's not there) and runs it through ``dj_database_url`` which parses it and
 returns what Django needs.
+
+With a default::
+
+    import dj_database_url
+    from everett.manager import ConfigManager, ConfigOSEnv
+
+    config = ConfigManager([ConfigOSEnv()])
+    DATABASE = {
+        'default': config('DATABASE_URL', default='sqlite:///my.db',
+                          parser=dj_database_url.parse)
+    }
+
+
+.. Note::
+
+   To use dj-database-url, you'll need to install it separately. Everett doesn't
+   require it to be installed.
+
+
+django-cache-url
+----------------
+
+Everett works great with `django-cache-url <https://github.com/ghickman/django-cache-url>`_.
+
+For example::
+
+    import django_cache_url
+    from everett.manager import ConfigManager, ConfigOSEnv
+
+    config = ConfigManager([ConfigOSEnv()])
+    CACHES = {
+        'default': config('CACHE_URL', parser=django_cache_url.parse)
+    }
+
+
+That'll pull the ``CACHE_URL`` value from the environment (it throws an error if
+it's not there) and runs it through ``django_cache_url`` which parses it and
+returns what Django needs.
+
+With a default::
+
+    import django_cache_url
+    from everett.manager import ConfigManager, ConfigOSEnv
+
+    config = ConfigManager([ConfigOSEnv()])
+    CACHES = {
+        'default': config('CACHE_URL', default='locmem://myapp',
+                          parser=django_cache_url.parse)
+    }
+
+
+.. Note::
+
+   To use django-cache-url, you'll need to install it separately. Everett
+   doesn't require it to be installed.
 
 
 Implementing your own parsers

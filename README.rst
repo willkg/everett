@@ -126,7 +126,10 @@ functionality is to wrap it up in a self-contained component::
             # component requires such that this component is
             # self-contained.
             self.config = config.with_options(self)
-            ...
+
+            self.host = self.config('host')
+            self.port = self.config('port')
+            self.queue_name = self.config('queue_name')
 
 
 Then in your app, you instantiate a ``RabbitMQComponent``, but with configuration
