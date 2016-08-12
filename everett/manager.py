@@ -101,6 +101,22 @@ def get_parser(parser):
     return parser
 
 
+def listify(thing):
+    """Returns a new list of thing
+
+    If thing is a string, then returns a list of thing. Otherwise
+    returns thing.
+
+    :arg thing: string or list of things
+
+    :returns: list
+
+    """
+    if isinstance(thing, six.string_types):
+        return [thing]
+    return thing
+
+
 def get_key_from_envs(envs, key, namespace=None):
     """Return the value of a key from the given dict respecting namespaces.
 
@@ -113,9 +129,8 @@ def get_key_from_envs(envs, key, namespace=None):
         envs = [envs]
 
     if namespace:
-        if not isinstance(namespace, six.string_types):
-            namespace = '_'.join(namespace)
-        key = '_'.join([namespace, key])
+        namespace = listify(namespace)
+        key = '_'.join(namespace + [key])
 
     key = key.upper()
     for env in envs:
@@ -154,6 +169,9 @@ class ListOf(object):
 class ConfigOverrideEnv(object):
     """Override configuration layer for testing"""
     def get(self, key, namespace=None):
+        # Short-circuit to reduce overhead.
+        if not _CONFIG_OVERRIDE:
+            return NO_VALUE
         return get_key_from_envs(reversed(_CONFIG_OVERRIDE), key, namespace)
 
 
@@ -207,13 +225,24 @@ class ConfigEnvFileEnv(object):
         config = ConfigManager([
             ConfigEnvFileEnv('.env')
         ])
+
+
+    Here's an example .env file::
+
+        DEBUG=true
+
+        # secrets
+        SECRET_KEY=ou812
+
+        # database setup
+        DB_HOST=localhost
+        DB_PORT=5432
+
     """
     data = None
 
     def __init__(self, possible_paths):
-        if isinstance(possible_paths, six.string_types):
-            possible_paths = [possible_paths]
-
+        possible_paths = listify(possible_paths)
         for path in possible_paths:
             if not path:
                 continue
@@ -263,17 +292,30 @@ class ConfigOSEnv(object):
 class ConfigIniEnv(object):
     """Source for pulling configuration from INI files
 
-    Takes a list of ``possible_paths`` to look for the INI file and uses the
-    first one it finds.
+    Takes a path or list of possible paths to look for the INI file and uses
+    the first one it finds.
 
     If it finds no INI files in the possible paths, then this configuration
     source will be a no-op.
 
-    This will expand ``~`` and work relative to the current working directory.
+    This will expand ``~`` as well as work relative to the current working
+    directory.
 
-    Here's an example that looks for a filename specified in the environment
-    variable ``FOO_INI`` and then the ``.antenna.ini`` in the user's home
-    directory::
+    This example looks just for the INI file specified in the environment::
+
+        from everett.manager import ConfigIniEnv, ConfigManager
+
+        config = ConfigManager([
+            ConfigIniEnv(os.environ.get('FOO_INI'))
+        ])
+
+
+    If there's no ``FOO_INI`` in the environment, then the path will be
+    ignored.
+
+    Here's an example that looks for the INI filespecified in the environment
+    variable ``FOO_INI`` and failing that will look for ``.antenna.ini`` in the
+    user's home directory::
 
         from everett.manager import ConfigIniEnv, ConfigManager
 
@@ -285,8 +327,21 @@ class ConfigIniEnv(object):
         ])
 
 
-    In this example, if there is no ``FOO_INI`` specified in the environment,
-    then that path will be ignored.
+    This example looks for a ``config/local.ini`` file which overrides values
+    in a ``config/base.ini`` file both are relative to the current working
+    directory::
+
+        from everett.manager import ConfigIniEnv, ConfigManager
+
+        config = ConfigManager([
+            ConfigIniEnv('config/local.ini'),
+            ConfigIniEnv('config/base.ini')
+        ])
+
+
+    Note how you can have multiple ``ConfigIniEnv`` files and this is how you
+    can set Everett up to have values in one INI file override values in
+    another INI file.
 
     INI files must have a "main" section. This is where keys that aren't in a
     namespace are placed.
@@ -313,8 +368,7 @@ class ConfigIniEnv(object):
     """
     def __init__(self, possible_paths):
         self._parser = None
-        if isinstance(possible_paths, six.string_types):
-            possible_paths = [possible_paths]
+        possible_paths = listify(possible_paths)
 
         for path in possible_paths:
             if not path:
@@ -328,10 +382,9 @@ class ConfigIniEnv(object):
                 break
 
     def get(self, key, namespace=None):
-        if not namespace:
-            namespace = 'main'
-        elif not isinstance(namespace, six.string_types):
-            namespace = '_'.join(namespace)
+        # INI files always have a namespace which defaults to "main".
+        namespace = listify(namespace) if namespace else ['main']
+        namespace = '_'.join(namespace)
 
         if self._parser and self._parser.has_option(namespace, key):
             return self._parser.get(namespace, key)

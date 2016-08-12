@@ -9,17 +9,20 @@ import pytest
 
 from everett import NO_VALUE, ConfigurationError
 from everett.manager import (
-    config_override,
     ConfigDictEnv,
     ConfigEnvFileEnv,
     ConfigIniEnv,
-    ConfigOSEnv,
     ConfigManager,
+    ConfigOSEnv,
+    ListOf,
+    config_override,
+    get_key_from_envs,
     get_parser,
+    listify,
     parse_bool,
     parse_class,
-    ListOf,
-    parse_env_file, get_key_from_envs)
+    parse_env_file,
+)
 
 
 def test_no_value():
@@ -30,6 +33,15 @@ def test_no_value():
 def test_parse_bool_error():
     with pytest.raises(ValueError):
         parse_bool('')
+
+
+def test_listify():
+    assert listify('foo') == ['foo']
+    assert listify('') == ['']
+
+    assert listify([]) == []
+    assert listify(['foo']) == ['foo']
+    assert listify(['foo', 'bar']) == ['foo', 'bar']
 
 
 @pytest.mark.parametrize('data', [
