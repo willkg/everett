@@ -53,6 +53,9 @@ def test_listify():
     'yes',
     'YES',
     '1',
+    'on',
+    'On',
+    'ON',
 ])
 def test_parse_bool_true(data):
     assert parse_bool(data) is True
@@ -68,6 +71,9 @@ def test_parse_bool_true(data):
     'No',
     'NO',
     '0',
+    'off',
+    'Off',
+    'OFF',
 ])
 def test_parse_bool_false(data):
     assert parse_bool(data) is False

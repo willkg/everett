@@ -221,8 +221,8 @@ bools
 Everett provides a special bool parser that handles more explicit values
 for "true" and "false":
 
-* true: t, true, yes, y, 1 (and uppercase versions)
-* false: f, false, no, n, 0 (and uppercase versions)
+* true: t, true, yes, y, on, 1 (and uppercase versions)
+* false: f, false, no, n, off, 0 (and uppercase versions)
 
 .. autofunction:: everett.manager.parse_bool
    :noindex:
