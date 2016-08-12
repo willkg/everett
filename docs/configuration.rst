@@ -267,10 +267,21 @@ For example::
         'default': config('DATABASE_URL', parser=dj_database_url.parse)
     }
 
-
 That'll pull the ``DATABASE_URL`` value from the environment (it throws an error
 if it's not there) and runs it through ``dj_database_url`` which parses it and
 returns what Django needs.
+
+With a default::
+
+    import dj_database_url
+    from everett.manager import ConfigManager, ConfigOSEnv
+
+    config = ConfigManager([ConfigOSEnv()])
+    DATABASE = {
+        'default': config('DATABASE_URL', default='sqlite:///my.db',
+                          parser=dj_database_url.parse)
+    }
+
 
 .. Note::
 
@@ -297,6 +308,18 @@ For example::
 That'll pull the ``CACHE_URL`` value from the environment (it throws an error if
 it's not there) and runs it through ``django_cache_url`` which parses it and
 returns what Django needs.
+
+With a default::
+
+    import django_cache_url
+    from everett.manager import ConfigManager, ConfigOSEnv
+
+    config = ConfigManager([ConfigOSEnv()])
+    CACHES = {
+        'default': config('CACHE_URL', default='locmem://myapp',
+                          parser=django_cache_url.parse)
+    }
+
 
 .. Note::
 

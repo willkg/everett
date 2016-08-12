@@ -313,7 +313,7 @@ class ConfigIniEnv(object):
     If there's no ``FOO_INI`` in the environment, then the path will be
     ignored.
 
-    Here's an example that looks for the INI filespecified in the environment
+    Here's an example that looks for the INI file specified in the environment
     variable ``FOO_INI`` and failing that will look for ``.antenna.ini`` in the
     user's home directory::
 
