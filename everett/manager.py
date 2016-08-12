@@ -227,6 +227,18 @@ class ConfigEnvFileEnv(object):
         ])
 
 
+    For multiple paths::
+
+        from everett.manager import ConfigEnvFileEnv, ConfigManager
+
+        config = ConfigManager([
+            ConfigEnvFileEnv([
+                '.env',
+                'config/prod.env'
+            ])
+        ])
+
+
     Here's an example .env file::
 
         DEBUG=true
