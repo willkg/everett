@@ -154,6 +154,9 @@ class ListOf(object):
 class ConfigOverrideEnv(object):
     """Override configuration layer for testing"""
     def get(self, key, namespace=None):
+        if not _CONFIG_OVERRIDE:
+            return NO_VALUE
+
         return get_key_from_envs(reversed(_CONFIG_OVERRIDE), key, namespace)
 
 
@@ -430,7 +433,7 @@ class ConfigManager(ConfigManagerBase):
     def __init__(self, environments, with_override=True):
         """Instantiates a ConfigManager
 
-        :arg environents: list of configuration sources to look through in
+        :arg environments: list of configuration sources to look through in
             the order they should be looked through
         :arg with_override: whether or not to insert the special override
             environment used for testing as the first environment in the list
