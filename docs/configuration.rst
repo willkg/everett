@@ -122,7 +122,7 @@ Some examples:
 
     This is what you want to do to require that a configuration value exist.
 
-``config('name', raise_rror=False)``
+``config('name', raise_error=False)``
     The key is "name".
 
     The value is parsed as a string.
