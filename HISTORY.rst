@@ -1,8 +1,8 @@
 History
 =======
 
-0.2 (In progress)
------------------
+0.2 (August 16th, 2016)
+-----------------------
 
 Feature: Add ``ConfigEnvFileEnv`` for supporting ``.env`` files. Thank you,
 Paul!
