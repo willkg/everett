@@ -7,5 +7,6 @@ recursive-include docs *.rst
 recursive-include docs *.py
 recursive-include docs Makefile
 
+recursive-include tests *.env
 recursive-include tests *.ini
 recursive-include tests *.py
