@@ -137,3 +137,31 @@ def test_parser_comes_from_options():
 
     comp = SomeComponent(config)
     assert comp.config('foo') == 1
+
+
+def test_get_namespace():
+    config = ConfigManager.from_dict({
+        'FOO': 'abc',
+        'FOO_BAR': 'abc',
+        'FOO_BAR_BAZ': 'abc',
+    })
+    assert config.get_namespace() == []
+
+    class SomeComponent(RequiredConfigMixin):
+        required_config = ConfigOptions()
+        required_config.add_option(
+            'foo',
+            parser=int
+        )
+
+        def __init__(self, config):
+            self.config = config.with_options(self)
+
+        def my_namespace_is(self):
+            return self.config.get_namespace()
+
+    comp = SomeComponent(config)
+    assert comp.my_namespace_is() == []
+
+    comp = SomeComponent(config.with_namespace('foo'))
+    assert comp.my_namespace_is() == ['foo']

@@ -269,3 +269,18 @@ def test_with_namespace():
     # Verify 'bat' is not available because it's not in the namespace
     with pytest.raises(ConfigurationError):
         config_with_namespace('bat')
+
+
+def test_get_namespace():
+    config = ConfigManager.from_dict({
+        'FOO': 'abc',
+        'FOO_BAR': 'abc',
+        'FOO_BAR_BAZ': 'abc',
+    })
+    assert config.get_namespace() == []
+
+    ns_foo_config = config.with_namespace('foo')
+    assert ns_foo_config.get_namespace() == ['foo']
+
+    ns_foo_bar_config = ns_foo_config.with_namespace('bar')
+    assert ns_foo_bar_config.get_namespace() == ['foo', 'bar']

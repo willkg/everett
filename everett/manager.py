@@ -404,6 +404,14 @@ class ConfigIniEnv(object):
 
 
 class ConfigManagerBase(object):
+    def get_namespace(self):
+        """Retrieves the complete namespace for this config object
+
+        :returns: namespace as a list of strings
+
+        """
+        return []
+
     def with_options(self, component):
         options = component.get_required_config()
         return BoundConfig(self, options)
@@ -426,6 +434,14 @@ class BoundConfig(ConfigManagerBase):
     def __init__(self, config, options):
         self.config = config
         self.options = options
+
+    def get_namespace(self):
+        """Retrieves the complete namespace for this config object
+
+        :returns: namespace as a list of strings
+
+        """
+        return self.config.get_namespace()
 
     def __call__(self, key, namespace=None, default=NO_VALUE, parser=str,
                  raise_error=True):
@@ -465,6 +481,14 @@ class NamespacedConfig(ConfigManagerBase):
     def __init__(self, config, namespace):
         self.config = config
         self.namespace = namespace
+
+    def get_namespace(self):
+        """Retrieves the complete namespace for this config object
+
+        :returns: namespace as a list of strings
+
+        """
+        return self.config.get_namespace() + [self.namespace]
 
     def __call__(self, key, namespace=None, default=NO_VALUE, parser=str,
                  raise_error=True):
