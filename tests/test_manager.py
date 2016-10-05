@@ -213,6 +213,18 @@ def test_config():
     assert config('DOESNOTEXISTNOWAY', default='ohreally') == 'ohreally'
 
 
+def test_config_from_dict():
+    config = ConfigManager.from_dict({})
+
+    assert config('FOO', raise_error=False) is NO_VALUE
+
+    config = ConfigManager.from_dict({
+        'FOO': 'bar'
+    })
+
+    assert config('FOO', raise_error=False) == 'bar'
+
+
 def test_config_override():
     config = ConfigManager([])
 
