@@ -507,6 +507,25 @@ class ConfigManager(ConfigManagerBase):
 
         self.envs = environments
 
+    @classmethod
+    def from_dict(cls, dict_config):
+        """Creates a ConfigManager with specified configuration as a Python dict
+
+        This is shorthand for::
+
+            config = ConfigManager([ConfigDictEnv(dict_config)])
+
+
+        This is handy for writing tests for the app you're using Everett in.
+
+        :arg dict_config: Python dict holding the configuration for this
+            manager
+
+        :returns: ConfigManager with specified configuration
+
+        """
+        return ConfigManager([ConfigDictEnv(dict_config)])
+
     def __call__(self, key, namespace=None, default=NO_VALUE, parser=str,
                  raise_error=True):
         """Returns a parsed value from the environment
