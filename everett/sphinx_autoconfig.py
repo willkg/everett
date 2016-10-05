@@ -147,9 +147,11 @@ class AutoConfigDirective(Directive):
                 if option.default is NO_VALUE:
                     self.add_line('%s        :default: ' % indent, sourcename)
                 else:
-                    self.add_line('%s        :default: ``%r``' % (indent, option.default), sourcename)
+                    self.add_line('%s        :default: ``%r``' % (indent, option.default),
+                                  sourcename)
 
-                self.add_line('%s        :parser: %s' % (indent, qualname(option.parser)), sourcename)
+                self.add_line('%s        :parser: %s' % (indent, qualname(option.parser)),
+                              sourcename)
                 self.add_line('', '')
                 self.add_line('%s        %s' % (indent, option.doc), sourcename)
                 self.add_line('', '')
