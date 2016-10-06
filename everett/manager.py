@@ -472,15 +472,23 @@ class BoundConfig(ConfigManagerBase):
         """
         return self.config.get_namespace()
 
-    def __call__(self, key, namespace=None, default=NO_VALUE, parser=str,
-                 raise_error=True):
+    def __call__(self, key, namespace=None, default=NO_VALUE,
+                 alternate_keys=NO_VALUE, parser=str, raise_error=True):
         """Returns a config value bound to a component's options
 
         :arg key: the key to look up
+
         :arg namespace: the namespace for the key--different environments
             use this differently
+
         :arg default: IGNORED
+
+        :arg alternate_keys: the list of alternate keys to look up;
+            supports a ``root:`` key prefix which will cause this to look at
+            the configuration root rather than the current namespace
+
         :arg parser: IGNORED
+
         :arg raise_error: True if you want a lack of value to raise a
             ``ConfigurationError``
 
@@ -495,8 +503,12 @@ class BoundConfig(ConfigManagerBase):
             return None
 
         return self.config(
-            key, namespace, default=option.default,
-            parser=option.parser, raise_error=raise_error
+            key,
+            namespace=namespace,
+            default=option.default,
+            alternate_keys=alternate_keys,
+            parser=option.parser,
+            raise_error=raise_error
         )
 
 
@@ -519,16 +531,24 @@ class NamespacedConfig(ConfigManagerBase):
         """
         return self.config.get_namespace() + [self.namespace]
 
-    def __call__(self, key, namespace=None, default=NO_VALUE, parser=str,
-                 raise_error=True):
+    def __call__(self, key, namespace=None, default=NO_VALUE,
+                 alternate_keys=NO_VALUE, parser=str, raise_error=True):
         """Returns a config value bound to a component's options
 
         :arg key: the key to look up
+
         :arg namespace: the namespace for the key--different environments
             use this differently
+
         :arg default: the default value (if any); must be a string that is
             parseable by the specified parser
+
+        :arg alternate_keys: the list of alternate keys to look up;
+            supports a ``root:`` key prefix which will cause this to look at
+            the configuration root rather than the current namespace
+
         :arg parser: the parser for converting this value to a Python object
+
         :arg raise_error: True if you want a lack of value to raise a
             ``ConfigurationError``
 
@@ -538,7 +558,12 @@ class NamespacedConfig(ConfigManagerBase):
             new_namespace.extend(namespace)
 
         return self.config(
-            key, new_namespace, default, parser, raise_error
+            key,
+            namespace=new_namespace,
+            default=default,
+            alternate_keys=alternate_keys,
+            parser=parser,
+            raise_error=raise_error
         )
 
 
@@ -579,18 +604,26 @@ class ConfigManager(ConfigManagerBase):
         """
         return ConfigManager([ConfigDictEnv(dict_config)])
 
-    def __call__(self, key, namespace=None, default=NO_VALUE, parser=str,
-                 raise_error=True):
+    def __call__(self, key, namespace=None, default=NO_VALUE,
+                 alternate_keys=NO_VALUE, parser=str, raise_error=True):
         """Returns a parsed value from the environment
 
         :arg key: the key to look up
+
         :arg namespace: the namespace for the key--different environments
             use this differently
+
         :arg default: the default value (if any); must be a string that is
             parseable by the specified parser; if no default is provided, this
             will raise an error or return ``everett.NO_VALUE`` depending on
             the value of ``raise_error``
+
+        :arg alternate_keys: the list of alternate keys to look up;
+            supports a ``root:`` key prefix which will cause this to look at
+            the configuration root rather than the current namespace
+
         :arg parser: the parser for converting this value to a Python object
+
         :arg raise_error: True if you want a lack of value to raise a
             ``everett.ConfigurationError``
 
@@ -605,6 +638,10 @@ class ConfigManager(ConfigManagerBase):
             from everett.manager import ListOf
             ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost',
                                    parser=ListOf(str))
+
+            # Use alternate_keys for backwards compatibility with an
+            # older version of this software
+            PASSWORD = config('PASSWORD', alternate_keys=['SECRET'])
 
 
         The default value should always be a string that is parseable by the
@@ -623,11 +660,25 @@ class ConfigManager(ConfigManagerBase):
 
         parser = get_parser(parser)
 
-        # Go through environments in reverse order
-        for env in self.envs:
-            val = env.get(key, namespace)
-            if val is not NO_VALUE:
-                return parser(val)
+        # Go through all possible keys
+        all_keys = [key]
+        if alternate_keys is not NO_VALUE:
+            all_keys = all_keys + alternate_keys
+
+        for possible_key in all_keys:
+            if possible_key.startswith('root:'):
+                # If this is a root-anchored key, we drop the namespace.
+                possible_key = possible_key[5:]
+                use_namespace = None
+            else:
+                use_namespace = namespace
+
+            # Go through environments in reverse order
+            for env in self.envs:
+                val = env.get(possible_key, use_namespace)
+
+                if val is not NO_VALUE:
+                    return parser(val)
 
         # Return the default if there is one
         if default is not NO_VALUE:

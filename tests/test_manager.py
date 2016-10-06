@@ -293,3 +293,40 @@ def test_get_namespace():
 
     ns_foo_bar_config = ns_foo_config.with_namespace('bar')
     assert ns_foo_bar_config.get_namespace() == ['foo', 'bar']
+
+
+@pytest.mark.parametrize('key,alternate_keys,expected', [
+    # key, alternate keys, expected
+    ('FOO', [], 'foo_abc'),
+    ('FOO', ['FOO_BAR'], 'foo_abc'),
+    ('BAD_KEY', ['FOO_BAR'], 'foo_bar_abc'),
+    ('BAD_KEY', ['BAD_KEY1', 'BAD_KEY2', 'FOO_BAR_BAZ'], 'foo_bar_baz_abc'),
+])
+def test_alternate_keys(key, alternate_keys, expected):
+    config = ConfigManager.from_dict({
+        'FOO': 'foo_abc',
+        'FOO_BAR': 'foo_bar_abc',
+        'FOO_BAR_BAZ': 'foo_bar_baz_abc',
+    })
+
+    assert config(key, alternate_keys=alternate_keys) == expected
+
+
+@pytest.mark.parametrize('key,alternate_keys,expected', [
+    # key, alternate keys, expected
+    ('BAR', [], 'foo_bar_abc'),
+    ('BAD_KEY', ['BAD_KEY1', 'BAR_BAZ'], 'foo_bar_baz_abc'),
+    ('bad_key', ['bad_key1', 'bar_baz'], 'foo_bar_baz_abc'),
+    ('bad_key', ['root:common_foo'], 'common_foo_abc')
+])
+def test_alternate_keys_with_namespace(key, alternate_keys, expected):
+    config = ConfigManager.from_dict({
+        'COMMON_FOO': 'common_foo_abc',
+        'FOO': 'foo_abc',
+        'FOO_BAR': 'foo_bar_abc',
+        'FOO_BAR_BAZ': 'foo_bar_baz_abc',
+    })
+
+    config = config.with_namespace('FOO')
+
+    assert config(key, alternate_keys=alternate_keys) == expected
