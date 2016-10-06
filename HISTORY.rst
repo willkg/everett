@@ -10,6 +10,8 @@ instances.
 Feature: Add ``.get_namespace()`` to ``ConfigManager`` and friends for getting
 the complete namespace for a given config instance as a list of strings.
 
+Feature: Make ``ConfigDictEnv`` case-insensitive to keys and namespaces.
+
 
 0.2 (August 16th, 2016)
 -----------------------
