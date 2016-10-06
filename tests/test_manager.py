@@ -120,6 +120,15 @@ def test_ConfigDictEnv():
     assert cde.get('foo') == 'bar'
     assert cde.get('foo', namespace=['a']) == 'a_bar'
     assert cde.get('foo', namespace=['a', 'b']) == 'a_b_bar'
+    assert cde.get('FOO', namespace=['a']) == 'a_bar'
+    assert cde.get('foo', namespace=['A']) == 'a_bar'
+    assert cde.get('FOO', namespace=['A']) == 'a_bar'
+
+    cde = ConfigDictEnv({
+        'foo': 'bar',
+    })
+    assert cde.get('foo') == 'bar'
+    assert cde.get('FOO') == 'bar'
 
 
 def test_ConfigOSEnv():

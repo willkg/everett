@@ -194,12 +194,41 @@ class ConfigDictEnv(object):
                 })
             ])
 
+    Keys are not case sensitive. This also works::
+
+            from everett.manager import ConfigDictEnv, ConfigManager
+
+            config = ConfigManager([
+                ConfigDictEnv({
+                    'foo_bar': 'someval',
+                    'bat': '1',
+                })
+            ])
+
+            print config('foo_bar')
+            print config('FOO_BAR')
+            print config.with_namespace('foo')('bar')
+
+
+    Also, ``ConfigManager`` has a convenience classmethod for creating a
+    ``ConfigManager`` with just a dict environment::
+
+            from everett.manager import ConfigManager
+
+            config = ConfigManager.from_dict({
+                'FOO_BAR': 'bat'
+            })
+
     """
     def __init__(self, cfg):
-        self.cfg = cfg
+        self.cfg = dict(
+            (key.upper(), val) for key, val in cfg.items()
+        )
 
     def get(self, key, namespace=None):
-        return get_key_from_envs(self.cfg, key, namespace)
+        if namespace is not None:
+            namespace = [part.upper() for part in namespace]
+        return get_key_from_envs(self.cfg, key.upper(), namespace)
 
 
 class ConfigEnvFileEnv(object):
