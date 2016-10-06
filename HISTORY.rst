@@ -1,8 +1,8 @@
 History
 =======
 
-0.3 (in development)
---------------------
+0.3 (October 6th, 2016)
+-----------------------
 
 Feature: Add ``ConfigManager.from_dict()`` shorthand for building configuration
 instances.
