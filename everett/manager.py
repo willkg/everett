@@ -219,6 +219,10 @@ class ConfigDictEnv(object):
                 'FOO_BAR': 'bat'
             })
 
+
+    .. versionchanged:: 0.3
+       Keys are no longer case-sensitive.
+
     """
     def __init__(self, cfg):
         self.cfg = dict(
@@ -487,6 +491,8 @@ class BoundConfig(ConfigManagerBase):
             supports a ``root:`` key prefix which will cause this to look at
             the configuration root rather than the current namespace
 
+            .. versionadded:: 0.3
+
         :arg parser: IGNORED
 
         :arg raise_error: True if you want a lack of value to raise a
@@ -547,6 +553,8 @@ class NamespacedConfig(ConfigManagerBase):
             supports a ``root:`` key prefix which will cause this to look at
             the configuration root rather than the current namespace
 
+            .. versionadded:: 0.3
+
         :arg parser: the parser for converting this value to a Python object
 
         :arg raise_error: True if you want a lack of value to raise a
@@ -601,6 +609,8 @@ class ConfigManager(ConfigManagerBase):
 
         :returns: ConfigManager with specified configuration
 
+        .. versionadded:: 0.3
+
         """
         return ConfigManager([ConfigDictEnv(dict_config)])
 
@@ -621,6 +631,8 @@ class ConfigManager(ConfigManagerBase):
         :arg alternate_keys: the list of alternate keys to look up;
             supports a ``root:`` key prefix which will cause this to look at
             the configuration root rather than the current namespace
+
+            .. versionadded:: 0.3
 
         :arg parser: the parser for converting this value to a Python object
 
