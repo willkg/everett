@@ -12,6 +12,14 @@ the complete namespace for a given config instance as a list of strings.
 
 Feature: Make ``ConfigDictEnv`` case-insensitive to keys and namespaces.
 
+Feature: Add ``alternate_keys`` to config call. This lets you specify a list
+of keys in order to try if the primary key doesn't find a value. This is
+helpful for deprecating keys that you used to use in a backwards-compatible
+way.
+
+Feature: Add ``root:`` prefix to keys allowing you to look outside of the
+current namespace and at the configuration root for configuration values.
+
 
 0.2 (August 16th, 2016)
 -----------------------
