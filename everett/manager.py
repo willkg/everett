@@ -512,7 +512,7 @@ class BoundConfig(ConfigManagerBase):
             key,
             namespace=namespace,
             default=option.default,
-            alternate_keys=alternate_keys,
+            alternate_keys=option.alternate_keys,
             parser=option.parser,
             raise_error=raise_error
         )

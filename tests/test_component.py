@@ -165,3 +165,27 @@ def test_get_namespace():
 
     comp = SomeComponent(config.with_namespace('foo'))
     assert comp.my_namespace_is() == ['foo']
+
+
+def test_alternate_keys():
+    config = ConfigManager.from_dict({
+        'COMMON': 'common_abc',
+        'FOO': 'abc',
+        'FOO_BAR': 'abc',
+        'FOO_BAR_BAZ': 'abc',
+    })
+
+    class SomeComponent(RequiredConfigMixin):
+        required_config = ConfigOptions()
+        required_config.add_option(
+            'bad_key',
+            alternate_keys=['root:common']
+        )
+
+        def __init__(self, config):
+            self.config = config.with_options(self)
+
+    comp = SomeComponent(config)
+
+    # The key is invalid, so it tries the alternate keys
+    assert comp.config('bad_key') == 'common_abc'
