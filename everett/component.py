@@ -12,9 +12,10 @@ from everett import NO_VALUE
 
 
 class Option(object):
-    def __init__(self, key, default, doc, parser):
+    def __init__(self, key, default, alternate_keys, doc, parser):
         self.key = key
         self.default = default
+        self.alternate_keys = alternate_keys
         self.doc = doc
         self.parser = parser
 
@@ -42,7 +43,7 @@ class ConfigOptions(object):
         :arg parser: the parser for converting this value to a Python object
 
         """
-        option = Option(key, default, doc, parser)
+        option = Option(key, default, alternate_keys, doc, parser)
         self.options[key] = option
 
     def update(self, new_options):
