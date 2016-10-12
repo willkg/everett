@@ -1,10 +1,11 @@
 History
 =======
 
-0.3.1 (In development)
-----------------------
+0.3.1 (October 12th, 2016)
+--------------------------
 
-FIXME
+Bug: Fix ``alternate_keys`` with components. Previously it worked for everything
+but components. Now it works with components, too.
 
 
 0.3 (October 6th, 2016)
