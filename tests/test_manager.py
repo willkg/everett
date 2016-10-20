@@ -35,13 +35,16 @@ def test_parse_bool_error():
         parse_bool('')
 
 
-def test_listify():
-    assert listify('foo') == ['foo']
-    assert listify('') == ['']
-
-    assert listify([]) == []
-    assert listify(['foo']) == ['foo']
-    assert listify(['foo', 'bar']) == ['foo', 'bar']
+@pytest.mark.parametrize('data,expected', [
+    (None, []),
+    ('', ['']),
+    ([], []),
+    ('foo', ['foo']),
+    (['foo'], ['foo']),
+    (['foo', 'bar'], ['foo', 'bar'])
+])
+def test_listify(data, expected):
+    assert listify(data) == expected
 
 
 @pytest.mark.parametrize('data', [
