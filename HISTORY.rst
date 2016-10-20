@@ -4,6 +4,8 @@ History
 0.4 (in development)
 --------------------
 
+Bug: Fix ``listify(None)`` to return ``[]``.
+
 
 0.3.1 (October 12th, 2016)
 --------------------------

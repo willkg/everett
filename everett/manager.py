@@ -112,6 +112,8 @@ def listify(thing):
     :returns: list
 
     """
+    if thing is None:
+        return []
     if isinstance(thing, six.string_types):
         return [thing]
     return thing
