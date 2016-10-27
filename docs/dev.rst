@@ -23,9 +23,8 @@ Release process
 5. Verify correctness.
 
    1. Run tests.
-   2. Build docs.
-   3. Run sample programs in docs.
-   4. Verify all that works.
+   2. Build docs (this runs example code).
+   3. Verify all that works.
 
 6. Tag the release::
 

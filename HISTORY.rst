@@ -1,13 +1,15 @@
 History
 =======
 
-0.4 (in development)
---------------------
+0.4 (October 27th, 2016)
+------------------------
 
 Feature: Add ``raw_value`` argument to config calls. This makes it easier to
 write code that prints configuration.
 
 Bug: Fix ``listify(None)`` to return ``[]``.
+
+Documentation fixes and updates.
 
 
 0.3.1 (October 12th, 2016)
