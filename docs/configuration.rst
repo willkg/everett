@@ -13,22 +13,11 @@ Configuration is handled by a ``ConfigManager``. When you instantiate the
 resolving configuration requests. The list of sources are consulted in the order
 you specify.
 
-For example::
+For example:
 
-    import os
+.. literalinclude:: code/configuration_sources.py
+   :language: python
 
-    from everett.manager import (
-        ConfigManager,
-        ConfigOSEnv,
-        ConfigIniEnv
-    )
-
-
-    config = ConfigManager([
-        ConfigOSEnv(),
-        ConfigIniEnv(os.environ.get('FOO_INI'))
-    ])
-        
 
 If you want to make configuration a global singleton, that's cool.
 
@@ -72,25 +61,10 @@ Implementing your own sources
 -----------------------------
 
 You can implement your own sources. They just need to implement the ``.get()``
-method. A no-op implementation is this::
+method. A no-op implementation is this:
 
-    from everett import NO_VALUE
-    from everett.manager import listify
-
-
-    class NoOpEnv(object):
-        def get(self, key, namespace=None):
-            # The namespace is either None, a string or a list of strings.
-            if namespace:
-                # This forces the namespace value to always be a list of
-                # strings
-                namespace = listify(namespace)
-
-            # Code to extract key in namespace here if possible.
-
-            # That key in namespace doesn't exist in this environment, so
-            # we return ``everett.NO_VALUE``.
-            return NO_VALUE
+.. literalinclude:: code/configuration_implementing_sources.py
+   :language: python
 
 
 For example, maybe you want to pull configuration from a database or Redis or a
@@ -282,6 +256,7 @@ For example::
         'default': config('DATABASE_URL', parser=dj_database_url.parse)
     }
 
+
 That'll pull the ``DATABASE_URL`` value from the environment (it throws an error
 if it's not there) and runs it through ``dj_database_url`` which parses it and
 returns what Django needs.
@@ -350,25 +325,12 @@ takes a string and returns the Python value you want.
 
 If the value is not parseable, then it should raise a ``ValueError``.
 
-For example, say we wanted to implement a parser that returned yes/no/no-answer::
+For example, say we wanted to implement a parser that returned yes/no/no-answer:
 
-    def parse_yes_no_no_answer(val):
-        """Returns True, False or None"""
-        val = val.strip().lower()
-        if not val:
-            return None
-
-        return val[0] == 'y'
+.. literalinclude:: code/configuration_parser.py
+   :language: python
 
 
-Say you wanted to make a parser class that's line delimited::
+Say you wanted to make a parser class that's line delimited:
 
-    from everett.manager import get_parser
-
-    class Lines(object):
-        def __init__(self, parser):
-            self.sub_pasrser = parser
-
-        def __call__(self, val):
-            parser = get_parser(self.sub_parser)
-            return [parser(line.strip()) for line in val.splitlines()]
+.. literalinclude:: code/configuration_parser2.py

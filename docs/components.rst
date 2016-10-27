@@ -100,40 +100,10 @@ Shared configuration by argument
 --------------------------------
 
 Let's create an app component which creates two file system components passing
-them a basedir::
+them a basedir:
 
-    class App(RequiredConfigMixin):
-        required_config = ConfigOptions()
-        required_config.add_option(
-            'basedir'
-        )
-        required_config.add_option(
-            'reader',
-            parser=parse_class
-        )
-        required_config.add_option(
-            'writer',
-            parser=parse_class
-        )
-        def __init__(self, config):
-            self.config = config.with_options(self)
-
-            basedir = self.config('basedir')
-            reader = self.config('reader')(config, basedir)
-            writer = self.config('writer')(config, basedir)
-
-
-    class FSReader(RequiredConfigMixin):
-        required_config = ConfigOptions()
-        def __init__(self, config, basedir):
-            self.config = config.with_options(self)
-            self.read_dir = os.path.join(basedir, 'read')
-
-    class FSWriter(RequiredConfigMixin):
-        required_config = ConfigOptions()
-        def __init__(self, config, basedir):
-            self.config = config.with_options(self)
-            self.write_dir = os.path.join(basedir, 'write')
+.. literalinclude:: code/component_shared.py
+   :language: python
 
 
 Why do it this way?
@@ -149,51 +119,7 @@ Shared configuration using alternate keys
 This recipe shows how to build components that share credntials using alternate
 keys.
 
-Let's create a db reader and a db writer component::
+Let's create a db reader and a db writer component:
 
-    class DBReader(RequiredConfigMixin):
-        required_config = ConfigOptions()
-        required_config.add_option(
-            'username',
-            alternate_keys=['root:db_username']
-        )
-        required_config.add_option(
-            'password',
-            alternate_keys=['root:db_password']
-        )
-        def __init__(self, config):
-            self.config = config.with_options(self)
-
-
-    class DBWriter(RequiredConfigMixin):
-        required_config = ConfigOptions()
-        required_config.add_option(
-            'username',
-            alternate_keys=['root:db_username']
-        )
-        required_config.add_option(
-            'password',
-            alternate_keys=['root:db_password']
-        )
-        def __init__(self, config):
-            self.config = config.with_options(self)
-
-    config = ConfigManager(...)
-
-    reader = DBReader(config.with_namespace('reader'))
-    writer = DBWriter(config.with_namespace('writer'))
-
-
-Then you could have them share credentials with this configuration::
-
-    DB_USERNAME=wilbur
-    DB_PASSWORD=foobar
-
-
-Or configure them to have different credentials::
-
-    READER_USERNAME=wilbur
-    READER_PASSWORD=foobar
-
-    WRITER_USERNAME=joe
-    WRITER_PASSWORD=joejoe
+.. literalinclude:: code/component_alternate_keys.py
+   :language: python
