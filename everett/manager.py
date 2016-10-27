@@ -323,6 +323,23 @@ class ConfigOSEnv(object):
 
     Key and namespace can consist of alphanumeric characters and ``_``.
 
+    .. Note::
+
+       Unlike other config environments, this one is case sensitive in that
+       keys defined in the environment **must** be all uppercase.
+
+       For example, these are good::
+
+           FOO=bar
+           FOO_BAR=bar
+           FOO_BAR1=bar
+
+
+       This is bad::
+
+           foo=bar
+
+
     To use, instantiate and toss in the source list::
 
         from everett.manager import ConfigOSEnv, ConfigManager

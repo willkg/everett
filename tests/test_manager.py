@@ -4,7 +4,6 @@
 
 import os
 
-import mock
 import pytest
 
 from everett import NO_VALUE, ConfigurationError
@@ -28,6 +27,7 @@ from everett.manager import (
 def test_no_value():
     assert bool(NO_VALUE) is False
     assert NO_VALUE is not True
+    assert str(NO_VALUE) == 'NOVALUE'
 
 
 def test_parse_bool_error():
@@ -119,6 +119,7 @@ def test_ConfigDictEnv():
         'FOO': 'bar',
         'A_FOO': 'a_bar',
         'A_B_FOO': 'a_b_bar',
+        'lower_foo': 'bar'
     })
     assert cde.get('foo') == 'bar'
     assert cde.get('foo', namespace=['a']) == 'a_bar'
@@ -135,28 +136,24 @@ def test_ConfigDictEnv():
 
 
 def test_ConfigOSEnv():
-    with mock.patch('os.environ') as os_environ_mock:
-        os_environ_mock.__contains__.return_value = True
-        os_environ_mock.__getitem__.return_value = 'baz'
-        cose = ConfigOSEnv()
-        assert cose.get('foo') == 'baz'
-        os_environ_mock.__getitem__.assert_called_with('FOO')
+    os.environ['EVERETT_TEST_FOO'] = 'bar'
+    os.environ['EVERETT_TEST_FOO'] = 'bar'
+    cose = ConfigOSEnv()
 
-    with mock.patch('os.environ') as os_environ_mock:
-        os_environ_mock.__contains__.return_value = True
-        os_environ_mock.__getitem__.return_value = 'baz'
-        cose = ConfigOSEnv()
-        assert cose.get('foo', namespace=['a']) == 'baz'
-        os_environ_mock.__getitem__.assert_called_with('A_FOO')
-    # FIXME: add multi-tier namespace
+    assert cose.get('everett_test_foo') == 'bar'
+    assert cose.get('EVERETT_test_foo') == 'bar'
+    assert cose.get('foo', namespace=['everett', 'test']) == 'bar'
 
 
 def test_ConfigIniEnv(datadir):
     ini_filename = os.path.join(datadir, 'config_test.ini')
     cie = ConfigIniEnv([ini_filename])
     assert cie.get('foo') == 'bar'
+    assert cie.get('FOO') == 'bar'
     assert cie.get('foo', namespace='namespacebaz') == 'bat'
-    # FIXME: Add multi-tier namespace
+
+    cie = ConfigIniEnv(ini_filename)
+    assert cie.get('foo') == 'bar'
 
     cie = ConfigIniEnv(['/a/b/c/bogus/filename'])
     assert cie.get('foo') == NO_VALUE
@@ -167,6 +164,7 @@ def test_ConfigEnvFileEnv(datadir):
     cefe = ConfigEnvFileEnv(['/does/not/exist/.env', env_filename])
     assert cefe.get('not_a', namespace='youre') == 'golfer'
     assert cefe.get('loglevel') == 'walter'
+    assert cefe.get('LOGLEVEL') == 'walter'
     assert cefe.get('missing') is NO_VALUE
     assert cefe.data == {
         'LOGLEVEL': 'walter',
@@ -174,6 +172,9 @@ def test_ConfigEnvFileEnv(datadir):
         'YOURE_NOT_A': 'golfer',
         'DATABASE_URL': 'sqlite:///kahlua.db',
     }
+
+    cefe = ConfigEnvFileEnv(env_filename)
+    assert cefe.get('not_a', namespace='youre') == 'golfer'
 
     cefe = ConfigEnvFileEnv('/does/not/exist/.env')
     assert cefe.get('loglevel') is NO_VALUE
