@@ -4,6 +4,9 @@ History
 0.4 (in development)
 --------------------
 
+Feature: Add ``raw_value`` argument to config calls. This makes it easier to
+write code that prints configuration.
+
 Bug: Fix ``listify(None)`` to return ``[]``.
 
 
