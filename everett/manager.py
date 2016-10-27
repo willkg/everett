@@ -479,7 +479,8 @@ class BoundConfig(ConfigManagerBase):
         return self.config.get_namespace()
 
     def __call__(self, key, namespace=None, default=NO_VALUE,
-                 alternate_keys=NO_VALUE, parser=str, raise_error=True):
+                 alternate_keys=NO_VALUE, parser=str, raise_error=True,
+                 raw_value=False):
         """Returns a config value bound to a component's options
 
         :arg key: the key to look up
@@ -500,6 +501,9 @@ class BoundConfig(ConfigManagerBase):
         :arg raise_error: True if you want a lack of value to raise a
             ``ConfigurationError``
 
+        :arg raw_value: False if you wanted the parsed value, True if
+            you want the raw value.
+
         """
         try:
             option = self.options[key]
@@ -516,7 +520,8 @@ class BoundConfig(ConfigManagerBase):
             default=option.default,
             alternate_keys=option.alternate_keys,
             parser=option.parser,
-            raise_error=raise_error
+            raise_error=raise_error,
+            raw_value=raw_value
         )
 
 
@@ -540,7 +545,8 @@ class NamespacedConfig(ConfigManagerBase):
         return self.config.get_namespace() + [self.namespace]
 
     def __call__(self, key, namespace=None, default=NO_VALUE,
-                 alternate_keys=NO_VALUE, parser=str, raise_error=True):
+                 alternate_keys=NO_VALUE, parser=str, raise_error=True,
+                 raw_value=False):
         """Returns a config value bound to a component's options
 
         :arg key: the key to look up
@@ -562,6 +568,9 @@ class NamespacedConfig(ConfigManagerBase):
         :arg raise_error: True if you want a lack of value to raise a
             ``ConfigurationError``
 
+        :arg raw_value: False if you wanted the parsed value, True if
+            you want the raw value.
+
         """
         new_namespace = [self.namespace]
         if namespace:
@@ -573,7 +582,8 @@ class NamespacedConfig(ConfigManagerBase):
             default=default,
             alternate_keys=alternate_keys,
             parser=parser,
-            raise_error=raise_error
+            raise_error=raise_error,
+            raw_value=raw_value
         )
 
 
@@ -617,7 +627,8 @@ class ConfigManager(ConfigManagerBase):
         return ConfigManager([ConfigDictEnv(dict_config)])
 
     def __call__(self, key, namespace=None, default=NO_VALUE,
-                 alternate_keys=NO_VALUE, parser=str, raise_error=True):
+                 alternate_keys=NO_VALUE, parser=str, raise_error=True,
+                 raw_value=False):
         """Returns a parsed value from the environment
 
         :arg key: the key to look up
@@ -640,6 +651,9 @@ class ConfigManager(ConfigManagerBase):
 
         :arg raise_error: True if you want a lack of value to raise a
             ``everett.ConfigurationError``
+
+        :arg raw_value: False if you wanted the parsed value, True if
+            you want the raw value.
 
         Examples::
 
@@ -672,7 +686,12 @@ class ConfigManager(ConfigManagerBase):
                 'default value %r is not a string' % (default,)
             )
 
-        parser = get_parser(parser)
+        if raw_value:
+            # If we're returning raw values, then we can just use str
+            # which is a no-op.
+            parser = str
+        else:
+            parser = get_parser(parser)
 
         # Go through all possible keys
         all_keys = [key]

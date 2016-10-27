@@ -189,3 +189,39 @@ def test_alternate_keys():
 
     # The key is invalid, so it tries the alternate keys
     assert comp.config('bad_key') == 'common_abc'
+
+
+def test_raw_value():
+    config = ConfigManager.from_dict({
+        'FOO_BAR': '1'
+    })
+
+    class SomeComponent(RequiredConfigMixin):
+        required_config = ConfigOptions()
+        required_config.add_option(
+            'foo_bar',
+            parser=int
+        )
+
+        def __init__(self, config):
+            self.config = config.with_options(self)
+
+    comp = SomeComponent(config)
+
+    assert comp.config('foo_bar') == 1
+    assert comp.config('foo_bar', raw_value=True) == '1'
+
+    class SomeComponent(RequiredConfigMixin):
+        required_config = ConfigOptions()
+        required_config.add_option(
+            'bar',
+            parser=int
+        )
+
+        def __init__(self, config):
+            self.config = config.with_options(self)
+
+    comp = SomeComponent(config.with_namespace('foo'))
+
+    assert comp.config('bar') == 1
+    assert comp.config('bar', raw_value=True) == '1'

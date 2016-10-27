@@ -333,3 +333,17 @@ def test_alternate_keys_with_namespace(key, alternate_keys, expected):
     config = config.with_namespace('FOO')
 
     assert config(key, alternate_keys=alternate_keys) == expected
+
+
+def test_raw_value():
+    config = ConfigManager.from_dict({
+        'FOO_BAR': '1'
+    })
+    assert config('FOO_BAR', parser=int) == 1
+    assert config('FOO_BAR', parser=int, raw_value=True) == '1'
+
+    assert str(config('NOEXIST', parser=int, raise_error=False)) == 'NOVALUE'
+
+    config = config.with_namespace('FOO')
+    assert config('BAR', parser=int) == 1
+    assert config('BAR', parser=int, raw_value=True) == '1'

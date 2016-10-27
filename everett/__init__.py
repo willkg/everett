@@ -11,6 +11,9 @@ class NoValue(object):
     def __bool__(self):
         return False
 
+    def __repr__(self):
+        return 'NOVALUE'
+
 
 # Singleton indicating a non-value
 NO_VALUE = NoValue()
