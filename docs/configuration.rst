@@ -158,6 +158,21 @@ Some examples:
     configuration variable set in the sources, this will raise a
     ``everett.ConfigurationError``.
 
+``config('password', namespace='postgres', alternate_keys=['db_password', 'root:postgres_password'])``
+
+    The key is "password".
+
+    The namespace is "postgres".
+
+    If there is no key "password" in namespace "postgres", then it looks for
+    "db_password" in namespace "postgres". This makes it possible to deprecate
+    old key names, but still support them.
+
+    If there is no key "password" or "db_password" in namespace "postgres", then
+    it looks at "postgres_password" in the root namespace. This allows you to
+    have multiple components that share configuration like credentials and
+    hostnames.
+
 
 Namespaces
 ==========
