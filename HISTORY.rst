@@ -4,6 +4,9 @@ History
 0.5 (in development)
 --------------------
 
+Bug: Fix ``autconfig`` Sphinx directive and add tests--it was all kinds of
+broken.
+
 
 0.4 (October 27th, 2016)
 ------------------------
