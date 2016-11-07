@@ -41,6 +41,16 @@ You can provide content as well::
 
        This is some content!
 
+
+You can hide the class name if you want::
+
+    .. autoconfig:: collector.external.boto.crashstorage.BotoS3CrashStorage
+       :hide-classname:
+
+
+This is handy for application-level configuration where you might not want to
+confuse users with how it's implemented.
+
 """
 
 import sys
@@ -83,7 +93,10 @@ class AutoConfigDirective(Directive):
 
     option_spec = {
         # Whether or not to show the class docstring
-        'show-docstring': directives.flag
+        'show-docstring': directives.flag,
+
+        # Whether or not to hide the class name
+        'hide-classname': directives.flag,
     }
 
     def add_line(self, line, source, *lineno):
@@ -95,10 +108,14 @@ class AutoConfigDirective(Directive):
         obj = import_class(clspath)
         sourcename = 'docstring of %s' % clspath
 
-        # Add the header
-        modname, clsname = split_clspath(clspath)
-        self.add_line('.. %s:%s:: %s.%s' % ('py', 'class', modname, clsname),
-                      sourcename)
+        # Add the classname or 'Configuration'
+        if 'hide-classname' not in self.options:
+            modname, clsname = split_clspath(clspath)
+            self.add_line('.. %s:%s:: %s.%s' % ('py', 'class', modname, clsname),
+                          sourcename)
+            indent = '    '
+        else:
+            indent = ''
         self.add_line('', sourcename)
 
         # Add the docstring if there is one and if show-docstring
@@ -107,34 +124,34 @@ class AutoConfigDirective(Directive):
             if docstring:
                 docstringlines = prepare_docstring(docstring, ignore=1)
                 for i, line in enumerate(docstringlines):
-                    self.add_line('    ' + line, sourcename, i)
+                    self.add_line(indent + line, sourcename, i)
                 self.add_line('', '')
 
         # Add content from the directive if there was any
         if more_content:
             for line, src in zip(more_content.data, more_content.items):
-                self.add_line('    ' + line, src[0], src[1])
+                self.add_line(indent + line, src[0], src[1])
             self.add_line('', '')
 
         # Add component options related content
         config = obj.get_required_config()
 
         if config.options:
-            self.add_line('    Configuration:', '')
+            self.add_line(indent + 'Configuration:', '')
             self.add_line('', '')
 
             sourcename = 'class definition'
 
             for option in config:
-                self.add_line('        ``%s``' % option.key, sourcename)
+                self.add_line('%s    ``%s``' % (indent, option.key), sourcename)
                 if option.default is NO_VALUE:
-                    self.add_line('            :default: ', sourcename)
+                    self.add_line('%s        :default: ' % indent, sourcename)
                 else:
-                    self.add_line('            :default: ``%r``' % option.default, sourcename)
+                    self.add_line('%s        :default: ``%r``' % (indent, option.default), sourcename)
 
-                self.add_line('            :parser: %s' % qualname(option.parser), sourcename)
+                self.add_line('%s        :parser: %s' % (indent, qualname(option.parser)), sourcename)
                 self.add_line('', '')
-                self.add_line('            %s' % option.doc, sourcename)
+                self.add_line('%s        %s' % (indent, option.doc), sourcename)
                 self.add_line('', '')
 
     def run(self):

@@ -4,7 +4,11 @@ History
 0.5 (in development)
 --------------------
 
-Bug: Fix ``autconfig`` Sphinx directive and add tests--it was all kinds of
+Feature: Add ``:show-docstring:`` flag to ``autoconfig`` directive.
+
+Feature: Add ``:hide-classname:`` flag to ``autoconfig`` directive.
+
+Bug: Fix ``autoconfig`` Sphinx directive and add tests--it was all kinds of
 broken.
 
 
