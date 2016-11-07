@@ -7,11 +7,12 @@ configuration from specified sources in the order you specify.
 
 """
 
+from functools import wraps
 import importlib
 import inspect
 import os
 import re
-from functools import wraps
+import types
 
 import six
 from six.moves import configparser
@@ -22,6 +23,53 @@ from everett import NO_VALUE, ConfigurationError
 # This is a stack of overrides to be examined in reverse order
 _CONFIG_OVERRIDE = []
 ENV_KEY_RE = re.compile(r'^[a-z][a-z0-9_]*$', flags=re.IGNORECASE)
+
+
+def qualname(thing):
+    """Returns the dot name for a given thing
+
+    >>> qualname(str)
+    'str'
+    >>> qualname(everett.manager.parse_class)
+    'everett.manager.parse_class'
+
+    """
+    parts = []
+
+    # Add the module, unless it's a builtin
+    mod = inspect.getmodule(thing)
+    if mod and mod.__name__ not in ('__main__', '__builtin__', 'builtins'):
+        parts.append(mod.__name__)
+
+    # Python 3 has __qualname__--just use that if it's available
+    if hasattr(thing, '__qualname__'):
+        parts.append(thing.__qualname__)
+        return '.'.join(parts)
+
+    # If it's a class
+    if inspect.isclass(thing):
+        parts.append(thing.__name__)
+        return '.'.join(parts)
+
+    # If it's a function
+    if isinstance(thing, (types.FunctionType, types.MethodType)):
+        # If it's a method or function
+        if inspect.ismethod(thing):
+            if thing.im_class is type:
+                # This is a class method
+                parts.append(thing.im_self.__name__)
+            else:
+                # This is an bound/instance method
+                parts.append(thing.im_class.__name__)
+            parts.append(thing.__name__)
+
+        elif inspect.isfunction(thing):
+            parts.append(thing.__name__)
+
+        return '.'.join(parts)
+
+    # It's an instance, so ... let's call repr on it
+    return repr(thing)
 
 
 def parse_bool(val):
@@ -166,6 +214,9 @@ class ListOf(object):
     def __call__(self, value):
         parser = get_parser(self.sub_parser)
         return [parser(token) for token in value.split(self.delimiter)]
+
+    def __repr__(self):
+        return '<ListOf(%s)>' % qualname(self.sub_parser)
 
 
 class ConfigOverrideEnv(object):

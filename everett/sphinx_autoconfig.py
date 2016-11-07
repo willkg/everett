@@ -27,16 +27,31 @@ Use it like this in an ``.rst`` file to document a component::
 
     .. autoconfig:: collector.external.boto.crashstorage.BotoS3CrashStorage
 
+
+If you want the docstring for the class, you can use the ``:show-docstring:``
+flag::
+
+    .. autoconfig:: collector.external.boto.crashstorage.BotoS3CrashStorage
+       :show-docstring:
+
+
+You can provide content as well::
+
+    .. autoconfig:: collector.external.boto.crashstorage.BotoS3CrashStorage
+
+       This is some content!
+
 """
 
 import sys
 
 from docutils import nodes
-from docutils.parsers.rst import Directive
+from docutils.parsers.rst import Directive, directives
 from docutils.statemachine import ViewList
 from sphinx.util.docstrings import prepare_docstring
 
 from everett import NO_VALUE
+from everett.manager import qualname
 
 
 def split_clspath(clspath):
@@ -64,6 +79,12 @@ class AutoConfigDirective(Directive):
     has_content = True
     required_arguments = 1
     optional_arguments = 0
+    final_argument_whitespace = False
+
+    option_spec = {
+        # Whether or not to show the class docstring
+        'show-docstring': directives.flag
+    }
 
     def add_line(self, line, source, *lineno):
         """Add a line to the result"""
@@ -80,21 +101,22 @@ class AutoConfigDirective(Directive):
                       sourcename)
         self.add_line('', sourcename)
 
-        # Add the docstring if there is one
-        docstring = getattr(obj, '__doc__', None)
-        if docstring:
-            docstringlines = prepare_docstring(docstring, ignore=1)
-            for i, line in enumerate(docstringlines):
-                self.add_line('    ' + line, sourcename, i)
-            self.add_line('', '')
+        # Add the docstring if there is one and if show-docstring
+        if 'show-docstring' in self.options:
+            docstring = getattr(obj, '__doc__', None)
+            if docstring:
+                docstringlines = prepare_docstring(docstring, ignore=1)
+                for i, line in enumerate(docstringlines):
+                    self.add_line('    ' + line, sourcename, i)
+                self.add_line('', '')
 
-        # Add additional content from the directive if there was any
+        # Add content from the directive if there was any
         if more_content:
             for line, src in zip(more_content.data, more_content.items):
                 self.add_line('    ' + line, src[0], src[1])
             self.add_line('', '')
 
-        # Add configman related content
+        # Add component options related content
         config = obj.get_required_config()
 
         if config.options:
@@ -108,10 +130,9 @@ class AutoConfigDirective(Directive):
                 if option.default is NO_VALUE:
                     self.add_line('            :default: ', sourcename)
                 else:
-                    self.add_line('            :default: %r' % option.default,
-                                  sourcename)
-                self.add_line('            :parser: %r' % option.parser,
-                              sourcename)
+                    self.add_line('            :default: ``%r``' % option.default, sourcename)
+
+                self.add_line('            :parser: %s' % qualname(option.parser), sourcename)
                 self.add_line('', '')
                 self.add_line('            %s' % option.doc, sourcename)
                 self.add_line('', '')
@@ -132,4 +153,4 @@ class AutoConfigDirective(Directive):
 
 
 def setup(app):
-    app.add_directive('sphinx_autoconfig', AutoConfigDirective)
+    app.add_directive('autoconfig', AutoConfigDirective)
