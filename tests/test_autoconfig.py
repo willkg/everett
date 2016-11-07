@@ -95,6 +95,28 @@ def test_defaults(tmpdir):
     )
 
 
+# Test classname
+
+
+def test_hide_classname(tmpdir):
+    rst = dedent('''\
+    .. autoconfig:: test_autoconfig.ComponentDefaults
+       :hide-classname:
+
+    ''')
+
+    assert (
+        parse(tmpdir, rst) ==
+        dedent('''\
+        Configuration:
+
+           "user"
+              default:
+              parser:
+                 str
+        ''')
+    )
+
 # Test docstring-related things
 
 
