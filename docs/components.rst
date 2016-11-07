@@ -87,7 +87,7 @@ Documenting components
 Components can have configuration. It's important to be able to easily document
 this configuration.
 
-As such, everett includes a Sphinx extension that adds a ``autoconfig``
+As such, Everett includes a Sphinx extension that adds a ``autoconfig``
 declaration for auto-documenting configuration for components.
 
 .. automodule:: everett.sphinx_autoconfig
