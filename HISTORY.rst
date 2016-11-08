@@ -8,6 +8,10 @@ Feature: Add ``:show-docstring:`` flag to ``autoconfig`` directive.
 
 Feature: Add ``:hide-classname:`` flag to ``autoconfig`` directive.
 
+Feature: Rewrite ``ConfigIniEnv`` to use configobj which allows for nested
+sections in INI files. This also allows you to specify multiple INI files
+and have later ones override earlier ones.
+
 Bug: Fix ``autoconfig`` Sphinx directive and add tests--it was all kinds of
 broken.
 

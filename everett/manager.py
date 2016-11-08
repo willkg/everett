@@ -14,8 +14,8 @@ import os
 import re
 import types
 
+from configobj import ConfigObj
 import six
-from six.moves import configparser
 
 from everett import NO_VALUE, ConfigurationError
 
@@ -472,17 +472,30 @@ class ConfigIniEnv(object):
         user=someval
 
 
-    Everett doesn't support multi-tiered hierarchies, so a key in a
-    namespace in another namespace is a key in a section formed by
-    concatenating all the namespaces. For example, the key "user" in namespace
-    "foo" which is in namespace "bar" ends up like this::
+    Everett uses configobj, so it supports nested sections like this::
 
-        [bar_foo]
-        user=someval
+        [main]
+        foo=bar
+
+        [namespace]
+        foo2=bar2
+
+          [[namespace2]]
+          foo3=bar3
+
+
+    Which gives you these:
+
+    * ``FOO``
+    * ``NAMESPACE_FOO2``
+    * ``NAMESPACE_NAMESPACE2_FOO3``
+
+    See more details here:
+    http://configobj.readthedocs.io/en/latest/configobj.html#the-config-file-format
 
     """
     def __init__(self, possible_paths):
-        self._parser = None
+        self.cfg = {}
         possible_paths = listify(possible_paths)
 
         for path in possible_paths:
@@ -491,19 +504,28 @@ class ConfigIniEnv(object):
 
             path = os.path.abspath(os.path.expanduser(path.strip()))
             if path and os.path.isfile(path):
-                # FIXME: log which path we used?
-                self._parser = configparser.SafeConfigParser()
-                self._parser.readfp(open(path, 'r'))
-                break
+                self.cfg.update(ConfigIniEnv.parse_ini_file(path))
+
+    @classmethod
+    def parse_ini_file(cls, path):
+        cfgobj = ConfigObj(path)
+
+        def extract_section(namespace, d):
+            cfg = {}
+            for key, val in d.items():
+                if isinstance(d[key], dict):
+                    cfg.update(extract_section(namespace + [key], d[key]))
+                else:
+                    cfg['_'.join(namespace + [key]).upper()] = val
+
+            return cfg
+
+        return extract_section([], cfgobj.dict())
 
     def get(self, key, namespace=None):
-        # INI files always have a namespace which defaults to "main".
-        namespace = listify(namespace) if namespace else ['main']
-        namespace = '_'.join(namespace)
-
-        if self._parser and self._parser.has_option(namespace, key):
-            return self._parser.get(namespace, key)
-        return NO_VALUE
+        # The "main" section is considered the root mainspace.
+        namespace = namespace or ['main']
+        return get_key_from_envs(self.cfg, key, namespace)
 
 
 class ConfigManagerBase(object):

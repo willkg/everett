@@ -150,10 +150,9 @@ def test_ConfigIniEnv(datadir):
     cie = ConfigIniEnv([ini_filename])
     assert cie.get('foo') == 'bar'
     assert cie.get('FOO') == 'bar'
-    assert cie.get('foo', namespace='namespacebaz') == 'bat'
-
-    cie = ConfigIniEnv(ini_filename)
-    assert cie.get('foo') == 'bar'
+    assert cie.get('foo', namespace='nsbaz') == 'bat'
+    assert cie.get('foo', namespace=['nsbaz']) == 'bat'
+    assert cie.get('foo', namespace=['nsbaz', 'nsbaz2']) == 'bat2'
 
     cie = ConfigIniEnv(['/a/b/c/bogus/filename'])
     assert cie.get('foo') == NO_VALUE

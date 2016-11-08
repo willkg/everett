@@ -36,7 +36,8 @@ setup(
     author_email='willkg@mozilla.com',
     url='https://github.com/willkg/everett',
     install_requires=[
-        'six'
+        'six',
+        'configobj',
     ],
     packages=[
         'everett',
