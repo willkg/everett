@@ -1,8 +1,8 @@
 History
 =======
 
-0.5 (in development)
---------------------
+0.5 (November 8th, 2016)
+------------------------
 
 Feature: Add ``:show-docstring:`` flag to ``autoconfig`` directive.
 
