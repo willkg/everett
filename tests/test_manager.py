@@ -2,6 +2,7 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+import argparse
 import os
 
 import pytest
@@ -12,6 +13,7 @@ from everett.manager import (
     ConfigEnvFileEnv,
     ConfigIniEnv,
     ConfigManager,
+    ConfigObjEnv,
     ConfigOSEnv,
     ListOf,
     config_override,
@@ -112,6 +114,67 @@ def test_ListOf():
     assert ListOf(bool)('t,f') == [True, False]
     assert ListOf(int)('1,2,3') == [1, 2, 3]
     assert ListOf(int, delimiter=':')('1:2') == [1, 2]
+
+
+class TestConfigObjEnv:
+    def test_basic(self):
+        class Namespace(object):
+            pass
+
+        obj = Namespace()
+        setattr(obj, 'foo', 'bar')
+        setattr(obj, 'foo_baz', 'bar')
+
+        coe = ConfigObjEnv(obj)
+        assert coe.get('foo') == 'bar'
+        assert coe.get('FOO') == 'bar'
+        assert coe.get('FOO_BAZ') == 'bar'
+
+    def test_with_argparse(self):
+        parser = argparse.ArgumentParser()
+        parser.add_argument(
+            '--debug', help='to debug or not to debug'
+        )
+        parsed_vals = parser.parse_known_args([])[0]
+
+        config = ConfigManager([
+            ConfigObjEnv(parsed_vals)
+        ])
+
+        assert config('debug', parser=bool, raise_error=False) is NO_VALUE
+
+        parsed_vals = parser.parse_known_args(['--debug=y'])[0]
+
+        config = ConfigManager([
+            ConfigObjEnv(parsed_vals)
+        ])
+
+        assert config('debug', parser=bool) is True
+
+    def test_with_argparse_actions(self):
+        parser = argparse.ArgumentParser()
+        parser.add_argument(
+            '--debug', help='to debug or not to debug', action='store_true'
+        )
+        parsed_vals = parser.parse_known_args([])[0]
+
+        config = ConfigManager([
+            ConfigObjEnv(parsed_vals)
+        ])
+
+        # What happens is that argparse doesn't see an arg, so saves
+        # debug=False. ConfigObjEnv converts that to "False". That gets parsed
+        # as False by the Everett parse_bool function. That's kind of
+        # roundabout but "works" for some/most cases.
+        assert config('debug', parser=bool) is False
+
+        parsed_vals = parser.parse_known_args(['--debug'])[0]
+
+        config = ConfigManager([
+            ConfigObjEnv(parsed_vals)
+        ])
+
+        assert config('debug', parser=bool) is True
 
 
 def test_ConfigDictEnv():

@@ -50,6 +50,13 @@ ConfigIniEnv
    :noindex:
 
 
+ConfigObjEnv
+------------
+
+.. autoclass:: everett.manager.ConfigObjEnv
+   :noindex:
+
+
 ConfigDictEnv
 -------------
 
