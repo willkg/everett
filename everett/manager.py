@@ -228,6 +228,77 @@ class ConfigOverrideEnv(object):
         return get_key_from_envs(reversed(_CONFIG_OVERRIDE), key, namespace)
 
 
+class ConfigObjEnv(object):
+    """Source for pulling configuration values out of a Python object
+
+    This is handy for a few weird situations. For example, you can use this to
+    "bridge" Everett configuration with command line arguments. The argparse
+    Namespace works fine here.
+
+    Namespace (the Everett one--not the argparse one) is prefixed. So key "foo"
+    in namespace "bar" is "foo_bar".
+
+    For example::
+
+        import argparse
+
+        from everett.manager import ConfigObjEnv, ConfigManager
+
+        parser = argparse.ArgumentParser()
+        parser.add_argument(
+            '--debug', help='to debug or not to debug'
+        )
+        parsed_vals = parser.parse_known_args()[0]
+
+        config = ConfigManager([
+            ConfigObjEnv(parsed_vals)
+        ])
+
+        print config('debug', parser=bool)
+
+
+    Keys are not case-sensitive--everything is converted to lowercase before
+    pulling it from the object.
+
+
+    .. Note::
+
+       ConfigObjEnv has nothing to do with the library configobj.
+
+    .. versionadded:: 0.6
+
+    """
+    def __init__(self, obj, force_lower=True):
+        self.obj = obj
+
+    def get(self, key, namespace=None):
+        if namespace is not None:
+            full_key = '_'.join(namespace) + '_' + key
+        else:
+            full_key = key
+
+        full_key = full_key.lower()
+
+        # Build a map of lowercase -> actual key
+        obj_keys = {
+            item.lower(): item
+            for item in dir(self.obj) if not item.startswith('__')
+        }
+
+        if full_key in obj_keys:
+            val = getattr(self.obj, obj_keys[full_key])
+
+            # If the value is None, then we're going to treat it as a non-valid
+            # value.
+            if val is not None:
+                # This is goofy, but this allows people to specify arg parser
+                # defaults, but do the right thing in Everett where everything
+                # is a string until it's parsed.
+                return str(val)
+
+        return NO_VALUE
+
+
 class ConfigDictEnv(object):
     """Source for pulling configuration out of a dict
 
@@ -236,41 +307,41 @@ class ConfigDictEnv(object):
 
     Namespace is prefixed, so key "foo" in namespace "bar" is ``FOO_BAR``.
 
-        For example::
+    For example::
 
-            from everett.manager import ConfigDictEnv, ConfigManager
+        from everett.manager import ConfigDictEnv, ConfigManager
 
-            config = ConfigManager([
-                ConfigDictEnv({
-                    'FOO_BAR': 'someval',
-                    'BAT': '1',
-                })
-            ])
+        config = ConfigManager([
+            ConfigDictEnv({
+                'FOO_BAR': 'someval',
+                'BAT': '1',
+            })
+        ])
 
     Keys are not case sensitive. This also works::
 
-            from everett.manager import ConfigDictEnv, ConfigManager
+        from everett.manager import ConfigDictEnv, ConfigManager
 
-            config = ConfigManager([
-                ConfigDictEnv({
-                    'foo_bar': 'someval',
-                    'bat': '1',
-                })
-            ])
+        config = ConfigManager([
+            ConfigDictEnv({
+                'foo_bar': 'someval',
+                'bat': '1',
+            })
+        ])
 
-            print config('foo_bar')
-            print config('FOO_BAR')
-            print config.with_namespace('foo')('bar')
+        print config('foo_bar')
+        print config('FOO_BAR')
+        print config.with_namespace('foo')('bar')
 
 
     Also, ``ConfigManager`` has a convenience classmethod for creating a
     ``ConfigManager`` with just a dict environment::
 
-            from everett.manager import ConfigManager
+        from everett.manager import ConfigManager
 
-            config = ConfigManager.from_dict({
-                'FOO_BAR': 'bat'
-            })
+        config = ConfigManager.from_dict({
+            'FOO_BAR': 'bat'
+        })
 
 
     .. versionchanged:: 0.3
