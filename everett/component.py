@@ -9,15 +9,26 @@
 from collections import OrderedDict
 
 from everett import NO_VALUE
+from everett.manager import BoundConfig
 
 
 class Option(object):
-    def __init__(self, key, default, alternate_keys, doc, parser):
+    def __init__(self, key, default=NO_VALUE, alternate_keys=NO_VALUE, doc='', parser=str):
         self.key = key
         self.default = default
         self.alternate_keys = alternate_keys
         self.doc = doc
         self.parser = parser
+
+    def __eq__(self, obj):
+        return (
+            isinstance(obj, Option) and
+            obj.key == self.key and
+            obj.default == self.default and
+            obj.alternate_keys == self.alternate_keys and
+            obj.doc == self.doc and
+            obj.parser == self.parser
+        )
 
 
 class ConfigOptions(object):
@@ -91,3 +102,50 @@ class RequiredConfigMixin(object):
             except AttributeError:
                 pass
         return options
+
+    def get_runtime_config(self, namespace=None):
+        """Roll up the runtime config for this class and all children
+
+        Implement this to call ``.get_runtime_config()`` on child components or
+        to adjust how it works.
+
+        For example, if you created a component that has a child component, you
+        could do something like this::
+
+            class MyComponent(RequiredConfigMixin):
+                ....
+
+                def __init__(self, config):
+                    self.config = config.with_options(self)
+                    self.child = OtherComponent(config.with_namespace('source'))
+
+                def get_runtime_config(self, namespace=None):
+                    for item in super(MyComponent, self).get_runtime_config(namespace):
+                        yield item
+                    for item in self.child.get_runtime_config(['source']):
+                        yield item
+
+
+        Calling this function can give you the complete runtime configuration
+        for a component tree. This is helpful for doing things like printing
+        the configuration being used including default values.
+
+        .. Note::
+
+           If you this instance has a ``.config`` attribute and that is a
+           :py:class:`everett.component.BoundConfig`, then this will try to
+           compute the runtime config.
+
+        :arg list namespace: list of namespace parts or None
+
+        :returns: list of ``(namespace, key, option)``
+
+        """
+        namespace = namespace or []
+
+        cfg = getattr(self, 'config', None)
+        if cfg is None or not isinstance(cfg, BoundConfig):
+            return
+
+        for key, opt in self.get_required_config().options.items():
+            yield (namespace, key, self.config(key, raise_error=False, raw_value=True), opt)

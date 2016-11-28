@@ -6,8 +6,9 @@ import pytest
 
 from everett import ConfigurationError
 from everett.component import (
-    RequiredConfigMixin,
     ConfigOptions,
+    Option,
+    RequiredConfigMixin,
 )
 from everett.manager import ConfigManager, ConfigDictEnv
 
@@ -213,10 +214,7 @@ def test_raw_value():
 
     class SomeComponent(RequiredConfigMixin):
         required_config = ConfigOptions()
-        required_config.add_option(
-            'bar',
-            parser=int
-        )
+        required_config.add_option('bar', parser=int)
 
         def __init__(self, config):
             self.config = config.with_options(self)
@@ -225,3 +223,86 @@ def test_raw_value():
 
     assert comp.config('bar') == 1
     assert comp.config('bar', raw_value=True) == '1'
+
+
+class TestRuntimeConfig:
+    def test_no_self_config(self):
+        class ComponentA(RequiredConfigMixin):
+            required_config = ConfigOptions()
+            required_config.add_option('bar', parser=int)
+
+            def __init__(self):
+                pass
+
+        comp = ComponentA()
+        assert list(comp.get_runtime_config()) == []
+
+    def test_not_bound_config(self):
+        class ComponentA(RequiredConfigMixin):
+            required_config = ConfigOptions()
+            required_config.add_option('bar', parser=int)
+
+            def __init__(self):
+                self.config = 'boo'
+
+        comp = ComponentA()
+        assert list(comp.get_runtime_config()) == []
+
+    def test_bound_config(self):
+        config = ConfigManager.from_dict({
+            'foo': 12345
+        })
+
+        class ComponentA(RequiredConfigMixin):
+            required_config = ConfigOptions()
+            required_config.add_option('foo', parser=int)
+            required_config.add_option('bar', parser=int, default='1')
+
+            def __init__(self, config):
+                self.config = config.with_options(self)
+
+        comp = ComponentA(config)
+        assert (
+            list(comp.get_runtime_config()) ==
+            [
+                ([], 'foo', '12345', Option(key='foo', parser=int)),
+                ([], 'bar', '1', Option(key='bar', parser=int, default='1')),
+            ]
+        )
+
+    def test_tree(self):
+        config = ConfigManager.from_dict({})
+
+        class ComponentB(RequiredConfigMixin):
+            required_config = ConfigOptions()
+            required_config.add_option('foo', parser=int, default='2')
+            required_config.add_option('bar', parser=int, default='1')
+
+            def __init__(self, config):
+                self.config = config.with_options(self)
+
+        class ComponentA(RequiredConfigMixin):
+            required_config = ConfigOptions()
+            required_config.add_option('baz', default='abc')
+
+            def __init__(self, config):
+                self.config = config.with_options(self)
+                self.comp = ComponentB(config.with_namespace('biff'))
+
+            def get_runtime_config(self, namespace=None):
+                for item in super(ComponentA, self).get_runtime_config(namespace):
+                    yield item
+
+                for item in self.comp.get_runtime_config(['biff']):
+                    yield item
+
+        comp = ComponentA(config)
+
+        assert (
+            list(comp.get_runtime_config()) ==
+            [
+                ([], 'baz', 'abc', Option(key='baz', default='abc')),
+                (['biff'], 'foo', '2', Option(key='foo', parser=int, default='2')),
+                (['biff'], 'bar', '1', Option(key='bar', parser=int, default='1')),
+            ]
+        )
