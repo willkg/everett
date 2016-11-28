@@ -132,9 +132,11 @@ class RequiredConfigMixin(object):
 
         .. Note::
 
-           If you this instance has a ``.config`` attribute and that is a
+           If this instance has a ``.config`` attribute and it is a
            :py:class:`everett.component.BoundConfig`, then this will try to
            compute the runtime config.
+
+           Otherwise, it'll yield nothing.
 
         :arg list namespace: list of namespace parts or None
 
