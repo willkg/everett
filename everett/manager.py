@@ -124,12 +124,12 @@ def parse_env_file(envfile):
         if not line or line.startswith('#'):
             continue
         if '=' not in line:
-            raise ConfigurationError('Env file line missing = operator (line %s)' % line_no)
+            raise ConfigurationError('Env file line missing = operator (line %s)' % (line_no + 1))
         k, v = line.split('=', 1)
         k = k.strip()
         if not ENV_KEY_RE.match(k):
             raise ConfigurationError(
-                'Invalid variable name "%s" in env file (line %s)' % (k, line_no)
+                'Invalid variable name "%s" in env file (line %s)' % (k, (line_no + 1))
             )
         v = v.strip().strip('\'"')
         data[k] = v

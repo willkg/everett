@@ -341,19 +341,19 @@ def test_parse_env_file():
         parse_env_file(['3AMIGOS=infamous'])
     assert (
         str(exc_info.value) ==
-        'Invalid variable name "3AMIGOS" in env file (line 0)'
+        'Invalid variable name "3AMIGOS" in env file (line 1)'
     )
     with pytest.raises(ConfigurationError) as exc_info:
         parse_env_file(['INVALID-CHAR=value'])
     assert (
         str(exc_info.value) ==
-        'Invalid variable name "INVALID-CHAR" in env file (line 0)'
+        'Invalid variable name "INVALID-CHAR" in env file (line 1)'
     )
     with pytest.raises(ConfigurationError) as exc_info:
-        parse_env_file(['MISSING-equals'])
+        parse_env_file(['', 'MISSING-equals'])
     assert (
         str(exc_info.value) ==
-        'Env file line missing = operator (line 0)'
+        'Env file line missing = operator (line 2)'
     )
 
 
