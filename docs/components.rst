@@ -106,35 +106,3 @@ final :py:class:`everett.component.ConfigOptions` class that you get is the
 configuration for that component.
 
 See :py:class:`everett.component.RequiredConfigMixin` for more details.
-
-
-Recipes
-=======
-
-Shared configuration by argument
---------------------------------
-
-Let's create an app component which creates two file system components passing
-them a basedir:
-
-.. literalinclude:: code/component_shared.py
-   :language: python
-
-
-Why do it this way?
-
-In this scenario, the ``basedir`` is defined at the app-scope and is passed to
-the reader and writer classes when they're created. In this way, ``basedir`` is
-app configuration, but not reader/writer configuration.
-
-
-Shared configuration using alternate keys
------------------------------------------
-
-This recipe shows how to build components that share credntials using alternate
-keys.
-
-Let's create a db reader and a db writer component:
-
-.. literalinclude:: code/component_alternate_keys.py
-   :language: python

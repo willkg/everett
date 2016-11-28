@@ -10,6 +10,7 @@ Contents
    history
    configuration
    components
+   recipes
    library
    dev
 
