@@ -120,7 +120,7 @@ def test_hide_classname(tmpdir):
 # Test docstring-related things
 
 
-def test_show_docstring_no_docstring(tmpdir):
+def test_show_docstring_class_has_no_docstring(tmpdir):
     rst = dedent('''\
     .. autoconfig:: test_autoconfig.ComponentDefaults
        :show-docstring:
@@ -170,6 +170,44 @@ def test_show_docstring(tmpdir):
            This component is the best.
 
            The best!
+
+           Configuration:
+
+              "user"
+                 default:
+                 parser:
+                    str
+        ''')
+    )
+
+
+class ComponentDocstringOtherAttribute(RequiredConfigMixin):
+    """Programming-focused help"""
+
+    __everett_help__ = """
+        User-focused help
+    """
+
+    required_config = ConfigOptions()
+    required_config.add_option('user')
+
+    def __init__(self, config):
+        self.config = config.with_options(self)
+
+
+def test_show_docstring_other_attribute(tmpdir):
+    rst = dedent('''\
+    .. autoconfig:: test_autoconfig.ComponentDocstringOtherAttribute
+       :show-docstring: __everett_help__
+
+    ''')
+
+    assert (
+        parse(tmpdir, rst) ==
+        dedent('''\
+        class test_autoconfig.ComponentDocstringOtherAttribute
+
+           User-focused help
 
            Configuration:
 

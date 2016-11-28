@@ -28,11 +28,19 @@ Use it like this in an ``.rst`` file to document a component::
     .. autoconfig:: collector.external.boto.crashstorage.BotoS3CrashStorage
 
 
-If you want the docstring for the class, you can use the ``:show-docstring:``
-flag::
+**Showing docstring and content**
+
+If you want the docstring for the class, you can specify ``:show-docstring:``::
 
     .. autoconfig:: collector.external.boto.crashstorage.BotoS3CrashStorage
        :show-docstring:
+
+
+If you want to show help, but from a different attribute than the docstring,
+you can specify any class attribute::
+
+    .. autoconfig:: collector.external.boto.crashstorage.BotoS3CrashStorage
+       :show-docstring: __everett_help__
 
 
 You can provide content as well::
@@ -41,6 +49,8 @@ You can provide content as well::
 
        This is some content!
 
+
+**Hiding the class name**
 
 You can hide the class name if you want::
 
@@ -92,8 +102,10 @@ class AutoConfigDirective(Directive):
     final_argument_whitespace = False
 
     option_spec = {
-        # Whether or not to show the class docstring
-        'show-docstring': directives.flag,
+        # Whether or not to show the class docstring--if None, don't show the
+        # docstring, if empty string use __doc__, otherwise use the value of
+        # the attribute on the class
+        'show-docstring': lambda x: x,
 
         # Whether or not to hide the class name
         'hide-classname': directives.flag,
@@ -120,7 +132,8 @@ class AutoConfigDirective(Directive):
 
         # Add the docstring if there is one and if show-docstring
         if 'show-docstring' in self.options:
-            docstring = getattr(obj, '__doc__', None)
+            docstring_attr = self.options['show-docstring'] or '__doc__'
+            docstring = getattr(obj, docstring_attr, None)
             if docstring:
                 docstringlines = prepare_docstring(docstring, ignore=1)
                 for i, line in enumerate(docstringlines):
