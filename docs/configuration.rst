@@ -171,17 +171,47 @@ Handling exceptions when extracting values
     :py:class:`everett.ConfigurationError`. This makes it easier to
     programmatically figure out what happened.
 
-    Example:
+    For example:
 
     .. code-block:: python
 
+       import logging
+
+       from everett import InvalidValueError
+       from everett.manager import ConfigManager
+
+       logging.basicConfig()
+
+       config = ConfigManager.from_dict({
+           'debug_mode': 'monkey'
+       })
+
        try:
            some_val = config('debug_mode', parser=bool)
-       except ConfigurationError as ce:
+       except InvalidValueError:
            # The "debug_mode" configuration value is incorrect--alert
            # user in the logs.
-           logging.error(ce.message)
-           sys.exit(1)
+           logging.exception('gah!')
+
+
+    That logs this::
+
+        ERROR:root:Gah!
+        Traceback (most recent call last):
+          File "/home/willkg/mozilla/everett/everett/manager.py", line 903, in __call__
+            return parser(val)
+          File "/home/willkg/mozilla/everett/everett/manager.py", line 109, in parse_bool
+            raise ValueError('"%s" is not a valid bool value' % val)
+          ValueError: "monkey" is not a valid bool value
+
+        During handling of the above exception, another exception occurred:
+
+        Traceback (most recent call last):
+          File "foo.py", line 13, in <module>
+            some_val = config('debug_mode', parser=bool)
+          File "/home/willkg/mozilla/everett/everett/manager.py", line 922, in __call__
+            raise InvalidValueError(msg)
+        everett.InvalidValueError: ValueError: "monkey" is not a valid bool value; namespace=None key=debug_mode requires a value parseable by everett.manager.parse_bool
 
 
 **In Python 2**
@@ -194,13 +224,40 @@ Handling exceptions when extracting values
 
     .. code-block:: python
 
+    For example:
+
+    .. code-block:: python
+
+       import logging
+
+       from everett.manager import ConfigManager
+
+       logging.basicConfig()
+
+       config = ConfigManager.from_dict({
+           'debug_mode': 'monkey'
+       })
+
        try:
            some_val = config('debug_mode', parser=bool)
-       except Exeption as exc:
+       except Exception:
            # The "debug_mode" configuration value is probably
-           # incorrect--alert user in the logs.
-           logging.error(exc.message)
-           sys.exit(1)
+           # incorrect, but it could be something else--alert user
+           # in the logs.
+           logging.exception('gah!')
+
+
+    This logs this::
+
+        ERROR:root:Gah!
+        Traceback (most recent call last):
+          File "foo.py", line 13, in <module>
+            some_val = config('debug_mode', parser=bool)
+          File "/home/willkg/mozilla/everett/everett/manager.py", line 903, in __call__
+            return parser(val)
+          File "/home/willkg/mozilla/everett/everett/manager.py", line 109, in parse_bool
+            raise ValueError('"%s" is not a valid bool value' % val)
+        ValueError: ValueError: "monkey" is not a valid bool value; namespace=None key=debug_mode requires a value parseable by everett.manager.parse_bool
 
 
 .. Note::
