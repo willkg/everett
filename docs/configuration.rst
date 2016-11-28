@@ -89,8 +89,7 @@ specified.
 
 .. automethod:: everett.manager.ConfigManager.__call__
 
-
-Some examples:
+Some more examples:
 
 ``config('password')``
     The key is "password".
@@ -153,6 +152,119 @@ Some examples:
     it looks at "postgres_password" in the root namespace. This allows you to
     have multiple components that share configuration like credentials and
     hostnames.
+
+.. autoclass:: everett.ConfigurationError
+
+.. autoclass:: everett.InvalidValueError
+
+.. autoclass:: everett.ConfigurationMissingError
+
+.. autoclass:: everett.InvalidKeyError
+
+
+Handling exceptions when extracting values
+==========================================
+
+**In Python 3**
+
+    Getting configuration should always return a subclass of
+    :py:class:`everett.ConfigurationError`. This makes it easier to
+    programmatically figure out what happened.
+
+    For example:
+
+    .. code-block:: python
+
+       import logging
+
+       from everett import InvalidValueError
+       from everett.manager import ConfigManager
+
+       logging.basicConfig()
+
+       config = ConfigManager.from_dict({
+           'debug_mode': 'monkey'
+       })
+
+       try:
+           some_val = config('debug_mode', parser=bool)
+       except InvalidValueError:
+           # The "debug_mode" configuration value is incorrect--alert
+           # user in the logs.
+           logging.exception('gah!')
+
+
+    That logs this::
+
+        ERROR:root:Gah!
+        Traceback (most recent call last):
+          File "/home/willkg/mozilla/everett/everett/manager.py", line 903, in __call__
+            return parser(val)
+          File "/home/willkg/mozilla/everett/everett/manager.py", line 109, in parse_bool
+            raise ValueError('"%s" is not a valid bool value' % val)
+          ValueError: "monkey" is not a valid bool value
+
+        During handling of the above exception, another exception occurred:
+
+        Traceback (most recent call last):
+          File "foo.py", line 13, in <module>
+            some_val = config('debug_mode', parser=bool)
+          File "/home/willkg/mozilla/everett/everett/manager.py", line 922, in __call__
+            raise InvalidValueError(msg)
+        everett.InvalidValueError: ValueError: "monkey" is not a valid bool value; namespace=None key=debug_mode requires a value parseable by everett.manager.parse_bool
+
+
+**In Python 2**
+
+    In Python 2, parsers can raise any kind of exception and Everett can't
+    wrap that nicely in a :py:class:`everett.ConfigurationError` without
+    losing information, so it doesn't try.
+
+    If you're using Python 2, you'll have to catch everything and
+
+    .. code-block:: python
+
+    For example:
+
+    .. code-block:: python
+
+       import logging
+
+       from everett.manager import ConfigManager
+
+       logging.basicConfig()
+
+       config = ConfigManager.from_dict({
+           'debug_mode': 'monkey'
+       })
+
+       try:
+           some_val = config('debug_mode', parser=bool)
+       except Exception:
+           # The "debug_mode" configuration value is probably
+           # incorrect, but it could be something else--alert user
+           # in the logs.
+           logging.exception('gah!')
+
+
+    This logs this::
+
+        ERROR:root:Gah!
+        Traceback (most recent call last):
+          File "foo.py", line 13, in <module>
+            some_val = config('debug_mode', parser=bool)
+          File "/home/willkg/mozilla/everett/everett/manager.py", line 903, in __call__
+            return parser(val)
+          File "/home/willkg/mozilla/everett/everett/manager.py", line 109, in parse_bool
+            raise ValueError('"%s" is not a valid bool value' % val)
+        ValueError: ValueError: "monkey" is not a valid bool value; namespace=None key=debug_mode requires a value parseable by everett.manager.parse_bool
+
+
+.. Note::
+
+   November 28th, 2016: This is irritating. If you have better ideas on how to
+   support Python 2 and 3, maintain the tracebacks, but yield a better exception
+   class, I'd love to know.
 
 
 Namespaces

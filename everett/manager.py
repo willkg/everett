@@ -12,12 +12,19 @@ import importlib
 import inspect
 import os
 import re
+import sys
 import types
 
 from configobj import ConfigObj
 import six
 
-from everett import NO_VALUE, ConfigurationError
+from everett import (
+    ConfigurationError,
+    ConfigurationMissingError,
+    InvalidValueError,
+    InvalidKeyError,
+    NO_VALUE,
+)
 
 
 # This is a stack of overrides to be examined in reverse order
@@ -32,6 +39,8 @@ def qualname(thing):
     'str'
     >>> qualname(everett.manager.parse_class)
     'everett.manager.parse_class'
+    >>> qualname(everet.manager)
+    'everett.manager'
 
     """
     parts = []
@@ -44,6 +53,10 @@ def qualname(thing):
     # Python 3 has __qualname__--just use that if it's available
     if hasattr(thing, '__qualname__'):
         parts.append(thing.__qualname__)
+        return '.'.join(parts)
+
+    # If it's a module
+    if inspect.ismodule(thing):
         return '.'.join(parts)
 
     # If it's a class
@@ -93,7 +106,7 @@ def parse_bool(val):
     if val in false_vals:
         return False
 
-    raise ValueError('%s is not a valid bool value' % val)
+    raise ValueError('"%s" is not a valid bool value' % val)
 
 
 def parse_env_file(envfile):
@@ -106,17 +119,17 @@ def parse_env_file(envfile):
 
     """
     data = {}
-    for line in envfile:
+    for line_no, line in enumerate(envfile):
         line = line.strip()
         if not line or line.startswith('#'):
             continue
         if '=' not in line:
-            raise ConfigurationError('Env file line missing = operator')
+            raise ConfigurationError('Env file line missing = operator (line %s)' % (line_no + 1))
         k, v = line.split('=', 1)
         k = k.strip()
         if not ENV_KEY_RE.match(k):
             raise ConfigurationError(
-                'Invalid variable name %s in env file' % k
+                'Invalid variable name "%s" in env file (line %s)' % (k, (line_no + 1))
             )
         v = v.strip().strip('\'"')
         data[k] = v
@@ -135,8 +148,8 @@ def parse_class(val):
     try:
         return getattr(module, class_name)
     except AttributeError:
-        raise ValueError('%s is not a valid member of %s' % (
-            class_name, module)
+        raise ValueError('"%s" is not a valid member of %s' % (
+            class_name, qualname(module))
         )
 
 
@@ -670,7 +683,7 @@ class BoundConfig(ConfigManagerBase):
             option = self.options[key]
         except KeyError:
             if raise_error:
-                raise ConfigurationError(
+                raise InvalidKeyError(
                     '%s is not a valid key for this component' % (key,)
                 )
             return None
@@ -816,6 +829,20 @@ class ConfigManager(ConfigManagerBase):
         :arg raw_value: False if you wanted the parsed value, True if
             you want the raw value.
 
+        :raises everett.ConfigurationMissingError: if the required bit of configuration
+            is missing from all the environments
+
+        :raises everett.InvalidKeyError: if the configuration key doesn't exist for
+            that component
+
+        :raises everet.InvalidValueError: (Python 3-only) if the configuration value
+            is invalid in some way (not an integer, not a bool, etc)
+
+        :raises Exception subclass: (Python 2-only) parser code can raise
+            anything and since this is Python 2, we can't do much about it
+            without stomping on the traceback so we change the message and
+            raise the same exception
+
         Examples::
 
             config = ConfigManager([])
@@ -848,8 +875,8 @@ class ConfigManager(ConfigManagerBase):
             )
 
         if raw_value:
-            # If we're returning raw values, then we can just use str
-            # which is a no-op.
+            # If we're returning raw values, then we can just use str which is
+            # a no-op.
             parser = str
         else:
             parser = get_parser(parser)
@@ -872,17 +899,77 @@ class ConfigManager(ConfigManagerBase):
                 val = env.get(possible_key, use_namespace)
 
                 if val is not NO_VALUE:
-                    return parser(val)
+                    try:
+                        return parser(val)
+                    except ConfigurationError:
+                        # Re-raise ConfigurationError and friends since that's
+                        # what we want to be raising.
+                        raise
+                    except Exception as orig_exc:
+                        exc_info = sys.exc_info()
+                        msg = (
+                            '%s: %s; namespace=%s key=%s requires a value parseable by %s' % (
+                                exc_info[0].__name__,
+                                str(exc_info[1]),
+                                use_namespace,
+                                key,
+                                qualname(parser)
+                            )
+                        )
+
+                        if six.PY3:
+                            # Python 3 has exception chaining, so this is easy peasy
+                            raise InvalidValueError(msg)
+                        else:
+                            # Python 2 does not have exception chaining, so we're going
+                            # to break our promise that this always returns a
+                            # ConfigurationError, modify the message and then raise it
+                            # again.
+                            if orig_exc.args:
+                                orig_exc.args = tuple([msg] + list(orig_exc.args[1:]))
+                            else:
+                                orig_exc.args = tuple(msg)
+                            raise
 
         # Return the default if there is one
         if default is not NO_VALUE:
-            return parser(default)
+            try:
+                return parser(default)
+            except ConfigurationError:
+                # Re-raise ConfigurationError and friends since that's
+                # what we want to be raising.
+                raise
+            except Exception as orig_exc:
+                exc_info = sys.exc_info()
+                msg = (
+                    '%s: %s; namespace=%s key=%s requires a default value parseable by %s' % (
+                        exc_info[0].__name__,
+                        str(exc_info[1]),
+                        namespace,
+                        key,
+                        qualname(parser)
+                    )
+                )
+
+                if six.PY3:
+                    # Python 3 has exception chaining, so this is easy peasy
+                    raise InvalidValueError(msg)
+                else:
+                    # Python 2 does not have exception chaining, so we're going
+                    # to break our promise that this always returns a
+                    # ConfigurationError, modify the message and then raise it
+                    # again.
+                    if orig_exc.args:
+                        orig_exc.args = tuple([msg] + list(orig_exc.args[1:]))
+                    else:
+                        orig_exc.args = tuple(msg)
+                    raise
 
         # No value specified and no default, so raise an error to the user
         if raise_error:
-            raise ConfigurationError(
-                '%s (%s) requires a value parseable by %s' % (
-                    key, namespace, parser)
+            raise ConfigurationMissingError(
+                'namespace=%s key=%s requires a value parseable by %s' % (
+                    namespace, key, qualname(parser))
             )
 
         # Otherwise return NO_VALUE

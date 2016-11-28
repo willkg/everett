@@ -19,8 +19,23 @@ class NoValue(object):
 NO_VALUE = NoValue()
 
 
-# Configuration error indicator
 class ConfigurationError(Exception):
+    """Configuration error base class"""
+    pass
+
+
+class ConfigurationMissingError(ConfigurationError):
+    """Indicates that required configuration is missing"""
+    pass
+
+
+class InvalidValueError(ConfigurationError):
+    """Indicates that the value is not valid"""
+    pass
+
+
+class InvalidKeyError(ConfigurationError):
+    """Indicates the key is not valid for this component"""
     pass
 
 
