@@ -1,6 +1,30 @@
 History
 =======
 
+0.6 (November 28th, 2016)
+-------------------------
+
+Feature: Change ``:show-docstring:`` to take an optional value which is the
+attribute to pull docstring content from. This means you don't have to mix
+programming documentation with user documentation--they can be in different
+attributes.
+
+Feature: Add ``RequiredConfigMixin.get_runtime_config()`` which returns the
+runtime configuration for a component or tree of components. This lets you print
+runtime configuration at startup, generate INI files, etc.
+
+Feature: Add ``ConfigObjEnv`` which lets you use an object for configuration.
+This works with argparse's Namespace amongst other things.
+
+Feature: Improve configuration-related exceptions. With Python 3, configuration
+errors all derive from ``ConfigurationError`` and have helpful error messages
+that should make it clear what's wrong with the configuration value. With Python
+2, you can get other kinds of Exceptions thrown depending on the parser used,
+but configuration error messages should still be helpful.
+
+Documentation fixes and updates.
+
+
 0.5 (November 8th, 2016)
 ------------------------
 
