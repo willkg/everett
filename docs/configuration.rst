@@ -89,8 +89,7 @@ specified.
 
 .. automethod:: everett.manager.ConfigManager.__call__
 
-
-Some examples:
+Some more examples:
 
 ``config('password')``
     The key is "password".
@@ -153,6 +152,62 @@ Some examples:
     it looks at "postgres_password" in the root namespace. This allows you to
     have multiple components that share configuration like credentials and
     hostnames.
+
+.. autoclass:: everett.ConfigurationError
+
+.. autoclass:: everett.InvalidValueError
+
+.. autoclass:: everett.ConfigurationMissingError
+
+.. autoclass:: everett.InvalidKeyError
+
+
+Handling exceptions when extracting values
+==========================================
+
+**In Python 3**
+
+    Getting configuration should always return a subclass of
+    :py:class:`everett.ConfigurationError`. This makes it easier to
+    programmatically figure out what happened.
+
+    Example:
+
+    .. code-block:: python
+
+       try:
+           some_val = config('debug_mode', parser=bool)
+       except ConfigurationError as ce:
+           # The "debug_mode" configuration value is incorrect--alert
+           # user in the logs.
+           logging.error(ce.message)
+           sys.exit(1)
+
+
+**In Python 2**
+
+    In Python 2, parsers can raise any kind of exception and Everett can't
+    wrap that nicely in a :py:class:`everett.ConfigurationError` without
+    losing information, so it doesn't try.
+
+    If you're using Python 2, you'll have to catch everything and
+
+    .. code-block:: python
+
+       try:
+           some_val = config('debug_mode', parser=bool)
+       except Exeption as exc:
+           # The "debug_mode" configuration value is probably
+           # incorrect--alert user in the logs.
+           logging.error(exc.message)
+           sys.exit(1)
+
+
+.. Note::
+
+   November 28th, 2016: This is irritating. If you have better ideas on how to
+   support Python 2 and 3, maintain the tracebacks, but yield a better exception
+   class, I'd love to know.
 
 
 Namespaces
