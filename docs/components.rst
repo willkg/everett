@@ -93,6 +93,21 @@ declaration for auto-documenting configuration for components.
 .. automodule:: everett.sphinx_autoconfig
 
 
+Getting configuration information for components
+================================================
+
+The :py:class:`everett.component.RequiredConfigMixin` has two methods to pull
+configuration about the component.
+
+:py:meth:`everett.component.RequiredConfigMixin.get_required_config` will
+return the required configuration for that component. This follows class
+hierarchies, handles configuration overrides and other things like that. The
+final :py:class:`everett.component.ConfigOptions` class that you get is the
+configuration for that component.
+
+See :py:class:`everett.component.RequiredConfigMixin` for more details.
+
+
 Recipes
 =======
 
