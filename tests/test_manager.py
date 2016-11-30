@@ -185,6 +185,7 @@ def test_get_parser():
 
 
 def test_ListOf():
+    assert ListOf(str)('') == []
     assert ListOf(str)('foo') == ['foo']
     assert ListOf(bool)('t,f') == [True, False]
     assert ListOf(int)('1,2,3') == [1, 2, 3]

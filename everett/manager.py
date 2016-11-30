@@ -206,6 +206,8 @@ def get_key_from_envs(envs, key, namespace=None):
 class ListOf(object):
     """Parses a comma-separated list of things
 
+    >>> ListOf(str)('')
+    []
     >>> ListOf(str)('a,b,c,d')
     ['a', 'b', 'c', 'd']
     >>> ListOf(int)('1,2,3,4')
@@ -226,7 +228,10 @@ class ListOf(object):
 
     def __call__(self, value):
         parser = get_parser(self.sub_parser)
-        return [parser(token) for token in value.split(self.delimiter)]
+        if value:
+            return [parser(token) for token in value.split(self.delimiter)]
+        else:
+            return []
 
     def __repr__(self):
         return '<ListOf(%s)>' % qualname(self.sub_parser)
