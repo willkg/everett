@@ -669,11 +669,7 @@ class BoundConfig(ConfigManagerBase):
 
         :arg default: IGNORED
 
-        :arg alternate_keys: the list of alternate keys to look up;
-            supports a ``root:`` key prefix which will cause this to look at
-            the configuration root rather than the current namespace
-
-            .. versionadded:: 0.3
+        :arg alternate_keys: IGNORED
 
         :arg parser: IGNORED
 
@@ -831,8 +827,7 @@ class ConfigManager(ConfigManagerBase):
         :arg raise_error: True if you want a lack of value to raise a
             ``everett.ConfigurationError``
 
-        :arg raw_value: False if you wanted the parsed value, True if
-            you want the raw value.
+        :arg raw_value: True if you want the raw unparsed value, False otherwise
 
         :raises everett.ConfigurationMissingError: if the required bit of configuration
             is missing from all the environments
