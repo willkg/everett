@@ -912,23 +912,24 @@ class ConfigManager(ConfigManagerBase):
                         raise
                     except Exception as orig_exc:
                         exc_info = sys.exc_info()
-                        msg = (
-                            '%s: %s; namespace=%s key=%s requires a value parseable by %s' % (
-                                exc_info[0].__name__,
-                                str(exc_info[1]),
+                        msg = [
+                            '%s: %s' % (exc_info[0].__name__, str(exc_info[1])),
+                            'namespace=%s key=%s requires a value parseable by %s' % (
                                 use_namespace,
                                 key,
                                 qualname(parser)
                             )
-                        )
+                        ]
 
                         # Add config option doc if it exists
                         if doc:
-                            msg = msg + '\n' + doc
+                            msg.append(doc)
 
                         # Add config manager help doc if it exists
                         if self.doc:
-                            msg = msg + '\n' + self.doc
+                            msg.append(self.doc)
+
+                        msg = '\n'.join(msg)
 
                         if six.PY3:
                             # Python 3 has exception chaining, so this is easy peasy
@@ -953,24 +954,27 @@ class ConfigManager(ConfigManagerBase):
                 # what we want to be raising.
                 raise
             except Exception as orig_exc:
+                # FIXME(willkg): This is a programmer error--not a user
+                # configuration error. We might want to denote that better.
                 exc_info = sys.exc_info()
-                msg = (
-                    '%s: %s; namespace=%s key=%s requires a default value parseable by %s' % (
-                        exc_info[0].__name__,
-                        str(exc_info[1]),
+                msg = [
+                    '%s: %s' % (exc_info[0].__name__, str(exc_info[1])),
+                    'namespace=%s key=%s requires a default value parseable by %s' % (
                         namespace,
                         key,
                         qualname(parser)
                     )
-                )
+                ]
 
                 # Add config option doc if it exists
                 if doc:
-                    msg = msg + '\n' + doc
+                    msg.append(doc)
 
                 # Add config manager help doc if it exists
                 if self.doc:
-                    msg = msg + '\n' + self.doc
+                    msg.append(self.doc)
+
+                msg = '\n'.join(msg)
 
                 if six.PY3:
                     # Python 3 has exception chaining, so this is easy peasy
@@ -988,21 +992,23 @@ class ConfigManager(ConfigManagerBase):
 
         # No value specified and no default, so raise an error to the user
         if raise_error:
-            msg = (
+            msg = [
                 'namespace=%s key=%s requires a value parseable by %s' % (
                     namespace,
                     key,
                     qualname(parser)
                 )
-            )
+            ]
 
             # Add config option doc if it exists
             if doc:
-                msg = msg + '\n' + doc
+                msg.append(doc)
 
             # Add config manager help doc if it exists
             if self.doc:
-                msg = msg + '\n' + self.doc
+                msg.append(self.doc)
+
+            msg = '\n'.join(msg)
 
             raise ConfigurationMissingError(msg)
 

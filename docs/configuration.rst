@@ -161,7 +161,7 @@ Some more examples:
     have multiple components that share configuration like credentials and
     hostnames.
 
-``config('port', default='8000', parser=int, doc='the port you want this to listen on')``
+``config('port', parser=int, doc='The port you want this to listen on.')``
     You can provide a ``doc`` argument which will give users users who are trying to
     configure your software a more helpful error message when they hit a configuration
     error.
@@ -175,7 +175,7 @@ Some more examples:
 
         everett.InvalidValueError: ValueError: invalid literal for int() with base 10:
         'bar'; namespace=None key=foo requires a value parseable by int
-        the port you want this to listen on
+        The port you want this to listen on.
 
 
 .. autoclass:: everett.ConfigurationError
