@@ -765,11 +765,13 @@ class NamespacedConfig(ConfigManagerBase):
 class ConfigManager(ConfigManagerBase):
     """Manages multiple configuration environment layers"""
 
-    def __init__(self, environments, with_override=True):
+    def __init__(self, environments, doc='', with_override=True):
         """Instantiates a ConfigManager
 
         :arg environents: list of configuration sources to look through in
             the order they should be looked through
+        :arg str doc: help text printed to users when they encounter configuration
+            errors
         :arg with_override: whether or not to insert the special override
             environment used for testing as the first environment in the list
             of sources
@@ -779,6 +781,7 @@ class ConfigManager(ConfigManagerBase):
             environments.insert(0, ConfigOverrideEnv())
 
         self.envs = environments
+        self.doc = doc
 
     @classmethod
     def from_dict(cls, dict_config):
@@ -802,7 +805,7 @@ class ConfigManager(ConfigManagerBase):
         return ConfigManager([ConfigDictEnv(dict_config)])
 
     def __call__(self, key, namespace=None, default=NO_VALUE,
-                 alternate_keys=NO_VALUE, parser=str, raise_error=True,
+                 alternate_keys=NO_VALUE, doc='', parser=str, raise_error=True,
                  raw_value=False):
         """Returns a parsed value from the environment
 
@@ -821,6 +824,8 @@ class ConfigManager(ConfigManagerBase):
             the configuration root rather than the current namespace
 
             .. versionadded:: 0.3
+
+        :arg doc: documentation for this config option
 
         :arg parser: the parser for converting this value to a Python object
 
@@ -917,6 +922,14 @@ class ConfigManager(ConfigManagerBase):
                             )
                         )
 
+                        # Add config option doc if it exists
+                        if doc:
+                            msg = msg + '\n' + doc
+
+                        # Add config manager help doc if it exists
+                        if self.doc:
+                            msg = msg + '\n' + self.doc
+
                         if six.PY3:
                             # Python 3 has exception chaining, so this is easy peasy
                             raise InvalidValueError(msg)
@@ -951,6 +964,14 @@ class ConfigManager(ConfigManagerBase):
                     )
                 )
 
+                # Add config option doc if it exists
+                if doc:
+                    msg = msg + '\n' + doc
+
+                # Add config manager help doc if it exists
+                if self.doc:
+                    msg = msg + '\n' + self.doc
+
                 if six.PY3:
                     # Python 3 has exception chaining, so this is easy peasy
                     raise InvalidValueError(msg)
@@ -967,10 +988,23 @@ class ConfigManager(ConfigManagerBase):
 
         # No value specified and no default, so raise an error to the user
         if raise_error:
-            raise ConfigurationMissingError(
+            msg = (
                 'namespace=%s key=%s requires a value parseable by %s' % (
-                    namespace, key, qualname(parser))
+                    namespace,
+                    key,
+                    qualname(parser)
+                )
             )
+
+            # Add config option doc if it exists
+            if doc:
+                msg = msg + '\n' + doc
+
+            # Add config manager help doc if it exists
+            if self.doc:
+                msg = msg + '\n' + self.doc
+
+            raise ConfigurationMissingError(msg)
 
         # Otherwise return NO_VALUE
         return NO_VALUE

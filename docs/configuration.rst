@@ -19,11 +19,21 @@ For example:
    :language: python
 
 
+In addition to a list of sources, you can provide a ``doc``. You can use this to
+guide users trying to use your software and hitting configuration errors to
+documentation for your configuration.
+
+For example:
+
+.. literalinclude:: code/configuration_doc.py
+
+
 If you want to make configuration a global singleton, that's cool.
 
 ``ConfigManager`` should be thread-safe and re-entrant with the provided
-sources. If you implement your own sources, then it depends on whether your
-sources are safe.
+sources. If you implement your own configuration environments, then
+thread-safety and re-entrantcy depend on whether your configuration environments
+are safe in these ways.
 
 
 Configuration sources
@@ -64,11 +74,11 @@ ConfigDictEnv
    :noindex:
 
 
-Implementing your own sources
------------------------------
+Implementing your own configuration environments
+------------------------------------------------
 
-You can implement your own sources. They just need to implement the ``.get()``
-method. A no-op implementation is this:
+You can implement your own configuration environments. They just need to
+implement the ``.get()`` method. A no-op implementation is this:
 
 .. literalinclude:: code/configuration_implementing_sources.py
    :language: python
@@ -129,7 +139,6 @@ Some more examples:
     the specified sources, the default will be false.
 
 ``config('username', namespace='db')``
-
     The key is "username".
 
     The namespace is "db".
@@ -139,7 +148,6 @@ Some more examples:
     ``everett.ConfigurationError``.
 
 ``config('password', namespace='postgres', alternate_keys=['db_password', 'root:postgres_password'])``
-
     The key is "password".
 
     The namespace is "postgres".
@@ -152,6 +160,23 @@ Some more examples:
     it looks at "postgres_password" in the root namespace. This allows you to
     have multiple components that share configuration like credentials and
     hostnames.
+
+``config('port', default='8000', parser=int, doc='the port you want this to listen on')``
+    You can provide a ``doc`` argument which will give users users who are trying to
+    configure your software a more helpful error message when they hit a configuration
+    error.
+
+    Example of error message without ``doc``::
+
+        everett.InvalidValueError: ValueError: invalid literal for int() with base 10:
+        'bar'; namespace=None key=foo requires a value parseable by int
+
+    Example of error message with ``doc``::
+
+        everett.InvalidValueError: ValueError: invalid literal for int() with base 10:
+        'bar'; namespace=None key=foo requires a value parseable by int
+        the port you want this to listen on
+
 
 .. autoclass:: everett.ConfigurationError
 
