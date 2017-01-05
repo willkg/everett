@@ -192,6 +192,33 @@ def test_alternate_keys():
     assert comp.config('bad_key') == 'common_abc'
 
 
+def test_doc():
+    config = ConfigManager.from_dict({
+        'FOO_BAR': 'bat'
+    })
+
+    class SomeComponent(RequiredConfigMixin):
+        required_config = ConfigOptions()
+        required_config.add_option(
+            'foo_bar',
+            parser=int,
+            doc='omg!'
+        )
+
+        def __init__(self, config):
+            self.config = config.with_options(self)
+
+    comp = SomeComponent(config)
+
+    try:
+        # This throws an exception becase "bat" is not an int
+        comp.config('foo_bar')
+    except Exception as exc:
+        # We're going to lazily assert that omg! is in exc msg because if it
+        # is, it came from the option and that's what we want to know.
+        assert 'omg!' in str(exc)
+
+
 def test_raw_value():
     config = ConfigManager.from_dict({
         'FOO_BAR': '1'
