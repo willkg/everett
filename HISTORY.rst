@@ -1,6 +1,20 @@
 History
 =======
 
+0.7 (January 5th, 2016)
+-----------------------
+
+Feature: You can now include documentation hints and urls for
+``ConfigManager`` objects and config options. This will make it easier
+for your users to debug configuration errors they're having with your
+software.
+
+Bug: Fix ``ListOf`` so it returns empty lists rather than a list with
+a single empty string.
+
+Documentation fixes and updates.
+
+
 0.6 (November 28th, 2016)
 -------------------------
 
