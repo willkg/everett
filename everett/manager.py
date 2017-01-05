@@ -658,7 +658,7 @@ class BoundConfig(ConfigManagerBase):
         return self.config.get_namespace()
 
     def __call__(self, key, namespace=None, default=NO_VALUE,
-                 alternate_keys=NO_VALUE, parser=str, raise_error=True,
+                 alternate_keys=NO_VALUE, doc='', parser=str, raise_error=True,
                  raw_value=False):
         """Returns a config value bound to a component's options
 
@@ -670,6 +670,8 @@ class BoundConfig(ConfigManagerBase):
         :arg default: IGNORED
 
         :arg alternate_keys: IGNORED
+
+        :arg doc: IGNORED
 
         :arg parser: IGNORED
 
@@ -694,6 +696,7 @@ class BoundConfig(ConfigManagerBase):
             namespace=namespace,
             default=option.default,
             alternate_keys=option.alternate_keys,
+            doc=option.doc,
             parser=option.parser,
             raise_error=raise_error,
             raw_value=raw_value
@@ -720,7 +723,7 @@ class NamespacedConfig(ConfigManagerBase):
         return self.config.get_namespace() + [self.namespace]
 
     def __call__(self, key, namespace=None, default=NO_VALUE,
-                 alternate_keys=NO_VALUE, parser=str, raise_error=True,
+                 alternate_keys=NO_VALUE, doc='', parser=str, raise_error=True,
                  raw_value=False):
         """Returns a config value bound to a component's options
 
@@ -737,6 +740,10 @@ class NamespacedConfig(ConfigManagerBase):
             the configuration root rather than the current namespace
 
             .. versionadded:: 0.3
+
+        :arg doc: documentation for this config option
+
+            .. versionadded:: 0.6
 
         :arg parser: the parser for converting this value to a Python object
 
@@ -772,6 +779,9 @@ class ConfigManager(ConfigManagerBase):
             the order they should be looked through
         :arg str doc: help text printed to users when they encounter configuration
             errors
+
+            .. versionadded:: 0.6
+
         :arg with_override: whether or not to insert the special override
             environment used for testing as the first environment in the list
             of sources
@@ -826,6 +836,8 @@ class ConfigManager(ConfigManagerBase):
             .. versionadded:: 0.3
 
         :arg doc: documentation for this config option
+
+            .. versionadded:: 0.6
 
         :arg parser: the parser for converting this value to a Python object
 
@@ -886,6 +898,11 @@ class ConfigManager(ConfigManagerBase):
         else:
             parser = get_parser(parser)
 
+        def build_msg(*pargs):
+            return '\n'.join([
+                item for item in pargs if item
+            ])
+
         # Go through all possible keys
         all_keys = [key]
         if alternate_keys is not NO_VALUE:
@@ -912,24 +929,19 @@ class ConfigManager(ConfigManagerBase):
                         raise
                     except Exception as orig_exc:
                         exc_info = sys.exc_info()
-                        msg = [
-                            '%s: %s' % (exc_info[0].__name__, str(exc_info[1])),
-                            'namespace=%s key=%s requires a value parseable by %s' % (
-                                use_namespace,
-                                key,
-                                qualname(parser)
-                            )
-                        ]
-
-                        # Add config option doc if it exists
-                        if doc:
-                            msg.append(doc)
-
-                        # Add config manager help doc if it exists
-                        if self.doc:
-                            msg.append(self.doc)
-
-                        msg = '\n'.join(msg)
+                        msg = build_msg(
+                            '%(class)s: %(msg)s' % {
+                                'class': exc_info[0].__name__,
+                                'msg': str(exc_info[1])
+                            },
+                            'namespace=%(namespace)s key=%(key)s requires a value parseable by %(parser)s' % {
+                                'namespace': use_namespace,
+                                'key': key,
+                                'parser': qualname(parser)
+                            },
+                            doc,
+                            self.doc
+                        )
 
                         if six.PY3:
                             # Python 3 has exception chaining, so this is easy peasy
@@ -957,24 +969,19 @@ class ConfigManager(ConfigManagerBase):
                 # FIXME(willkg): This is a programmer error--not a user
                 # configuration error. We might want to denote that better.
                 exc_info = sys.exc_info()
-                msg = [
-                    '%s: %s' % (exc_info[0].__name__, str(exc_info[1])),
-                    'namespace=%s key=%s requires a default value parseable by %s' % (
-                        namespace,
-                        key,
-                        qualname(parser)
-                    )
-                ]
-
-                # Add config option doc if it exists
-                if doc:
-                    msg.append(doc)
-
-                # Add config manager help doc if it exists
-                if self.doc:
-                    msg.append(self.doc)
-
-                msg = '\n'.join(msg)
+                msg = build_msg(
+                    '%(class)s: %(msg)s' % {
+                        'class': exc_info[0].__name__,
+                        'msg': str(exc_info[1])
+                    },
+                    'namespace=%(namespace)s key=%(key)s requires a default value parseable by %(parser)s' % {
+                        'namespace': namespace,
+                        'key': key,
+                        'parser': qualname(parser)
+                    },
+                    doc,
+                    self.doc
+                )
 
                 if six.PY3:
                     # Python 3 has exception chaining, so this is easy peasy
@@ -992,23 +999,15 @@ class ConfigManager(ConfigManagerBase):
 
         # No value specified and no default, so raise an error to the user
         if raise_error:
-            msg = [
-                'namespace=%s key=%s requires a value parseable by %s' % (
-                    namespace,
-                    key,
-                    qualname(parser)
-                )
-            ]
-
-            # Add config option doc if it exists
-            if doc:
-                msg.append(doc)
-
-            # Add config manager help doc if it exists
-            if self.doc:
-                msg.append(self.doc)
-
-            msg = '\n'.join(msg)
+            msg = build_msg(
+                'namespace=%(namespace)s key=%(key)s requires a value parseable by %(parser)s' % {
+                    'namespace': namespace,
+                    'key': key,
+                    'parser': qualname(parser)
+                },
+                doc,
+                self.doc
+            )
 
             raise ConfigurationMissingError(msg)
 

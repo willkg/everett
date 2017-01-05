@@ -8,6 +8,9 @@ Configuration
 Setting up configuration in your app
 ====================================
 
+Create a ConfigManager and specify sources
+------------------------------------------
+
 Configuration is handled by a ``ConfigManager``. When you instantiate the
 ``ConfigManager``, you pass it a list of sources that it should look at when
 resolving configuration requests. The list of sources are consulted in the order
@@ -19,16 +22,61 @@ For example:
    :language: python
 
 
+Specify pointer to configuration errors docs
+--------------------------------------------
+
 In addition to a list of sources, you can provide a ``doc``. You can use this to
 guide users trying to use your software and hitting configuration errors to
 documentation for your configuration.
 
-For example:
+Here's a trivial program:
 
 .. literalinclude:: code/configuration_doc.py
 
 
-If you want to make configuration a global singleton, that's cool.
+Let's configure the program wrong and run it in Python 3 and see what it tells
+us:
+
+::
+
+   $ python trivial.py
+   Debug mode off.
+
+   $ DEBUG=true python trivial.py
+   Debug mode is on!
+
+   $ DEBUG=omg python trivial.py
+   Traceback (most recent call last):
+     File "/home/willkg/mozilla/everett/everett/manager.py", line 908, in __call__
+       return parser(val)
+     File "/home/willkg/mozilla/everett/everett/manager.py", line 109, in parse_bool
+       raise ValueError('"%s" is not a valid bool value' % val)
+   ValueError: "omg" is not a valid bool value
+
+   During handling of the above exception, another exception occurred:
+
+   Traceback (most recent call last):
+     File "configuration_doc.py", line 22, in <module>
+       main()
+     File "configuration_doc.py", line 12, in main
+       doc='True to put the app in debug mode. Don\'t use this in production!'
+     File "/home/willkg/mozilla/everett/everett/manager.py", line 936, in __call__
+       raise InvalidValueError(msg)
+   everett.InvalidValueError: ValueError: "omg" is not a valid bool value
+   namespace=None key=debug requires a value parseable by everett.manager.parse_bool
+   True to put the app in debug mode. Don't use this in production!
+   For configuration help, see https://example.com/configuration
+
+
+Here, we see the documentation for the configuration item, the documentation
+from the ``ConfigManager`` and the specific Python exception information.
+
+
+Where to put ConfigManager
+==========================
+
+You can create the ``ConfigManager`` when instantiating the app--that works
+fine. You could also create it as a global singleton.
 
 ``ConfigManager`` should be thread-safe and re-entrant with the provided
 sources. If you implement your own configuration environments, then
@@ -166,16 +214,13 @@ Some more examples:
     configure your software a more helpful error message when they hit a configuration
     error.
 
-    Example of error message without ``doc``::
-
-        everett.InvalidValueError: ValueError: invalid literal for int() with base 10:
-        'bar'; namespace=None key=foo requires a value parseable by int
-
     Example of error message with ``doc``::
 
         everett.InvalidValueError: ValueError: invalid literal for int() with base 10:
         'bar'; namespace=None key=foo requires a value parseable by int
         The port you want this to listen on.
+
+    That last line comes directly from the ``doc`` argument you provide.
 
 
 .. autoclass:: everett.ConfigurationError
@@ -198,45 +243,27 @@ Handling exceptions when extracting values
 
     For example:
 
-    .. code-block:: python
-
-       import logging
-
-       from everett import InvalidValueError
-       from everett.manager import ConfigManager
-
-       logging.basicConfig()
-
-       config = ConfigManager.from_dict({
-           'debug_mode': 'monkey'
-       })
-
-       try:
-           some_val = config('debug_mode', parser=bool)
-       except InvalidValueError:
-           # The "debug_mode" configuration value is incorrect--alert
-           # user in the logs.
-           logging.exception('gah!')
-
+    .. literalinclude:: code/configuration_handling_exceptions_3.py
 
     That logs this::
 
-        ERROR:root:Gah!
-        Traceback (most recent call last):
-          File "/home/willkg/mozilla/everett/everett/manager.py", line 903, in __call__
-            return parser(val)
-          File "/home/willkg/mozilla/everett/everett/manager.py", line 109, in parse_bool
-            raise ValueError('"%s" is not a valid bool value' % val)
-          ValueError: "monkey" is not a valid bool value
+       ERROR:root:gah!
+       Traceback (most recent call last):
+         File "/home/willkg/mozilla/everett/everett/manager.py", line 908, in __call__
+           return parser(val)
+         File "/home/willkg/mozilla/everett/everett/manager.py", line 109, in parse_bool
+           raise ValueError('"%s" is not a valid bool value' % val)
+       ValueError: "monkey" is not a valid bool value
 
-        During handling of the above exception, another exception occurred:
+       During handling of the above exception, another exception occurred:
 
-        Traceback (most recent call last):
-          File "foo.py", line 13, in <module>
-            some_val = config('debug_mode', parser=bool)
-          File "/home/willkg/mozilla/everett/everett/manager.py", line 922, in __call__
-            raise InvalidValueError(msg)
-        everett.InvalidValueError: ValueError: "monkey" is not a valid bool value; namespace=None key=debug_mode requires a value parseable by everett.manager.parse_bool
+       Traceback (most recent call last):
+         File "configuration_handling_exceptions.py", line 13, in <module>
+           some_val = config('debug_mode', parser=bool)
+         File "/home/willkg/mozilla/everett/everett/manager.py", line 936, in __call__
+           raise InvalidValueError(msg)
+       everett.InvalidValueError: ValueError: "monkey" is not a valid bool value
+       namespace=None key=debug_mode requires a value parseable by everett.manager.parse_bool
 
 
 **In Python 2**
@@ -245,44 +272,26 @@ Handling exceptions when extracting values
     wrap that nicely in a :py:class:`everett.ConfigurationError` without
     losing information, so it doesn't try.
 
-    If you're using Python 2, you'll have to catch everything and
-
-    .. code-block:: python
+    If you're using Python 2, you'll have to catch everything and handle it
+    on your own.
 
     For example:
 
-    .. code-block:: python
-
-       import logging
-
-       from everett.manager import ConfigManager
-
-       logging.basicConfig()
-
-       config = ConfigManager.from_dict({
-           'debug_mode': 'monkey'
-       })
-
-       try:
-           some_val = config('debug_mode', parser=bool)
-       except Exception:
-           # The "debug_mode" configuration value is probably
-           # incorrect, but it could be something else--alert user
-           # in the logs.
-           logging.exception('gah!')
+    .. literalinclude:: code/configuration_handling_exceptions_2.py
 
 
     This logs this::
 
-        ERROR:root:Gah!
-        Traceback (most recent call last):
-          File "foo.py", line 13, in <module>
-            some_val = config('debug_mode', parser=bool)
-          File "/home/willkg/mozilla/everett/everett/manager.py", line 903, in __call__
-            return parser(val)
-          File "/home/willkg/mozilla/everett/everett/manager.py", line 109, in parse_bool
-            raise ValueError('"%s" is not a valid bool value' % val)
-        ValueError: ValueError: "monkey" is not a valid bool value; namespace=None key=debug_mode requires a value parseable by everett.manager.parse_bool
+       ERROR:root:gah!
+       Traceback (most recent call last):
+         File "./configuration_handling_exceptions_2.py", line 14, in <module>
+           some_val = config('debug_mode', parser=bool)
+         File "/home/willkg/mozilla/everett/everett/manager.py", line 908, in __call__
+           return parser(val)
+         File "/home/willkg/mozilla/everett/everett/manager.py", line 109, in parse_bool
+           raise ValueError('"%s" is not a valid bool value' % val)
+       ValueError: ValueError: "monkey" is not a valid bool value
+       namespace=None key=debug_mode requires a value parseable by everett.manager.parse_bool
 
 
 .. Note::
