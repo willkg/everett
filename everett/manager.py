@@ -669,11 +669,7 @@ class BoundConfig(ConfigManagerBase):
 
         :arg default: IGNORED
 
-        :arg alternate_keys: the list of alternate keys to look up;
-            supports a ``root:`` key prefix which will cause this to look at
-            the configuration root rather than the current namespace
-
-            .. versionadded:: 0.3
+        :arg alternate_keys: IGNORED
 
         :arg parser: IGNORED
 
@@ -769,11 +765,13 @@ class NamespacedConfig(ConfigManagerBase):
 class ConfigManager(ConfigManagerBase):
     """Manages multiple configuration environment layers"""
 
-    def __init__(self, environments, with_override=True):
+    def __init__(self, environments, doc='', with_override=True):
         """Instantiates a ConfigManager
 
         :arg environents: list of configuration sources to look through in
             the order they should be looked through
+        :arg str doc: help text printed to users when they encounter configuration
+            errors
         :arg with_override: whether or not to insert the special override
             environment used for testing as the first environment in the list
             of sources
@@ -783,6 +781,7 @@ class ConfigManager(ConfigManagerBase):
             environments.insert(0, ConfigOverrideEnv())
 
         self.envs = environments
+        self.doc = doc
 
     @classmethod
     def from_dict(cls, dict_config):
@@ -806,7 +805,7 @@ class ConfigManager(ConfigManagerBase):
         return ConfigManager([ConfigDictEnv(dict_config)])
 
     def __call__(self, key, namespace=None, default=NO_VALUE,
-                 alternate_keys=NO_VALUE, parser=str, raise_error=True,
+                 alternate_keys=NO_VALUE, doc='', parser=str, raise_error=True,
                  raw_value=False):
         """Returns a parsed value from the environment
 
@@ -826,13 +825,14 @@ class ConfigManager(ConfigManagerBase):
 
             .. versionadded:: 0.3
 
+        :arg doc: documentation for this config option
+
         :arg parser: the parser for converting this value to a Python object
 
         :arg raise_error: True if you want a lack of value to raise a
             ``everett.ConfigurationError``
 
-        :arg raw_value: False if you wanted the parsed value, True if
-            you want the raw value.
+        :arg raw_value: True if you want the raw unparsed value, False otherwise
 
         :raises everett.ConfigurationMissingError: if the required bit of configuration
             is missing from all the environments
@@ -912,15 +912,24 @@ class ConfigManager(ConfigManagerBase):
                         raise
                     except Exception as orig_exc:
                         exc_info = sys.exc_info()
-                        msg = (
-                            '%s: %s; namespace=%s key=%s requires a value parseable by %s' % (
-                                exc_info[0].__name__,
-                                str(exc_info[1]),
+                        msg = [
+                            '%s: %s' % (exc_info[0].__name__, str(exc_info[1])),
+                            'namespace=%s key=%s requires a value parseable by %s' % (
                                 use_namespace,
                                 key,
                                 qualname(parser)
                             )
-                        )
+                        ]
+
+                        # Add config option doc if it exists
+                        if doc:
+                            msg.append(doc)
+
+                        # Add config manager help doc if it exists
+                        if self.doc:
+                            msg.append(self.doc)
+
+                        msg = '\n'.join(msg)
 
                         if six.PY3:
                             # Python 3 has exception chaining, so this is easy peasy
@@ -945,16 +954,27 @@ class ConfigManager(ConfigManagerBase):
                 # what we want to be raising.
                 raise
             except Exception as orig_exc:
+                # FIXME(willkg): This is a programmer error--not a user
+                # configuration error. We might want to denote that better.
                 exc_info = sys.exc_info()
-                msg = (
-                    '%s: %s; namespace=%s key=%s requires a default value parseable by %s' % (
-                        exc_info[0].__name__,
-                        str(exc_info[1]),
+                msg = [
+                    '%s: %s' % (exc_info[0].__name__, str(exc_info[1])),
+                    'namespace=%s key=%s requires a default value parseable by %s' % (
                         namespace,
                         key,
                         qualname(parser)
                     )
-                )
+                ]
+
+                # Add config option doc if it exists
+                if doc:
+                    msg.append(doc)
+
+                # Add config manager help doc if it exists
+                if self.doc:
+                    msg.append(self.doc)
+
+                msg = '\n'.join(msg)
 
                 if six.PY3:
                     # Python 3 has exception chaining, so this is easy peasy
@@ -972,10 +992,25 @@ class ConfigManager(ConfigManagerBase):
 
         # No value specified and no default, so raise an error to the user
         if raise_error:
-            raise ConfigurationMissingError(
+            msg = [
                 'namespace=%s key=%s requires a value parseable by %s' % (
-                    namespace, key, qualname(parser))
-            )
+                    namespace,
+                    key,
+                    qualname(parser)
+                )
+            ]
+
+            # Add config option doc if it exists
+            if doc:
+                msg.append(doc)
+
+            # Add config manager help doc if it exists
+            if self.doc:
+                msg.append(self.doc)
+
+            msg = '\n'.join(msg)
+
+            raise ConfigurationMissingError(msg)
 
         # Otherwise return NO_VALUE
         return NO_VALUE

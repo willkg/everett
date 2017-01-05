@@ -18,6 +18,8 @@ This library tries to do configuration with minimal "fanciness":
 Configuration with Everett:
 
 * is composeable and flexible
+* makes it easier to provide helpful error messages for users trying to
+  configure your software
 * can pull configuration from a variety of specified sources (environment, ini
   files, dict, write-your-own)
 * supports parsing values (bool, int, lists, ..., write-your-own)
@@ -38,6 +40,7 @@ Most other libraries I looked at had one or more of the following issues:
 
 * were tied to a specific web app framework
 * didn't allow you to specify configuration sources
+* provided poor error messages when you configure things wrong
 * had a global configuration object
 * made it really hard to override specific configuration when writing tests
 * had no facilities for auto-documenting configuration for components
@@ -46,7 +49,7 @@ Most other libraries I looked at had one or more of the following issues:
 Quick start
 ===========
 
-You're writing a web app using some framework that doesn't provide
+Say you're writing a web app using some framework that doesn't provide
 infrastructure for configuration.
 
 You want to pull configuration from an INI file stored in a place specified by
@@ -61,14 +64,25 @@ First, you set up your ``ConfigManager`` in your webapp::
 
     class MyWSGIApp(SomeFrameworkApp):
         def __init__(self):
-            self.config = ConfigManager([
-                ConfigOSEnv(),
-                ConfigIniEnv([
-                    os.environ.get('FOO_INI'),
-                    '~/.foo.ini',
-                    '/etc/foo.ini'
-                ]),
-            ])
+            self.config = ConfigManager(
+                # Specify one or more configuration environments in
+                # the order they should be checked
+                [
+                    # Looks in OS environment first
+                    ConfigOSEnv(),
+
+                    # Looks in INI files in order specified
+                    ConfigIniEnv([
+                        os.environ.get('MYAPP_INI'),
+                        '~/.myapp.ini',
+                        '/etc/myapp.ini'
+                    ]),
+                ],
+
+                # Make it easy for users to find your configuration
+                # docs
+                doc='Check https://example.com/configuration for docs'
+            )
 
             # Set ``is_debug`` based on configuration
             self.is_debug = self.config('debug', parser=bool)
@@ -77,6 +91,8 @@ First, you set up your ``ConfigManager`` in your webapp::
     def get_app():
         return MyWSGIApp()
 
+
+Now all configuration for the app can be pulled from the ``.config`` property.
 
 Let's write some tests that verify behavior based on the ``debug`` configuration
 value::
@@ -94,13 +110,13 @@ value::
         ...
 
 
-(``config_override`` works as a class decorator and a context manager, too.)
+This works with frameworks that do have configuration infrastructure like
+Django and Flask.
 
-That probably covers most configuration requirements.
+This works with non-web things, too, like command line programs.
 
-
-However, say your app needs to connect to RabbitMQ. One way to implement that
-functionality is to wrap it up in a self-contained component::
+Everett supports components, too. Say your app needs to connect to RabbitMQ.
+With Everett, you can wrap the configuration up with the component::
 
     from everett.component import RequiredConfigMixin, ConfigOptions
 
@@ -132,13 +148,19 @@ functionality is to wrap it up in a self-contained component::
             self.queue_name = self.config('queue_name')
 
 
-Then in your app, you instantiate a ``RabbitMQComponent``, but with configuration
-in the ``rmq`` namespace::
+Then instantiate a ``RabbitMQComponent``, but with configuration in the ``rmq``
+namespace::
 
     queue = RabbitMQComponent(config.with_namespace('rmq'))
 
 
 In your environment, you would provide ``RMQ_HOST``, etc for this component.
+
+You can auto-document the configuration for this component in your Sphinx docs
+with::
+
+    .. autoconfig:: path.to.RabbitMQComponent
+
 
 Say your app actually needs to connect to two separate queues--one for regular
 processing and one for priority processing::
@@ -155,7 +177,10 @@ In your environment, you provide the regular queue configuration with
 ``RMQ_REGULAR_HOST``, etc and the priority queue configuration with
 ``RMQ_PRIORITY_HOST``, etc.
 
-Same component code--two different instances.
+Same component code. Two different instances pulling configuration from two
+different namespaces.
+
+Components support subclassing, mixins and all that, too.
 
 
 Install

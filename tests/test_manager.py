@@ -104,8 +104,8 @@ def test_parse_bool_with_config():
             config('foo', parser=bool)
     assert (
         str(excinfo.value) ==
-        'ValueError: "bar" is not a valid bool value; namespace=None key=foo '
-        'requires a value parseable by everett.manager.parse_bool'
+        'ValueError: "bar" is not a valid bool value\n'
+        'namespace=None key=foo requires a value parseable by everett.manager.parse_bool'
     )
 
     # Test key is not there and default is bad
@@ -117,8 +117,8 @@ def test_parse_bool_with_config():
             config('phil', default='foo', parser=bool)
     assert (
         str(excinfo.value) ==
-        'ValueError: "foo" is not a valid bool value; namespace=None key=phil '
-        'requires a default value parseable by everett.manager.parse_bool'
+        'ValueError: "foo" is not a valid bool value\n'
+        'namespace=None key=phil requires a default value parseable by everett.manager.parse_bool'
     )
 
 
@@ -137,37 +137,37 @@ def test_parse_class():
 
 def test_parse_class_config():
     config = ConfigManager.from_dict({
-        'foo_class': 'hashlib.doesnotexist',
-        'bar_class': 'doesnotexist.class',
+        'foo_cls': 'hashlib.doesnotexist',
+        'bar_cls': 'doesnotexist.class',
     })
 
     if six.PY3:
         with pytest.raises(InvalidValueError) as exc_info:
-            config('foo_class', parser=parse_class)
+            config('foo_cls', parser=parse_class)
     else:
         with pytest.raises(ValueError) as exc_info:
-            config('foo_class', parser=parse_class)
+            config('foo_cls', parser=parse_class)
     assert (
         str(exc_info.value) ==
-        'ValueError: "doesnotexist" is not a valid member of hashlib; namespace=None key=foo_class '
-        'requires a value parseable by everett.manager.parse_class'
+        'ValueError: "doesnotexist" is not a valid member of hashlib\n'
+        'namespace=None key=foo_cls requires a value parseable by everett.manager.parse_class'
     )
 
     if six.PY3:
         with pytest.raises(InvalidValueError) as exc_info:
-            config('bar_class', parser=parse_class)
+            config('bar_cls', parser=parse_class)
     else:
         with pytest.raises(ImportError) as exc_info:
-            config('bar_class', parser=parse_class)
+            config('bar_cls', parser=parse_class)
     assert (
         str(exc_info.value) in
         [
             # Python 2
-            'ImportError: No module named doesnotexist; namespace=None key=bar_class '
-            'requires a value parseable by everett.manager.parse_class',
+            'ImportError: No module named doesnotexist\n'
+            'namespace=None key=bar_cls requires a value parseable by everett.manager.parse_class',
             # Python 3
-            'ImportError: No module named \'doesnotexist\'; namespace=None key=bar_class '
-            'requires a value parseable by everett.manager.parse_class',
+            'ImportError: No module named \'doesnotexist\'\n'
+            'namespace=None key=bar_cls requires a value parseable by everett.manager.parse_class',
         ]
     )
 
@@ -205,8 +205,8 @@ def test_ListOf_error():
 
     assert (
         str(exc_info.value) ==
-        'ValueError: "badbool" is not a valid bool value; namespace=None key=bools '
-        'requires a value parseable by <ListOf(bool)>'
+        'ValueError: "badbool" is not a valid bool value\n'
+        'namespace=None key=bools requires a value parseable by <ListOf(bool)>'
     )
 
 
@@ -398,7 +398,7 @@ def test_config():
     )
 
     # Raises an error if raise_error is True
-    with pytest.raises(ConfigurationMissingError):
+    with pytest.raises(ConfigurationMissingError) as exc_info:
         config('DOESNOTEXISTNOWAY', raise_error=True)
     assert (
         str(exc_info.value) ==
@@ -407,6 +407,15 @@ def test_config():
 
     # With a default, returns the default
     assert config('DOESNOTEXISTNOWAY', default='ohreally') == 'ohreally'
+
+    # Test doc
+    with pytest.raises(ConfigurationMissingError) as exc_info:
+        config('DOESNOTEXISTNOWAY', doc='Nothing to see here.')
+    assert (
+        str(exc_info.value) ==
+        'namespace=None key=DOESNOTEXISTNOWAY requires a value parseable by str\n'
+        'Nothing to see here.'
+    )
 
 
 def test_config_from_dict():
@@ -419,6 +428,44 @@ def test_config_from_dict():
     })
 
     assert config('FOO', raise_error=False) == 'bar'
+
+
+def test_config_manager_doc():
+    config = ConfigManager(
+        [
+            ConfigDictEnv({'foo': 'bar'}),
+        ],
+        doc='See http://example.com/configuration'
+    )
+
+    # Test ConfigManager doc shows up
+    if six.PY3:
+        with pytest.raises(ConfigurationError) as exc_info:
+            config('foo', parser=int)
+    else:
+        with pytest.raises(ValueError) as exc_info:
+            config('foo', parser=int)
+    assert(
+        str(exc_info.value) ==
+        'ValueError: invalid literal for int() with base 10: \'bar\'\n'
+        'namespace=None key=foo requires a value parseable by int\n'
+        'See http://example.com/configuration'
+    )
+
+    # Test config doc and ConfigManager doc show up
+    if six.PY3:
+        with pytest.raises(ConfigurationError) as exc_info:
+            config('foo', parser=int, doc='Port to listen on.')
+    else:
+        with pytest.raises(ValueError) as exc_info:
+            config('foo', parser=int, doc='Port to listen on.')
+    assert(
+        str(exc_info.value) ==
+        'ValueError: invalid literal for int() with base 10: \'bar\'\n'
+        'namespace=None key=foo requires a value parseable by int\n'
+        'Port to listen on.\n'
+        'See http://example.com/configuration'
+    )
 
 
 def test_config_override():
