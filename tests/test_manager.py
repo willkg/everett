@@ -168,6 +168,9 @@ def test_parse_class_config():
             # Python 3
             'ImportError: No module named \'doesnotexist\'\n'
             'namespace=None key=bar_cls requires a value parseable by everett.manager.parse_class',
+            # Python 3.6
+            'ModuleNotFoundError: No module named \'doesnotexist\'\n'
+            'namespace=None key=bar_cls requires a value parseable by everett.manager.parse_class'
         ]
     )
 
