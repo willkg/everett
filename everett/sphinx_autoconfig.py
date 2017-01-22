@@ -49,6 +49,8 @@ You can provide content as well::
 
        This is some content!
 
+.. versionadded:: 0.5
+
 
 **Hiding the class name**
 
@@ -60,6 +62,8 @@ You can hide the class name if you want::
 
 This is handy for application-level configuration where you might not want to
 confuse users with how it's implemented.
+
+.. versionadded:: 0.5
 
 
 **Prepending the namespace**
@@ -76,6 +80,8 @@ You can do that like this::
 
 Then the docs will show keys like ``crashstorage_foo`` rather than just
 ``foo``.
+
+.. versionadded:: 0.8
 
 """
 
