@@ -117,6 +117,32 @@ def test_hide_classname(tmpdir):
         ''')
     )
 
+
+# Test namespace
+
+
+def test_namespace(tmpdir):
+    rst = dedent('''\
+    .. autoconfig:: test_autoconfig.ComponentDefaults
+       :namespace: foo
+
+    ''')
+
+    assert (
+        parse(tmpdir, rst) ==
+        dedent('''\
+        class test_autoconfig.ComponentDefaults
+
+           Configuration:
+
+              "foo_user"
+                 default:
+                 parser:
+                    str
+        ''')
+    )
+
+
 # Test docstring-related things
 
 

@@ -61,6 +61,22 @@ You can hide the class name if you want::
 This is handy for application-level configuration where you might not want to
 confuse users with how it's implemented.
 
+
+**Prepending the namespace**
+
+If you have a component that only gets used with one namespace, then it will
+probably help users if the documentation includes the full configuration key
+with the namespace prepended.
+
+You can do that like this::
+
+    .. autoconfig:: collector.external.boto.crashstorage.BotoS3CrashStorage
+       :namespace: crashstorage
+
+
+Then the docs will show keys like ``crashstorage_foo`` rather than just
+``foo``.
+
 """
 
 import sys
@@ -105,10 +121,13 @@ class AutoConfigDirective(Directive):
         # Whether or not to show the class docstring--if None, don't show the
         # docstring, if empty string use __doc__, otherwise use the value of
         # the attribute on the class
-        'show-docstring': lambda x: x,
+        'show-docstring': directives.unchanged,
 
         # Whether or not to hide the class name
         'hide-classname': directives.flag,
+
+        # Prepend a specified namespace
+        'namespace': directives.unchanged,
     }
 
     def add_line(self, line, source, *lineno):
@@ -156,7 +175,12 @@ class AutoConfigDirective(Directive):
             sourcename = 'class definition'
 
             for option in config:
-                self.add_line('%s    ``%s``' % (indent, option.key), sourcename)
+                if 'namespace' in self.options:
+                    namespaced_key = self.options['namespace'] + '_' + option.key
+                else:
+                    namespaced_key = option.key
+
+                self.add_line('%s    ``%s``' % (indent, namespaced_key), sourcename)
                 if option.default is NO_VALUE:
                     self.add_line('%s        :default: ' % indent, sourcename)
                 else:
