@@ -143,6 +143,67 @@ def test_namespace(tmpdir):
     )
 
 
+# Test case
+
+
+class TestKeyCase:
+    def test_bad_value(self, tmpdir):
+        rst = dedent('''\
+        .. autoconfig:: test_autoconfig.ComponentDefaults
+           :case: foo
+
+        ''')
+
+        # Because "foo" isn't valid, nothing ends up in the file
+        assert parse(tmpdir, rst) == '\n'
+
+        # FIXME(willkg): Verify an appropriate error was given to the user.
+        # It's hard to do since it comes via stderr, but we probalby have to
+        # find out where that code is and mock it directly.
+
+    def test_lower(self, tmpdir):
+        rst = dedent('''\
+        .. autoconfig:: test_autoconfig.ComponentDefaults
+           :case: lower
+
+        ''')
+
+        assert (
+            parse(tmpdir, rst) ==
+            dedent('''\
+            class test_autoconfig.ComponentDefaults
+
+               Configuration:
+
+                  "user"
+                     default:
+                     parser:
+                        str
+            ''')
+        )
+
+    def test_upper(self, tmpdir):
+        rst = dedent('''\
+        .. autoconfig:: test_autoconfig.ComponentDefaults
+           :case: upper
+
+        ''')
+
+        assert (
+            parse(tmpdir, rst) ==
+            dedent('''\
+            class test_autoconfig.ComponentDefaults
+
+               Configuration:
+
+                  "USER"
+                     default:
+                     parser:
+                        str
+            ''')
+        )
+
+
 # Test docstring-related things
 
 

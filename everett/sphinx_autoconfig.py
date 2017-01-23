@@ -83,6 +83,29 @@ Then the docs will show keys like ``crashstorage_foo`` rather than just
 
 .. versionadded:: 0.8
 
+
+**Showing keys as uppercased or lowercased**
+
+If your project primarily depends on configuration from OS environment
+variables, then you probably want to document those variables with the keys
+shown as uppercased.
+
+You can do that like this::
+
+    .. autoconfig:: collector.external.boto.crashstorage.BotoS3CrashStorage
+       :case: upper
+
+
+If your project primarily depends on configuration from INI files, then you
+probably want to document those variables with keys shown as lowercased.
+
+You can do that like this::
+
+    .. autoconfig:: collector.external.boto.crashstorage.BotoS3CrashStorage
+       :case: lower
+
+.. versionadded:: 0.8
+
 """
 
 import sys
@@ -117,6 +140,17 @@ def import_class(clspath):
     return getattr(module, clsname)
 
 
+def upper_lower_none(arg):
+    if not arg:
+        return arg
+
+    arg = arg.strip().lower()
+    if arg in ['upper', 'lower']:
+        return arg
+
+    raise ValueError('argument must be "upper", "lower" or None')
+
+
 class AutoConfigDirective(Directive):
     has_content = True
     required_arguments = 1
@@ -134,6 +168,9 @@ class AutoConfigDirective(Directive):
 
         # Prepend a specified namespace
         'namespace': directives.unchanged,
+
+        # Render keys in specified case
+        'case': upper_lower_none,
     }
 
     def add_line(self, line, source, *lineno):
@@ -185,6 +222,12 @@ class AutoConfigDirective(Directive):
                     namespaced_key = self.options['namespace'] + '_' + option.key
                 else:
                     namespaced_key = option.key
+
+                if 'case' in self.options:
+                    if self.options['case'] == 'upper':
+                        namespaced_key = namespaced_key.upper()
+                    elif self.options['case'] == 'lower':
+                        namespaced_key = namespaced_key.lower()
 
                 self.add_line('%s    ``%s``' % (indent, namespaced_key), sourcename)
                 if option.default is NO_VALUE:
