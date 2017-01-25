@@ -1,6 +1,18 @@
 History
 =======
 
+0.8 (January 24th, 2016)
+------------------------
+
+Feature: Add ``:namespace:`` and ``:case:`` arguments to autoconfig
+directive. These make it easier to cater your documentation to your
+project's needs.
+
+Feature: Add support for Python 3.6.
+
+Minor documentation fixes and updates.
+
+
 0.7 (January 5th, 2016)
 -----------------------
 
