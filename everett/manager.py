@@ -35,11 +35,12 @@ ENV_KEY_RE = re.compile(r'^[a-z][a-z0-9_]*$', flags=re.IGNORECASE)
 def qualname(thing):
     """Returns the dot name for a given thing
 
+    >>> import everett.manager
     >>> qualname(str)
     'str'
     >>> qualname(everett.manager.parse_class)
     'everett.manager.parse_class'
-    >>> qualname(everet.manager)
+    >>> qualname(everett.manager)
     'everett.manager'
 
     """
@@ -141,6 +142,7 @@ def parse_class(val):
     """Parses a string, imports the module and returns the class
 
     >>> parse_class('hashlib.md5')
+    <built-in function openssl_md5>
 
     """
     module, class_name = val.rsplit('.', 1)

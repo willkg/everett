@@ -11,4 +11,5 @@ install:
   - pip install -r requirements-dev.txt
 
 script:
-  - py.test tests
+  - py.test tests/
+  - py.test --doctest-modules everett/
