@@ -1,7 +1,7 @@
 History
 =======
 
-0.8 (January 24th, 2016)
+0.8 (January 24th, 2017)
 ------------------------
 
 Feature: Add ``:namespace:`` and ``:case:`` arguments to autoconfig
@@ -13,7 +13,7 @@ Feature: Add support for Python 3.6.
 Minor documentation fixes and updates.
 
 
-0.7 (January 5th, 2016)
+0.7 (January 5th, 2017)
 -----------------------
 
 Feature: You can now include documentation hints and urls for
