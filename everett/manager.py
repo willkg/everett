@@ -325,7 +325,10 @@ class ConfigDictEnv(object):
     This is handy for testing. You might also use it if you wanted to move all
     your defaults values into one centralized place.
 
-    Namespace is prefixed, so key "foo" in namespace "bar" is ``FOO_BAR``.
+    Keys are prefixed by namespaces and the whole thing is uppercased.
+
+    For example, namespace "bar" for key "foo" becomes ``BAR_FOO`` in the
+    dict.
 
     For example::
 
@@ -557,7 +560,8 @@ class ConfigIniEnv(object):
         [main]
 
 
-    In the INI file, namespace is a section. So "user" in namespace "foo" is::
+    In the INI file, namespace is a section. So key "user" in namespace "foo"
+    is::
 
         [foo]
         user=someval
