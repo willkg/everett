@@ -1,6 +1,16 @@
 History
 =======
 
+0.9 (in development)
+--------------------
+
+Feature: Rewrite Sphinx extension. The extension is now in the
+``everett.sphinxext`` module and the directive is now ``.. autocomponent::``. It
+generates better documentation and it now indexes Everett components.
+
+Documentation fixes and updates.
+
+
 0.8 (January 24th, 2017)
 ------------------------
 

@@ -10,6 +10,7 @@ Contents
    history
    configuration
    components
+   sphinxext
    recipes
    library
    dev

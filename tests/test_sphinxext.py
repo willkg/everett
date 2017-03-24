@@ -18,7 +18,8 @@ class FakeSphinx(Sphinx):
         doctreedir = tmpdir / 'doctree'
 
         with open(str(confdir / 'conf.py'), 'w') as fp:
-            fp.write('master_doc = "index"')
+            fp.write('master_doc = "index"\n')
+            fp.write('extensions = ["everett.sphinxext"]\n')
 
         super(FakeSphinx, self).__init__(
             srcdir=str(srcdir),
@@ -32,8 +33,7 @@ class FakeSphinx(Sphinx):
 
 def parse(tmpdir, text):
     fakesphinx = FakeSphinx(tmpdir)
-    fakesphinx.setup_extension('everett.sphinx_autoconfig')
-
+    fakesphinx.setup_extension('everett.sphinxext')
     text = 'BEGINBEGIN\n\n%s\n\nENDEND' % text
 
     with open(str(tmpdir / 'index.rst'), 'w') as fp:
@@ -64,6 +64,26 @@ def test_infrastructure(tmpdir):
     )
 
 
+def test_everett_component(tmpdir):
+    # Test .. everett:component:: with an option
+    rst = dedent('''\
+    .. everett:component:: test_sphinxext.ComponentDefaults
+
+       :option str opt1: First option. Defaults to "foo".
+
+    ''')
+
+    assert (
+        parse(tmpdir, rst) ==
+        dedent('''\
+        component test_sphinxext.ComponentDefaults
+
+           Options:
+              **opt1** (*str*) -- First option. Defaults to "foo".
+        ''')
+    )
+
+
 class ComponentDefaults(RequiredConfigMixin):
     required_config = ConfigOptions()
     required_config.add_option('user')
@@ -72,35 +92,26 @@ class ComponentDefaults(RequiredConfigMixin):
         self.config = config.with_options(self)
 
 
-# Test defaults
-
-
-def test_defaults(tmpdir):
+def test_autocomponent_defaults(tmpdir):
     rst = dedent('''\
-    .. autoconfig:: test_autoconfig.ComponentDefaults
+    .. autocomponent:: test_sphinxext.ComponentDefaults
     ''')
 
     assert (
         parse(tmpdir, rst) ==
         dedent('''\
-        class test_autoconfig.ComponentDefaults
+        component test_sphinxext.ComponentDefaults
 
-           Configuration:
-
-              "user"
-                 default:
-                 parser:
-                    str
+           Options:
+              **user** (*str*) --
         ''')
     )
 
 
-# Test classname
-
-
 def test_hide_classname(tmpdir):
+    # Test classname
     rst = dedent('''\
-    .. autoconfig:: test_autoconfig.ComponentDefaults
+    .. autocomponent:: test_sphinxext.ComponentDefaults
        :hide-classname:
 
     ''')
@@ -108,22 +119,18 @@ def test_hide_classname(tmpdir):
     assert (
         parse(tmpdir, rst) ==
         dedent('''\
-        Configuration:
+        Configuration
 
-           "user"
-              default:
-              parser:
-                 str
+           Options:
+              **user** (*str*) --
         ''')
     )
 
 
-# Test namespace
-
-
 def test_namespace(tmpdir):
+    # Test namespace
     rst = dedent('''\
-    .. autoconfig:: test_autoconfig.ComponentDefaults
+    .. autocomponent:: test_sphinxext.ComponentDefaults
        :namespace: foo
 
     ''')
@@ -131,25 +138,19 @@ def test_namespace(tmpdir):
     assert (
         parse(tmpdir, rst) ==
         dedent('''\
-        class test_autoconfig.ComponentDefaults
+        component test_sphinxext.ComponentDefaults
 
-           Configuration:
-
-              "foo_user"
-                 default:
-                 parser:
-                    str
+           Options:
+              **foo_user** (*str*) --
         ''')
     )
 
 
-# Test case
-
-
 class TestKeyCase:
+    # Test case
     def test_bad_value(self, tmpdir):
         rst = dedent('''\
-        .. autoconfig:: test_autoconfig.ComponentDefaults
+        .. autocomponent:: test_sphinxext.ComponentDefaults
            :case: foo
 
         ''')
@@ -163,7 +164,7 @@ class TestKeyCase:
 
     def test_lower(self, tmpdir):
         rst = dedent('''\
-        .. autoconfig:: test_autoconfig.ComponentDefaults
+        .. autocomponent:: test_sphinxext.ComponentDefaults
            :case: lower
 
         ''')
@@ -171,20 +172,16 @@ class TestKeyCase:
         assert (
             parse(tmpdir, rst) ==
             dedent('''\
-            class test_autoconfig.ComponentDefaults
+            component test_sphinxext.ComponentDefaults
 
-               Configuration:
-
-                  "user"
-                     default:
-                     parser:
-                        str
+               Options:
+                  **user** (*str*) --
             ''')
         )
 
     def test_upper(self, tmpdir):
         rst = dedent('''\
-        .. autoconfig:: test_autoconfig.ComponentDefaults
+        .. autocomponent:: test_sphinxext.ComponentDefaults
            :case: upper
 
         ''')
@@ -192,24 +189,18 @@ class TestKeyCase:
         assert (
             parse(tmpdir, rst) ==
             dedent('''\
-            class test_autoconfig.ComponentDefaults
+            component test_sphinxext.ComponentDefaults
 
-               Configuration:
-
-                  "USER"
-                     default:
-                     parser:
-                        str
+               Options:
+                  **USER** (*str*) --
             ''')
         )
 
 
-# Test docstring-related things
-
-
 def test_show_docstring_class_has_no_docstring(tmpdir):
+    # Test docstring-related things
     rst = dedent('''\
-    .. autoconfig:: test_autoconfig.ComponentDefaults
+    .. autocomponent:: test_sphinxext.ComponentDefaults
        :show-docstring:
 
     ''')
@@ -217,14 +208,10 @@ def test_show_docstring_class_has_no_docstring(tmpdir):
     assert (
         parse(tmpdir, rst) ==
         dedent('''\
-        class test_autoconfig.ComponentDefaults
+        component test_sphinxext.ComponentDefaults
 
-           Configuration:
-
-              "user"
-                 default:
-                 parser:
-                    str
+           Options:
+              **user** (*str*) --
         ''')
     )
 
@@ -244,7 +231,7 @@ class ComponentWithDocstring(RequiredConfigMixin):
 
 def test_show_docstring(tmpdir):
     rst = dedent('''\
-    .. autoconfig:: test_autoconfig.ComponentWithDocstring
+    .. autocomponent:: test_sphinxext.ComponentWithDocstring
        :show-docstring:
 
     ''')
@@ -252,18 +239,14 @@ def test_show_docstring(tmpdir):
     assert (
         parse(tmpdir, rst) ==
         dedent('''\
-        class test_autoconfig.ComponentWithDocstring
+        component test_sphinxext.ComponentWithDocstring
 
            This component is the best.
 
            The best!
 
-           Configuration:
-
-              "user"
-                 default:
-                 parser:
-                    str
+           Options:
+              **user** (*str*) --
         ''')
     )
 
@@ -284,7 +267,7 @@ class ComponentDocstringOtherAttribute(RequiredConfigMixin):
 
 def test_show_docstring_other_attribute(tmpdir):
     rst = dedent('''\
-    .. autoconfig:: test_autoconfig.ComponentDocstringOtherAttribute
+    .. autocomponent:: test_sphinxext.ComponentDocstringOtherAttribute
        :show-docstring: __everett_help__
 
     ''')
@@ -292,16 +275,12 @@ def test_show_docstring_other_attribute(tmpdir):
     assert (
         parse(tmpdir, rst) ==
         dedent('''\
-        class test_autoconfig.ComponentDocstringOtherAttribute
+        component test_sphinxext.ComponentDocstringOtherAttribute
 
            User-focused help
 
-           Configuration:
-
-              "user"
-                 default:
-                 parser:
-                    str
+           Options:
+              **user** (*str*) --
         ''')
     )
 
@@ -312,7 +291,7 @@ class ComponentSubclass(ComponentWithDocstring):
 
 def test_show_docstring_subclass(tmpdir):
     rst = dedent('''\
-    .. autoconfig:: test_autoconfig.ComponentSubclass
+    .. autocomponent:: test_sphinxext.ComponentSubclass
        :show-docstring:
 
     ''')
@@ -320,21 +299,14 @@ def test_show_docstring_subclass(tmpdir):
     assert (
         parse(tmpdir, rst) ==
         dedent('''\
-        class test_autoconfig.ComponentSubclass
+        component test_sphinxext.ComponentSubclass
 
            A different docstring
 
-           Configuration:
-
-              "user"
-                 default:
-                 parser:
-                    str
+           Options:
+              **user** (*str*) --
         ''')
     )
-
-
-# Test configuration-related things
 
 
 class ComponentOptionDefault(RequiredConfigMixin):
@@ -347,22 +319,16 @@ class ComponentOptionDefault(RequiredConfigMixin):
 
 def test_option_default(tmpdir):
     rst = dedent('''\
-    .. autoconfig:: test_autoconfig.ComponentOptionDefault
+    .. autocomponent:: test_sphinxext.ComponentOptionDefault
     ''')
 
     assert (
         parse(tmpdir, rst) ==
         dedent('''\
-        class test_autoconfig.ComponentOptionDefault
+        component test_sphinxext.ComponentOptionDefault
 
-           Configuration:
-
-              "user"
-                 default:
-                    "\'ou812\'"
-
-                 parser:
-                    str
+           Options:
+              **user** (*str*) -- Defaults to "\'ou812\'".
         ''')
     )
 
@@ -377,22 +343,45 @@ class ComponentOptionDoc(RequiredConfigMixin):
 
 def test_option_doc(tmpdir):
     rst = dedent('''\
-    .. autoconfig:: test_autoconfig.ComponentOptionDoc
+    .. autocomponent:: test_sphinxext.ComponentOptionDoc
     ''')
 
     assert (
         parse(tmpdir, rst) ==
         dedent('''\
-        class test_autoconfig.ComponentOptionDoc
+        component test_sphinxext.ComponentOptionDoc
 
-           Configuration:
+           Options:
+              **user** (*str*) -- ou812
+        ''')
+    )
 
-              "user"
-                 default:
-                 parser:
-                    str
 
-                 ou812
+class ComponentOptionDocDefault(RequiredConfigMixin):
+    required_config = ConfigOptions()
+    required_config.add_option(
+        'user',
+        doc='This is some docs.',
+        default='ou812'
+    )
+
+
+def test_option_doc_default(tmpdir):
+    rst = dedent('''\
+    .. autocomponent:: test_sphinxext.ComponentOptionDocDefault
+    ''')
+
+    assert (
+        parse(tmpdir, rst) ==
+        dedent('''\
+        component test_sphinxext.ComponentOptionDocDefault
+
+           Options:
+              **user** (*str*) --
+
+              This is some docs.
+
+              Defaults to "\'ou812\'".
         ''')
     )
 
@@ -432,39 +421,25 @@ class ComponentOptionParser(RequiredConfigMixin):
 
 def test_option_parser(tmpdir):
     rst = dedent('''\
-    .. autoconfig:: test_autoconfig.ComponentOptionParser
+    .. autocomponent:: test_sphinxext.ComponentOptionParser
     ''')
 
     assert (
         parse(tmpdir, rst) ==
         dedent('''\
-        class test_autoconfig.ComponentOptionParser
+        component test_sphinxext.ComponentOptionParser
 
-           Configuration:
+           Options:
+              * **user_builtin** (*int*) --
 
-              "user_builtin"
-                 default:
-                 parser:
-                    int
+              * **user_parse_class** (*everett.manager.parse_class*) --
 
-              "user_parse_class"
-                 default:
-                 parser:
-                    everett.manager.parse_class
+              * **user_listof** (*<ListOf(str)>*) --
 
-              "user_listof"
-                 default:
-                 parser:
-                    <ListOf(str)>
+              * **user_class_method** (*test_sphinxext.Foo.parse_foo_class*)
+                --
 
-              "user_class_method"
-                 default:
-                 parser:
-                    test_autoconfig.Foo.parse_foo_class
-
-              "user_instance_method"
-                 default:
-                 parser:
-                    test_autoconfig.Foo.parse_foo_instance
+              * **user_instance_method**
+                (*test_sphinxext.Foo.parse_foo_instance*) --
         ''')
     )
