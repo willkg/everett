@@ -1,8 +1,8 @@
 -e .
 
-pytest==3.0.3
+pytest==3.0.7
 pytest-wholenodeid==0.2
-tox==2.4.1
+tox==2.6
 twine==1.8.1
-Sphinx==1.4.8
-flake8==3.0.4
+Sphinx==1.5.5
+flake8==3.3.0
