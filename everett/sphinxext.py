@@ -237,9 +237,11 @@ class EverettDomain(Domain):
         'component': EverettComponent,
     }
     roles = {
+        # FIXME(willkg): Verify roles work.
         'comp': XRefRole(),
     }
     initial_data = {
+        # (typ, name) -> sphinx document name
         'objects': {},
     }
 
@@ -284,15 +286,51 @@ class AutoComponentDirective(Directive):
         """Generate documentation for this configman class"""
         obj = import_class(clspath)
         sourcename = 'docstring of %s' % clspath
+        all_options = []
+        indent = '    '
+        config = obj.get_required_config()
 
-        # Add the classname or 'Configuration'
+        if config.options:
+            # Go through options and figure out relevant information
+            for option in config:
+                if 'namespace' in self.options:
+                    namespaced_key = self.options['namespace'] + '_' + option.key
+                else:
+                    namespaced_key = option.key
+
+                if 'case' in self.options:
+                    if self.options['case'] == 'upper':
+                        namespaced_key = namespaced_key.upper()
+                    elif self.options['case'] == 'lower':
+                        namespaced_key = namespaced_key.lower()
+
+                all_options.append({
+                    'key': namespaced_key,
+                    'parser': qualname(option.parser),
+                    'doc': option.doc,
+                    'default': option.default,
+                })
+
         if 'hide-classname' not in self.options:
             modname, clsname = split_clspath(clspath)
-            self.add_line('.. everett:component:: %s.%s' % (modname, clsname), sourcename)
+            component_name = clspath
+            component_index = clsname
         else:
-            self.add_line('.. everett:component:: Configuration', sourcename)
+            component_name = 'Configuration'
+            component_index = 'Configuration'
 
-        indent = '    '
+        if all_options:
+            # Add index entries for options first so they link to the right
+            # place; we do it this way so that we don't have to make options a
+            # real object type and then we don't get to use TypedField
+            # formatting
+            self.add_line('.. index::', sourcename)
+            for option in all_options:
+                self.add_line('   single: %s; (%s)' % (option['key'], component_index), sourcename)
+            self.add_line('', '')
+
+        # Add the classname or 'Configuration'
+        self.add_line('.. everett:component:: %s' % component_name, sourcename)
         self.add_line('', sourcename)
 
         # Add the docstring if there is one and if show-docstring
@@ -311,32 +349,20 @@ class AutoComponentDirective(Directive):
                 self.add_line(indent + line, src[0], src[1])
             self.add_line('', '')
 
-        # Add component options related content
-        config = obj.get_required_config()
-
-        if config.options:
+        if all_options:
+            # Now list the options
             sourcename = 'class definition'
 
-            for option in config:
-                if 'namespace' in self.options:
-                    namespaced_key = self.options['namespace'] + '_' + option.key
-                else:
-                    namespaced_key = option.key
-
-                if 'case' in self.options:
-                    if self.options['case'] == 'upper':
-                        namespaced_key = namespaced_key.upper()
-                    elif self.options['case'] == 'lower':
-                        namespaced_key = namespaced_key.lower()
-
-                self.add_line('%s:option %s %s:' % (
-                    indent, qualname(option.parser), namespaced_key), sourcename
+            for option in all_options:
+                self.add_line(
+                    '%s:option %s %s:' % (indent, option['parser'], option['key']),
+                    sourcename
                 )
-                self.add_line('%s    %s' % (indent, option.doc), sourcename)
-                if option.default is not NO_VALUE:
+                self.add_line('%s    %s' % (indent, option['doc']), sourcename)
+                if option['default'] is not NO_VALUE:
                     self.add_line('', '')
                     self.add_line(
-                        '%s    Defaults to ``%r``.' % (indent, option.default),
+                        '%s    Defaults to ``%r``.' % (indent, option['default']),
                         sourcename
                     )
                 self.add_line('', '')
