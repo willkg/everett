@@ -24,18 +24,30 @@ class ConfigurationError(Exception):
     pass
 
 
-class ConfigurationMissingError(ConfigurationError):
+class InvalidKeyError(ConfigurationError):
+    """Indicates the key is not valid for this component"""
+    pass
+
+
+class DetailedConfigurationError(ConfigurationError):
+    """Base class for configuration errors that have a msg, namespace, key, and parser"""
+    def __init__(self, *args, **kwargs):
+        self.namespace = args[1]
+        self.key = args[2]
+        self.parser = args[3]
+        super(DetailedConfigurationError, self).__init__(*args, **kwargs)
+
+    def __str__(self):
+        return self.args[0]
+
+
+class ConfigurationMissingError(DetailedConfigurationError):
     """Indicates that required configuration is missing"""
     pass
 
 
-class InvalidValueError(ConfigurationError):
+class InvalidValueError(DetailedConfigurationError):
     """Indicates that the value is not valid"""
-    pass
-
-
-class InvalidKeyError(ConfigurationError):
-    """Indicates the key is not valid for this component"""
     pass
 
 

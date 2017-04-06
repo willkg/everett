@@ -14,6 +14,10 @@ Changed:
 
 * Changed the repr for ``everett.NO_VALUE`` to ``"NO_VALUE"``.
 
+* ``InvalidValueError`` and ``ConfigurationMissingError`` now have
+  ``namespace``, ``key``, and ``parser`` attributes allowing you to build your
+  own messages.
+
 Fixed:
 
 * Fix an example in the docs where the final key was backwards. Thank you, pjz!

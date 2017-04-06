@@ -421,6 +421,34 @@ def test_config():
     )
 
 
+@pytest.mark.skipif(six.PY2, reason='requires python 3')
+def test_invalidvalueerror():
+    config = ConfigManager.from_dict({
+        'foo_bar': 'bat'
+    })
+    if six.PY3:
+        with pytest.raises(InvalidValueError) as excinfo:
+            config('bar', namespace='foo', parser=bool)
+
+            assert excinfo.value.namespace == 'foo'
+            assert excinfo.value.key == 'bar'
+            assert excinfo.value.parser == bool
+
+
+def test_configurationmissingerror():
+    # Verify ConfigurationMissingError has the right values
+    config = ConfigManager([])
+
+    # Defaults to raising an error
+    with pytest.raises(ConfigurationMissingError) as exc_info:
+        config('DOESNOTEXISTNOWAY', namespace='foo')
+
+    assert exc_info.value.args[0] == 'namespace=foo key=DOESNOTEXISTNOWAY requires a value parseable by str'
+    assert exc_info.value.namespace == 'foo'
+    assert exc_info.value.key == 'DOESNOTEXISTNOWAY'
+    assert exc_info.value.parser == str
+
+
 def test_config_from_dict():
     config = ConfigManager.from_dict({})
 
