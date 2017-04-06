@@ -8,7 +8,7 @@ Changed:
 
 * Rewrite Sphinx extension. The extension is now in the ``everett.sphinxext``
   module and the directive is now ``.. autocomponent::``. It generates better
-  documentation and it now indexes Everett components.
+  documentation and it now indexes Everett components and options.
 
 * Changed the ``HISTORY.rst`` structure.
 
