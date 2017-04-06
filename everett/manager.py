@@ -940,7 +940,7 @@ class ConfigManager(ConfigManagerBase):
                                 'class': exc_info[0].__name__,
                                 'msg': str(exc_info[1])
                             },
-                            'namespace=%(namespace)s key=%(key)s requires a value parseable by %(parser)s' % {
+                            'namespace=%(namespace)s key=%(key)s requires a value parseable by %(parser)s' % {  # noqa
                                 'namespace': use_namespace,
                                 'key': key,
                                 'parser': qualname(parser)
@@ -980,7 +980,7 @@ class ConfigManager(ConfigManagerBase):
                         'class': exc_info[0].__name__,
                         'msg': str(exc_info[1])
                     },
-                    'namespace=%(namespace)s key=%(key)s requires a default value parseable by %(parser)s' % {
+                    'namespace=%(namespace)s key=%(key)s requires a default value parseable by %(parser)s' % {  # noqa
                         'namespace': namespace,
                         'key': key,
                         'parser': qualname(parser)
