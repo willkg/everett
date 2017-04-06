@@ -35,7 +35,7 @@ from everett.manager import (
 def test_no_value():
     assert bool(NO_VALUE) is False
     assert NO_VALUE is not True
-    assert str(NO_VALUE) == 'NOVALUE'
+    assert str(NO_VALUE) == 'NO_VALUE'
 
 
 def test_parse_bool_error():
@@ -576,7 +576,7 @@ def test_raw_value():
     assert config('FOO_BAR', parser=int) == 1
     assert config('FOO_BAR', parser=int, raw_value=True) == '1'
 
-    assert str(config('NOEXIST', parser=int, raise_error=False)) == 'NOVALUE'
+    assert str(config('NOEXIST', parser=int, raise_error=False)) == 'NO_VALUE'
 
     config = config.with_namespace('FOO')
     assert config('BAR', parser=int) == 1

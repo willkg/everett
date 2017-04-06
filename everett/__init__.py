@@ -12,7 +12,7 @@ class NoValue(object):
         return False
 
     def __repr__(self):
-        return 'NOVALUE'
+        return 'NO_VALUE'
 
 
 # Singleton indicating a non-value
