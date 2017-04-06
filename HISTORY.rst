@@ -12,6 +12,8 @@ Changed:
 
 * Changed the ``HISTORY.rst`` structure.
 
+* Changed the repr for ``everett.NO_VALUE`` to ``"NO_VALUE"``.
+
 Fixed:
 
 * Fix an example in the docs where the final key was backwards. Thank you, pjz!
