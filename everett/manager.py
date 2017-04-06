@@ -378,7 +378,7 @@ class ConfigDictEnv(object):
 
     def get(self, key, namespace=None):
         if namespace is not None:
-            namespace = [part.upper() for part in namespace]
+            namespace = [part.upper() for part in listify(namespace)]
         return get_key_from_envs(self.cfg, key.upper(), namespace)
 
 
@@ -951,7 +951,7 @@ class ConfigManager(ConfigManagerBase):
 
                         if six.PY3:
                             # Python 3 has exception chaining, so this is easy peasy
-                            raise InvalidValueError(msg)
+                            raise InvalidValueError(msg, namespace, key, parser)
                         else:
                             # Python 2 does not have exception chaining, so we're going
                             # to break our promise that this always returns a
@@ -991,7 +991,7 @@ class ConfigManager(ConfigManagerBase):
 
                 if six.PY3:
                     # Python 3 has exception chaining, so this is easy peasy
-                    raise InvalidValueError(msg)
+                    raise InvalidValueError(msg, namespace, key, parser)
                 else:
                     # Python 2 does not have exception chaining, so we're going
                     # to break our promise that this always returns a
@@ -1015,7 +1015,7 @@ class ConfigManager(ConfigManagerBase):
                 self.doc
             )
 
-            raise ConfigurationMissingError(msg)
+            raise ConfigurationMissingError(msg, namespace, key, parser)
 
         # Otherwise return NO_VALUE
         return NO_VALUE
