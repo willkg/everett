@@ -26,7 +26,7 @@ Configuration with Everett:
 * supports key namespaces
 * facilitates writing tests that change configuration values
 * supports component architectures with auto-documentation of configuration with
-  a Sphinx ``autoconfig`` directive
+  a Sphinx ``autocomponent`` directive
 
 Everett is inspired by `python-decouple
 <https://github.com/henriquebastos/python-decouple>`_ and `configman
@@ -159,7 +159,7 @@ In your environment, you would provide ``RMQ_HOST``, etc for this component.
 You can auto-document the configuration for this component in your Sphinx docs
 with::
 
-    .. autoconfig:: path.to.RabbitMQComponent
+    .. autocomponent:: path.to.RabbitMQComponent
 
 
 Say your app actually needs to connect to two separate queues--one for regular

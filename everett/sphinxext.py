@@ -2,18 +2,18 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-"""Contains the autoconfig Sphinx extension for auto-documenting components
+"""Contains the autocomponent Sphinx extension for auto-documenting components
 with configuration.
 
-The ``autoconfig`` declaration will pull out the class docstring as well as
+The ``autocomponent`` declaration will pull out the class docstring as well as
 configuration requirements, throw it all in a blender and spit it out.
 
-To configure Sphinx, add ``'everett.sphinx_autoconfig'`` to the
-``extensions`` in ``conf.py``::
+To configure Sphinx, add ``'everett.sphinxext'`` to the ``extensions`` in
+``conf.py``::
 
     extensions = [
         ...
-        'everett.sphinx_autoconfig'
+        'everett.sphinxext'
     ]
 
 
@@ -22,30 +22,36 @@ To configure Sphinx, add ``'everett.sphinx_autoconfig'`` to the
    You need to make sure that Everett is installed in the environment
    that Sphinx is being run in.
 
-
 Use it like this in an ``.rst`` file to document a component::
 
-    .. autoconfig:: collector.external.boto.crashstorage.BotoS3CrashStorage
+    .. autocomponent:: collector.external.boto.crashstorage.BotoS3CrashStorage
+
+
+.. versionchanged:: 0.9
+
+   In Everett 0.8 and prior, the extension was in the
+   ``everett.sphinx_autoconfig`` module and the directive was ``..
+   autoconfig::``.
 
 
 **Showing docstring and content**
 
 If you want the docstring for the class, you can specify ``:show-docstring:``::
 
-    .. autoconfig:: collector.external.boto.crashstorage.BotoS3CrashStorage
+    .. autocomponent:: collector.external.boto.crashstorage.BotoS3CrashStorage
        :show-docstring:
 
 
 If you want to show help, but from a different attribute than the docstring,
 you can specify any class attribute::
 
-    .. autoconfig:: collector.external.boto.crashstorage.BotoS3CrashStorage
+    .. autocomponent:: collector.external.boto.crashstorage.BotoS3CrashStorage
        :show-docstring: __everett_help__
 
 
 You can provide content as well::
 
-    .. autoconfig:: collector.external.boto.crashstorage.BotoS3CrashStorage
+    .. autocomponent:: collector.external.boto.crashstorage.BotoS3CrashStorage
 
        This is some content!
 
@@ -56,7 +62,7 @@ You can provide content as well::
 
 You can hide the class name if you want::
 
-    .. autoconfig:: collector.external.boto.crashstorage.BotoS3CrashStorage
+    .. autocomponent:: collector.external.boto.crashstorage.BotoS3CrashStorage
        :hide-classname:
 
 
@@ -74,7 +80,7 @@ with the namespace prepended.
 
 You can do that like this::
 
-    .. autoconfig:: collector.external.boto.crashstorage.BotoS3CrashStorage
+    .. autocomponent:: collector.external.boto.crashstorage.BotoS3CrashStorage
        :namespace: crashstorage
 
 
@@ -92,7 +98,7 @@ shown as uppercased.
 
 You can do that like this::
 
-    .. autoconfig:: collector.external.boto.crashstorage.BotoS3CrashStorage
+    .. autocomponent:: collector.external.boto.crashstorage.BotoS3CrashStorage
        :case: upper
 
 
@@ -101,7 +107,7 @@ probably want to document those variables with keys shown as lowercased.
 
 You can do that like this::
 
-    .. autoconfig:: collector.external.boto.crashstorage.BotoS3CrashStorage
+    .. autocomponent:: collector.external.boto.crashstorage.BotoS3CrashStorage
        :case: lower
 
 .. versionadded:: 0.8
@@ -113,9 +119,15 @@ import sys
 from docutils import nodes
 from docutils.parsers.rst import Directive, directives
 from docutils.statemachine import ViewList
+from sphinx import addnodes
+from sphinx.directives import ObjectDescription
+from sphinx.domains import Domain, ObjType
+from sphinx.roles import XRefRole
+from sphinx.util.docfields import TypedField
+from sphinx.locale import l_, _
 from sphinx.util.docstrings import prepare_docstring
 
-from everett import NO_VALUE
+from everett import NO_VALUE, __version__
 from everett.manager import qualname
 
 
@@ -151,7 +163,98 @@ def upper_lower_none(arg):
     raise ValueError('argument must be "upper", "lower" or None')
 
 
-class AutoConfigDirective(Directive):
+class EverettComponent(ObjectDescription):
+    """
+    Description of an Everett component""
+    """
+
+    doc_field_types = [
+        TypedField('options', label=l_('Options'),
+                   names=('option', 'opt'),
+                   typerolename='obj', typenames=('parser',),
+                   can_collapse=True),
+    ]
+
+    allow_nesting = False
+
+    def handle_signature(self, sig, signode):
+        if sig != 'Configuration':
+            # Add "component" to the beginning if it's a specific component
+            signode.clear()
+
+            # Add "component" which is the type of this thing
+            signode += addnodes.desc_annotation('component ', 'component ')
+
+            if '.' in sig:
+                modname, clsname = sig.rsplit('.', 1)
+            else:
+                modname, clsname = '', sig
+
+            # If there's a module name, then we add the module
+            if modname:
+                signode += addnodes.desc_addname(modname + '.', modname + '.')
+
+            # Add the class name
+            signode += addnodes.desc_name(clsname, clsname)
+        else:
+            # Add just "Configuration"
+            signode += addnodes.desc_name(sig, sig)
+
+        return sig
+
+    def add_target_and_index(self, name, sig, signode):
+        targetname = '%s-%s' % (self.objtype, name)
+
+        if targetname not in self.state.document.ids:
+            signode['names'].append(targetname)
+            signode['ids'].append(targetname)
+            signode['first'] = (not self.names)
+            self.state.document.note_explicit_target(signode)
+
+            objects = self.env.domaindata['everett']['objects']
+            key = (self.objtype, name)
+            if key in objects:
+                self.state_machine.reporter.warning(
+                    'duplicate description of %s %s, ' % (self.objtype, name) +
+                    'other instance in ' + self.env.doc2path(objects[key]),
+                    line=self.lineno
+                )
+            objects[key] = self.env.docname
+
+        indextext = _('%s (component)') % name
+        self.indexnode['entries'].append(('single', indextext, targetname, '', None))
+
+
+class EverettDomain(Domain):
+    """Everett domain for component configuration"""
+    name = 'everett'
+    label = 'Everett'
+
+    object_types = {
+        'component': ObjType(l_('component'), 'comp'),
+    }
+    directives = {
+        'component': EverettComponent,
+    }
+    roles = {
+        'comp': XRefRole(),
+    }
+    initial_data = {
+        'objects': {},
+    }
+
+    def clear_doc(self, docname):
+        for (typ, name), doc in list(self.data['objects'].items()):
+            if doc == docname:
+                del self.data['objects'][typ, name]
+
+    def merge_domaindata(self, docnames, otherdata):
+        for (typ, name), doc in otherdata['objects'].items():
+            if doc in docnames:
+                self.data['objects'][typ, name] = doc
+
+
+class AutoComponentDirective(Directive):
     has_content = True
     required_arguments = 1
     optional_arguments = 0
@@ -185,11 +288,11 @@ class AutoConfigDirective(Directive):
         # Add the classname or 'Configuration'
         if 'hide-classname' not in self.options:
             modname, clsname = split_clspath(clspath)
-            self.add_line('.. %s:%s:: %s.%s' % ('py', 'class', modname, clsname),
-                          sourcename)
-            indent = '    '
+            self.add_line('.. everett:component:: %s.%s' % (modname, clsname), sourcename)
         else:
-            indent = ''
+            self.add_line('.. everett:component:: Configuration', sourcename)
+
+        indent = '    '
         self.add_line('', sourcename)
 
         # Add the docstring if there is one and if show-docstring
@@ -212,9 +315,6 @@ class AutoConfigDirective(Directive):
         config = obj.get_required_config()
 
         if config.options:
-            self.add_line(indent + 'Configuration:', '')
-            self.add_line('', '')
-
             sourcename = 'class definition'
 
             for option in config:
@@ -229,17 +329,16 @@ class AutoConfigDirective(Directive):
                     elif self.options['case'] == 'lower':
                         namespaced_key = namespaced_key.lower()
 
-                self.add_line('%s    ``%s``' % (indent, namespaced_key), sourcename)
-                if option.default is NO_VALUE:
-                    self.add_line('%s        :default: ' % indent, sourcename)
-                else:
-                    self.add_line('%s        :default: ``%r``' % (indent, option.default),
-                                  sourcename)
-
-                self.add_line('%s        :parser: %s' % (indent, qualname(option.parser)),
-                              sourcename)
-                self.add_line('', '')
-                self.add_line('%s        %s' % (indent, option.doc), sourcename)
+                self.add_line('%s:option %s %s:' % (
+                    indent, qualname(option.parser), namespaced_key), sourcename
+                )
+                self.add_line('%s    %s' % (indent, option.doc), sourcename)
+                if option.default is not NO_VALUE:
+                    self.add_line('', '')
+                    self.add_line(
+                        '%s    Defaults to ``%r``.' % (indent, option.default),
+                        sourcename
+                    )
                 self.add_line('', '')
 
     def run(self):
@@ -258,4 +357,11 @@ class AutoConfigDirective(Directive):
 
 
 def setup(app):
-    app.add_directive('autoconfig', AutoConfigDirective)
+    app.add_domain(EverettDomain)
+    app.add_directive('autocomponent', AutoComponentDirective)
+
+    return {
+        'version': __version__,
+        'parallel_read_safe': True,
+        'parallel_write_safe': True
+    }

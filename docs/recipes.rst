@@ -37,8 +37,8 @@ for the application:
 
 
 Couple of nice things here. First, is that if you do Sphinx documentation, you
-can use ``autoconfig`` to automatically document your configuration based on the
-code. Second, you can use
+can use ``autocomponent`` to automatically document your configuration based on
+the code. Second, you can use
 :py:meth:`everett.component.RequiredConfigMixin.get_runtime_config` to print out
 the runtime configuratino at startup.
 
