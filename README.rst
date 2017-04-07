@@ -2,7 +2,7 @@
 Everett
 =======
 
-Everett is a configuration library.
+Everett is a Python configuration library for your app.
 
 :Code:          https://github.com/willkg/everett
 :Issues:        https://github.com/willkg/everett/issues
@@ -13,20 +13,24 @@ Everett is a configuration library.
 Goals
 =====
 
-This library tries to do configuration with minimal "fanciness":
+This library tries to do configuration with minimal "fanciness".
 
 Configuration with Everett:
 
 * is composeable and flexible
 * makes it easier to provide helpful error messages for users trying to
   configure your software
-* can pull configuration from a variety of specified sources (environment, ini
-  files, dict, write-your-own)
-* supports parsing values (bool, int, lists, ..., write-your-own)
+* supports auto-documentation of configuration with a Sphinx
+  ``autocomponent`` directive
+* supports easy testing with configuration override
+* can pull configuration from a variety of specified sources (environment,
+  ini files, dict, write-your-own)
+* supports parsing values (bool, int, lists of things, classes,
+  write-your-own)
 * supports key namespaces
-* facilitates writing tests that change configuration values
-* supports component architectures with auto-documentation of configuration with
-  a Sphinx ``autocomponent`` directive
+* supports component architectures
+* works with whatever you're writing--command line tools, web sites, system
+  daemons, etc
 
 Everett is inspired by `python-decouple
 <https://github.com/henriquebastos/python-decouple>`_ and `configman
@@ -40,85 +44,117 @@ Most other libraries I looked at had one or more of the following issues:
 
 * were tied to a specific web app framework
 * didn't allow you to specify configuration sources
-* provided poor error messages when you configure things wrong
+* provided poor error messages when users configure things wrong
 * had a global configuration object
 * made it really hard to override specific configuration when writing tests
-* had no facilities for auto-documenting configuration for components
+* had no facilities for auto-generating configuration documentation
 
 
 Quick start
 ===========
 
-Say you're writing a web app using some framework that doesn't provide
-infrastructure for configuration.
+Example
+-------
 
-You want to pull configuration from an INI file stored in a place specified by
-``FOO_INI`` in the environment. You want to pull infrastructure values from the
-environment. Values from the environment should override values from the INI
-file.
+We have an app and want to pull configuration from an INI file stored in
+a place specified by ``MYAPP_INI`` in the environment, ``~/.myapp.ini``,
+or ``/etc/myapp.ini`` in that order.
 
-First, you set up your ``ConfigManager`` in your webapp::
+We want to pull infrastructure values from the environment.
+
+Values from the environment should override values from the INI file.
+
+First, we set up our ``ConfigManager``::
+
+    import os
+    import sys
 
     from everett.manager import ConfigManager, ConfigOSEnv, ConfigIniEnv
 
 
-    class MyWSGIApp(SomeFrameworkApp):
-        def __init__(self):
-            self.config = ConfigManager(
-                # Specify one or more configuration environments in
-                # the order they should be checked
-                [
-                    # Looks in OS environment first
-                    ConfigOSEnv(),
+    def get_config():
+        return ConfigManager(
+            # Specify one or more configuration environments in
+            # the order they should be checked
+            [
+                # Looks in OS environment first
+                ConfigOSEnv(),
 
-                    # Looks in INI files in order specified
-                    ConfigIniEnv([
-                        os.environ.get('MYAPP_INI'),
-                        '~/.myapp.ini',
-                        '/etc/myapp.ini'
-                    ]),
-                ],
+                # Looks in INI files in order specified
+                ConfigIniEnv([
+                    os.environ.get('MYAPP_INI'),
+                    '~/.myapp.ini',
+                    '/etc/myapp.ini'
+                ]),
+            ],
 
-                # Make it easy for users to find your configuration
-                # docs
-                doc='Check https://example.com/configuration for docs'
-            )
+            # Make it easy for users to find your configuration
+            # docs
+            doc='Check https://example.com/configuration for docs.'
+        )
 
-            # Set ``is_debug`` based on configuration
-            self.is_debug = self.config('debug', parser=bool)
+Then we use it::
 
-
-    def get_app():
-        return MyWSGIApp()
+    def is_debug(config):
+        return config('debug', parser=bool,
+            doc='Switch debug mode on and off.')
 
 
-Now all configuration for the app can be pulled from the ``.config`` property.
+    def main(args):
+        config = get_config()
 
-Let's write some tests that verify behavior based on the ``debug`` configuration
-value::
+        if is_debug(config):
+            print('DEBUG MODE ON!')
+
+
+    if __name__ == '__main__':
+        sys.exit(main(sys.argv[1:]))
+
+
+Let's write some tests that verify behavior based on the ``debug``
+configuration value::
+
+    from myapp import get_config, is_debug
 
     from everett.manager import config_override
 
+
     @config_override(DEBUG='true')
     def test_debug_true():
-        app = get_app()
-        ...
+        assert is_debug(get_config()) is True
 
     @config_override(DEBUG='false')
     def test_debug_false():
-        app = get_app()
-        ...
+        assert is_debug(get_config()) is False
 
 
-This works with frameworks that do have configuration infrastructure like
+If the user sets ``DEBUG`` wrong, they get a helpful error message with
+the documentation for the configuration option and the ``ConfigManager``::
+
+    $ DEBUG=foo python myprogram.py
+    <traceback>
+    namespace=None key=debug requires a value parseable by bool
+    Switch debug mode on and off.
+    Check https://example.com/configuration for docs.
+
+
+What can you use Everett with
+-----------------------------
+
+Everett works with frameworks that have configuration infrastructure like
 Django and Flask.
 
-This works with non-web things, too, like command line programs.
+Everett works with non-web things like scripts and servers and other things.
 
-Everett supports components, too. Say your app needs to connect to RabbitMQ.
+
+Everett components
+------------------
+
+Everett supports components. Say your app needs to connect to RabbitMQ.
 With Everett, you can wrap the configuration up with the component::
 
     from everett.component import RequiredConfigMixin, ConfigOptions
+
 
     class RabbitMQComponent(RequiredConfigMixin):
         required_config = ConfigOptions()
@@ -156,8 +192,9 @@ namespace::
 
 In your environment, you would provide ``RMQ_HOST``, etc for this component.
 
-You can auto-document the configuration for this component in your Sphinx docs
-with::
+You can auto-generate configuration documentation for this component in your
+Sphinx docs by including the ``everett.sphinxext`` Sphinx extension and
+using the ``autocomponent`` directive::
 
     .. autocomponent:: path.to.RabbitMQComponent
 
