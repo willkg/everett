@@ -1,14 +1,17 @@
 History
 =======
 
-0.9 (in development)
---------------------
+0.9 (April 7th, 2017)
+---------------------
 
 Changed:
 
 * Rewrite Sphinx extension. The extension is now in the ``everett.sphinxext``
   module and the directive is now ``.. autocomponent::``. It generates better
   documentation and it now indexes Everett components and options.
+
+  This is backwards-incompatible. You will need to update your Sphinx
+  configuration and documentation.
 
 * Changed the ``HISTORY.rst`` structure.
 
