@@ -24,7 +24,19 @@ To configure Sphinx, add ``'everett.sphinxext'`` to the ``extensions`` in
 
 Use it like this in an ``.rst`` file to document a component::
 
-    .. autocomponent:: collector.external.boto.crashstorage.BotoS3CrashStorage
+    .. autocomponent:: collector.ext.s3.S3CrashStorage
+
+
+You can refer to that component in other parts of your docs and get a link
+by using the ``:everett:component:`` role::
+
+    Check out the :everett:component:`collector.ext.s3.S3CrashStorage`
+    configuration.
+
+
+If your component class names are unique, then you can probably get away with::
+
+    Check out the :everett:component:`S3CrashStorage` configuration.
 
 
 .. versionchanged:: 0.9
@@ -119,13 +131,15 @@ import sys
 from docutils import nodes
 from docutils.parsers.rst import Directive, directives
 from docutils.statemachine import ViewList
+from six import iteritems
 from sphinx import addnodes
 from sphinx.directives import ObjectDescription
 from sphinx.domains import Domain, ObjType
+from sphinx.locale import l_, _
 from sphinx.roles import XRefRole
 from sphinx.util.docfields import TypedField
-from sphinx.locale import l_, _
 from sphinx.util.docstrings import prepare_docstring
+from sphinx.util.nodes import make_refnode
 
 from everett import NO_VALUE, __version__
 from everett.manager import qualname
@@ -237,11 +251,11 @@ class EverettDomain(Domain):
         'component': EverettComponent,
     }
     roles = {
-        # FIXME(willkg): Verify roles work.
+        'component': XRefRole(),
         'comp': XRefRole(),
     }
     initial_data = {
-        # (typ, name) -> sphinx document name
+        # (typ, clspath) -> sphinx document name
         'objects': {},
     }
 
@@ -254,6 +268,37 @@ class EverettDomain(Domain):
         for (typ, name), doc in otherdata['objects'].items():
             if doc in docnames:
                 self.data['objects'][typ, name] = doc
+
+    def resolve_xref(self, env, fromdocname, builder, typ, target, node, contnode):
+        objects = self.data['objects']
+        objtypes = self.objtypes_for_role(typ) or []
+
+        for objtype in objtypes:
+            for (typ, clspath) in objects:
+                # Look up using the full classpath
+                if (objtype, target) == (typ, clspath):
+                    return make_refnode(
+                        builder,
+                        fromdocname,
+                        objects[typ, clspath],
+                        objtype + '-' + target,
+                        contnode,
+                        target + ' ' + objtype
+                    )
+
+                # Try looking it up by the class name--this lets people use
+                # shorthand in their roles
+                if '.' in clspath:
+                    modname, clsname = split_clspath(clspath)
+                    if (objtype, target) == (typ, clsname):
+                        return make_refnode(
+                            builder,
+                            fromdocname,
+                            objects[typ, clspath],
+                            objtype + '-' + clspath,
+                            contnode,
+                            target + ' ' + objtype
+                        )
 
 
 class AutoComponentDirective(Directive):
