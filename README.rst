@@ -223,16 +223,16 @@ Components support subclassing, mixins and all that, too.
 Install
 =======
 
-From PyPI
----------
+Install from PyPI
+-----------------
 
 Run::
 
     $ pip install everett
 
 
-For hacking
------------
+Install for hacking
+-------------------
 
 Run::
 
