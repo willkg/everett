@@ -443,7 +443,10 @@ def test_configurationmissingerror():
     with pytest.raises(ConfigurationMissingError) as exc_info:
         config('DOESNOTEXISTNOWAY', namespace='foo')
 
-    assert exc_info.value.args[0] == 'namespace=foo key=DOESNOTEXISTNOWAY requires a value parseable by str'
+    assert (
+        exc_info.value.args[0] ==
+        'namespace=foo key=DOESNOTEXISTNOWAY requires a value parseable by str'
+    )
     assert exc_info.value.namespace == 'foo'
     assert exc_info.value.key == 'DOESNOTEXISTNOWAY'
     assert exc_info.value.parser == str
