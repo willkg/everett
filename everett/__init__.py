@@ -56,5 +56,5 @@ __email__ = 'willkg@mozilla.com'
 
 # yyyymmdd
 __releasedate__ = ''
-# x.y or x.y.dev
-__version__ = '0.9.dev'
+# x.y or x.y.dev0
+__version__ = '0.9.dev0'
