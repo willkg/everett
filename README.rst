@@ -53,8 +53,28 @@ Most other libraries I looked at had one or more of the following issues:
 Quick start
 ===========
 
-Example
--------
+Fast start example
+------------------
+
+You have an app and want configuration in the environment that can be
+overridden by a ``.env`` file::
+
+    from everett.manager import ConfigManager
+
+    config = ConfigManager.basic_config()
+
+
+Now you can use it::
+
+    debug_mode = config('debug', parser=bool)
+
+
+When you outgrow that or need different variations of it, you can change
+that to creating a ``ConfigManager`` from scratch.
+
+
+More control example
+--------------------
 
 We have an app and want to pull configuration from an INI file stored in
 a place specified by ``MYAPP_INI`` in the environment, ``~/.myapp.ini``,

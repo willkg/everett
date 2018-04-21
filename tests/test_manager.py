@@ -19,8 +19,8 @@ from everett.manager import (
     ConfigEnvFileEnv,
     ConfigIniEnv,
     ConfigManager,
-    ConfigObjEnv,
     ConfigOSEnv,
+    ConfigObjEnv,
     ListOf,
     config_override,
     get_key_from_envs,
@@ -463,6 +463,20 @@ def test_config_from_dict():
 
     assert config('FOO', raise_error=False) == 'bar'
 
+
+def test_basic_config(datadir):
+    os.environ['EVERETT_BASIC_CONFIG_TEST'] = 'foo'
+    env_filename = os.path.join(datadir, '.env')
+    config = ConfigManager.basic_config(env_filename)
+
+    # This doesn't exist in either the environment or the env file
+    assert config('FOO', raise_error=False) is NO_VALUE
+
+    # This exists in the environment
+    assert config('EVERETT_BASIC_CONFIG_TEST') == 'foo'
+
+    # This exists in the env file
+    assert config('LOGLEVEL') == 'walter'
 
 def test_config_manager_doc():
     config = ConfigManager(

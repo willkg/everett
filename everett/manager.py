@@ -186,6 +186,7 @@ def get_key_from_envs(envs, key, namespace=None):
     """Return the value of a key from the given dict respecting namespaces.
 
     Data can also be a list of data dicts.
+
     """
     # if it barks like a dict, make it a list
     # have to use `get` since dicts and lists
@@ -800,6 +801,43 @@ class ConfigManager(ConfigManagerBase):
         self.doc = doc
 
     @classmethod
+    def basic_config(cls, env_file='.env'):
+        """Returns a basic ConfigManager
+
+        This sets up a ConfigManager that will look at a specified ``env_file``
+        and also the operating system process environment. This is for a fast
+        one-line opinionated setup.
+
+        Example::
+
+            from everett.manager import ConfigManager
+
+            config = ConfigManager.basic_config()
+
+
+        This is shorthand for::
+
+            config = ConfigManager(
+                environments=[
+                    ConfigEnvFileEnv(['.env']),
+                    ConfigOSEnv()
+                ]
+            )
+
+
+        :arg env_file: the name of the env file to use
+
+        :returns: a :py:class:`everett.manager.ConfigManager`
+
+        """
+        return cls(
+            environments=[
+                ConfigEnvFileEnv([env_file]),
+                ConfigOSEnv()
+            ]
+        )
+
+    @classmethod
     def from_dict(cls, dict_config):
         """Creates a ConfigManager with specified configuration as a Python dict
 
@@ -818,7 +856,7 @@ class ConfigManager(ConfigManagerBase):
         .. versionadded:: 0.3
 
         """
-        return ConfigManager([ConfigDictEnv(dict_config)])
+        return cls([ConfigDictEnv(dict_config)])
 
     def __call__(self, key, namespace=None, default=NO_VALUE,
                  alternate_keys=NO_VALUE, doc='', parser=str, raise_error=True,
