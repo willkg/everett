@@ -804,9 +804,13 @@ class ConfigManager(ConfigManagerBase):
     def basic_config(cls, env_file='.env'):
         """Returns a basic ConfigManager
 
-        This sets up a ConfigManager that will look at a specified ``env_file``
-        and also the operating system process environment. This is for a fast
-        one-line opinionated setup.
+        This sets up a ConfigManager that will look for configuration in
+        this order:
+
+        1. environment
+        2. specified ``env_file`` defaulting to ``.env``
+
+        This is for a fast one-line opinionated setup.
 
         Example::
 
@@ -819,8 +823,8 @@ class ConfigManager(ConfigManagerBase):
 
             config = ConfigManager(
                 environments=[
-                    ConfigEnvFileEnv(['.env']),
-                    ConfigOSEnv()
+                    ConfigOSEnv(),
+                    ConfigEnvFileEnv(['.env'])
                 ]
             )
 
@@ -832,8 +836,8 @@ class ConfigManager(ConfigManagerBase):
         """
         return cls(
             environments=[
-                ConfigEnvFileEnv([env_file]),
-                ConfigOSEnv()
+                ConfigOSEnv(),
+                ConfigEnvFileEnv([env_file])
             ]
         )
 

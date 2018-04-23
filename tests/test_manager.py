@@ -478,6 +478,7 @@ def test_basic_config(datadir):
     # This exists in the env file
     assert config('LOGLEVEL') == 'walter'
 
+
 def test_config_manager_doc():
     config = ConfigManager(
         [

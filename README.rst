@@ -56,15 +56,15 @@ Quick start
 Fast start example
 ------------------
 
-You have an app and want configuration in the environment that can be
-overridden by a ``.env`` file::
+You have an app and want it to look for configuration in an ``.env`` file then
+the environment. You can do this::
 
     from everett.manager import ConfigManager
 
     config = ConfigManager.basic_config()
 
 
-Now you can use it::
+Then you can use it like this::
 
     debug_mode = config('debug', parser=bool)
 
