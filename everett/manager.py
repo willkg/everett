@@ -14,6 +14,7 @@ import os
 import re
 import sys
 import types
+import os.path
 
 from configobj import ConfigObj
 import six
@@ -238,6 +239,100 @@ class ListOf(object):
 
     def __repr__(self):
         return '<ListOf(%s)>' % qualname(self.sub_parser)
+
+
+def _parse_rwx(modestr, default):
+    """parse out 'r', 'w' and 'x'.  use 'default' if none used or specified"""
+    mode = 0
+    if 'r' in modestr:
+        mode |= os.R_OK
+    if 'w' in modestr:
+        mode |= os.W_OK
+    if 'x' in modestr:
+        mode |= os.X_OK
+    if not mode:
+        mode = default
+    return mode
+
+
+def _mode2english(mode):
+    """turn a file mode into an english phrase"""
+    perms = []
+    if mode & os.R_OK: perms.append('read')
+    if mode & os.W_OK: perms.append('write')
+    if mode & os.X_OK: perms.append('execute')
+    return (','.join(perms[:-1]) + ' and ' if len(perms)>1 else '') + perms[-1]
+
+
+class PathValue(object):
+    """
+    A parser for paths
+
+    config('Pathname', parser=PathValue('w', isdir=True, check_exists=False))
+    """
+
+    def __init__(self, mode='', isdir=None, check_exists=True):
+        """
+        :arg mode: specifies if the file is any subset of readable ('r'), writable ('w') and executable ('x')
+        Ignores any other characters in 'mode'; defaults to 'r' if mode is unspecified, or 'rx' if isdir is True
+
+        :arg isdir: if True, check that it's a directory and not just any kind of file
+
+        :arg check_exists: if True, verify that the path exists.
+        """
+        self.isdir = isdir
+        self.check_exists = check_exists
+        self.mode = _parse_rwx(mode, os.R_OK|os.X_OK if isdir else os.R_OK)
+
+    def __call__(self, val):
+        """
+        :returns: a normalized absolute path to the configured file
+        """
+        if self.check_exists and not os.path.exists(val):
+            raise ValueError("Expected %s to exist, but it doesn't" % val)
+        if not os.access(val, self.mode):
+            raise ValueError('Unable to %s %s' % (_mode2english(self.mode), val))
+        if self.isdir is not None:
+            if self.isdir:
+                if not os.path.isdir(val):
+                    raise ValueError("Expected %s to be a directory, but it's not." % val)
+            elif not os.path.isfile(val):
+                raise ValueError("Expected %s to be a file, but it's not." % val)
+        return os.path.abspath(val)
+
+
+def PathValue_(mode='', isdir=None, check_exists=True):
+    """A parser for paths
+
+    config('Pathname', parser=PathValue_('w', isdir=True, check_exists=False))
+
+
+    :arg mode: specifies if the file is any subset of readable ('r'), writable ('w') and executable ('x')
+    Ignores any other characters in 'mode'; defaults to 'r' if mode is unspecified, or 'rx' if isdir is True
+
+    :arg isdir: if True, check that it's a directory and not just any kind of file
+
+    :arg check_exists: if True, verify that the path check_exists.
+
+    :returns: (parser that returns) a normalized absolute path to the configured file
+    """
+
+    filemode = _parse_rwx(mode, os.R_OK|os.X_OK if isdir else os.R_OK)
+
+    def parser(val):
+        if check_exists and not os.path.exists(val):
+            raise ValueError("Expected %s to exist, but it doesn't" % val)
+        if not os.access(val, filemode):
+            raise ValueError('Unable to %s %s' % (_mode2english(filemode), val))
+        if isdir is not None:
+            if isdir:
+                if not os.path.isdir(val):
+                    raise ValueError("Expected %s to be a directory, but it's not." % val)
+            elif not os.path.isfile(val):
+                raise ValueError("Expected %s to be a file, but it's not." % val)
+        return os.path.abspath(val)
+
+    return parser
 
 
 class ConfigOverrideEnv(object):

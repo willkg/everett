@@ -21,6 +21,7 @@ from everett.manager import (
     ConfigManager,
     ConfigOSEnv,
     ConfigObjEnv,
+    PathValue,
     ListOf,
     config_override,
     get_key_from_envs,
@@ -627,3 +628,22 @@ def test_raw_value():
     config = config.with_namespace('FOO')
     assert config('BAR', parser=int) == 1
     assert config('BAR', parser=int, raw_value=True) == '1'
+
+
+def test_existingfile():
+    config = ConfigManager.from_dict({'FOO': '/tmp', 'BAR': '/etc/hostname', 'BAZ': '/nonexistant-file'})
+    ErrorType = InvalidValueError if six.PY3 else ValueError
+
+    assert config('FOO', parser=PathValue()) == '/tmp'
+    assert config('FOO', parser=PathValue('w')) == '/tmp'
+    assert config('FOO', parser=PathValue('w', isdir=True)) == '/tmp'
+
+    assert config('BAR', parser=PathValue()) == '/etc/hostname'
+    with pytest.raises(ErrorType):
+        config('BAR', parser=PathValue('w'))
+    with pytest.raises(ErrorType):
+        config('BAR', parser=PathValue(isdir=True))
+
+    with pytest.raises(ErrorType):
+        config('BAZ', parser=PathValue())
+
