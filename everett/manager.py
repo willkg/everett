@@ -600,11 +600,11 @@ class ConfigIniEnv(object):
 
             path = os.path.abspath(os.path.expanduser(path.strip()))
             if path and os.path.isfile(path):
-                self.cfg.update(ConfigIniEnv.parse_ini_file(path))
+                self.cfg.update(self.parse_ini_file(path))
+                break
 
-    @classmethod
     def parse_ini_file(cls, path):
-        cfgobj = ConfigObj(path)
+        cfgobj = ConfigObj(path, list_values=False)
 
         def extract_section(namespace, d):
             cfg = {}
