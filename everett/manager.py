@@ -603,7 +603,7 @@ class ConfigIniEnv(object):
                 self.cfg.update(self.parse_ini_file(path))
                 break
 
-    def parse_ini_file(cls, path):
+    def parse_ini_file(self, path):
         cfgobj = ConfigObj(path, list_values=False)
 
         def extract_section(namespace, d):
