@@ -318,6 +318,23 @@ def test_ConfigIniEnv(datadir):
     assert cie.get('foo') == NO_VALUE
 
 
+def test_ConfigIniEnv_multiple_files(datadir):
+    ini_filename = os.path.join(datadir, 'config_test.ini')
+    ini_filename_original = os.path.join(datadir, 'config_test_original.ini')
+    cie = ConfigIniEnv([ini_filename, ini_filename_original])
+    # Only the first found file is loaded, so foo_original does not exist
+    assert cie.get('foo_original') == NO_VALUE
+    cie = ConfigIniEnv([ini_filename_original])
+    # ... but it is there if only the original is loaded (safety check)
+    assert cie.get('foo_original') == 'original'
+
+
+def test_ConfigIniEnv_does_not_parse_lists(datadir):
+    ini_filename = os.path.join(datadir, 'config_test.ini')
+    cie = ConfigIniEnv([ini_filename])
+    assert cie.get('bar') == 'test1,test2'
+
+
 def test_ConfigEnvFileEnv(datadir):
     env_filename = os.path.join(datadir, '.env')
     cefe = ConfigEnvFileEnv(['/does/not/exist/.env', env_filename])
