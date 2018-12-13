@@ -1,6 +1,23 @@
 History
 =======
 
+1.0 (In development)
+--------------------
+
+Features:
+
+
+Fixes:
+
+* Dropped support for Python 3.3 and added support for Python 3.7. Thank you,
+  pjz! (#68)
+
+* Fixed list parsing and file discovery in ConfigIniEnv so they match the
+  docs and are more consistent with other envs. Thank you, apollo13! (#71)
+
+* Added a ``.basic_config()`` for fast opinionated setup.
+
+
 0.9 (April 7th, 2017)
 ---------------------
 
