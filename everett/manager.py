@@ -16,7 +16,6 @@ import sys
 import types
 
 from configobj import ConfigObj
-import six
 
 from everett import (
     ConfigurationError,
@@ -177,7 +176,7 @@ def listify(thing):
     """
     if thing is None:
         return []
-    if isinstance(thing, six.string_types):
+    if isinstance(thing, str):
         return [thing]
     return thing
 
@@ -739,7 +738,7 @@ class NamespacedConfig(ConfigManagerBase):
         :arg namespace: the namespace for the key--different environments
             use this differently
 
-        :arg default: the default value (if any); must be a string that is
+        :arg default: the default value (if any); this must be a string that is
             parseable by the specified parser
 
         :arg alternate_keys: the list of alternate keys to look up;
@@ -872,7 +871,7 @@ class ConfigManager(ConfigManagerBase):
         :arg namespace: the namespace for the key--different environments
             use this differently
 
-        :arg default: the default value (if any); must be a string that is
+        :arg default: the default value (if any); this must be a string that is
             parseable by the specified parser; if no default is provided, this
             will raise an error or return ``everett.NO_VALUE`` depending on
             the value of ``raise_error``
@@ -913,7 +912,11 @@ class ConfigManager(ConfigManagerBase):
             config = ConfigManager([])
 
             # Use the special bool parser
+            DEBUG = config('DEBUG', default='false', parser=bool)
             DEBUG = config('DEBUG', default='True', parser=bool)
+            DEBUG = config('DEBUG', default='true', parser=bool)
+            DEBUG = config('DEBUG', default='yes', parser=bool)
+            DEBUG = config('DEBUG', default='y', parser=bool)
 
             # Use the list of parser
             from everett.manager import ListOf
@@ -925,16 +928,17 @@ class ConfigManager(ConfigManagerBase):
             PASSWORD = config('PASSWORD', alternate_keys=['SECRET'])
 
 
-        The default value should always be a string that is parseable by the
-        parser. This simplifies some things because then default values are
-        **always** strings and parseable by parsers. It's not the case that in
-        some places they're strings and some places they're parsed values.
+        The default value should **always** be a string that is parseable by the
+        parser. This simplifies thinking about values since **all** values
+        are strings that are parsed by the parser rather than default values
+        do one thing and non-default values doa nother. Further, it simplifies
+        documentation for the user since the default value is an example value.
 
         The parser can be any callable that takes a string value and returns a
         parsed value.
 
         """
-        if not (default is NO_VALUE or isinstance(default, six.string_types)):
+        if not (default is NO_VALUE or isinstance(default, str)):
             raise ConfigurationError(
                 'default value %r is not a string' % (default,)
             )
@@ -975,7 +979,7 @@ class ConfigManager(ConfigManagerBase):
                         # Re-raise ConfigurationError and friends since that's
                         # what we want to be raising.
                         raise
-                    except Exception as orig_exc:
+                    except Exception:
                         exc_info = sys.exc_info()
                         msg = build_msg(
                             '%(class)s: %(msg)s' % {
@@ -991,19 +995,7 @@ class ConfigManager(ConfigManagerBase):
                             self.doc
                         )
 
-                        if six.PY3:
-                            # Python 3 has exception chaining, so this is easy peasy
-                            raise InvalidValueError(msg, namespace, key, parser)
-                        else:
-                            # Python 2 does not have exception chaining, so we're going
-                            # to break our promise that this always returns a
-                            # ConfigurationError, modify the message and then raise it
-                            # again.
-                            if orig_exc.args:
-                                orig_exc.args = tuple([msg] + list(orig_exc.args[1:]))
-                            else:
-                                orig_exc.args = tuple(msg)
-                            raise
+                        raise InvalidValueError(msg, namespace, key, parser)
 
         # Return the default if there is one
         if default is not NO_VALUE:
@@ -1013,7 +1005,7 @@ class ConfigManager(ConfigManagerBase):
                 # Re-raise ConfigurationError and friends since that's
                 # what we want to be raising.
                 raise
-            except Exception as orig_exc:
+            except Exception:
                 # FIXME(willkg): This is a programmer error--not a user
                 # configuration error. We might want to denote that better.
                 exc_info = sys.exc_info()
@@ -1031,19 +1023,7 @@ class ConfigManager(ConfigManagerBase):
                     self.doc
                 )
 
-                if six.PY3:
-                    # Python 3 has exception chaining, so this is easy peasy
-                    raise InvalidValueError(msg, namespace, key, parser)
-                else:
-                    # Python 2 does not have exception chaining, so we're going
-                    # to break our promise that this always returns a
-                    # ConfigurationError, modify the message and then raise it
-                    # again.
-                    if orig_exc.args:
-                        orig_exc.args = tuple([msg] + list(orig_exc.args[1:]))
-                    else:
-                        orig_exc.args = tuple(msg)
-                    raise
+                raise InvalidValueError(msg, namespace, key, parser)
 
         # No value specified and no default, so raise an error to the user
         if raise_error:

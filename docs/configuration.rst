@@ -246,70 +246,33 @@ Some more examples:
 Handling exceptions when extracting values
 ==========================================
 
-**In Python 3**
+Getting configuration should always return a subclass of
+:py:class:`everett.ConfigurationError`. This makes it easier to
+programmatically figure out what happened.
 
-    Getting configuration should always return a subclass of
-    :py:class:`everett.ConfigurationError`. This makes it easier to
-    programmatically figure out what happened.
+For example:
 
-    For example:
+.. literalinclude:: code/configuration_handling_exceptions.py
 
-    .. literalinclude:: code/configuration_handling_exceptions_3.py
+That logs this::
 
-    That logs this::
+   ERROR:root:gah!
+   Traceback (most recent call last):
+     File "/home/willkg/mozilla/everett/everett/manager.py", line 908, in __call__
+       return parser(val)
+     File "/home/willkg/mozilla/everett/everett/manager.py", line 109, in parse_bool
+       raise ValueError('"%s" is not a valid bool value' % val)
+   ValueError: "monkey" is not a valid bool value
 
-       ERROR:root:gah!
-       Traceback (most recent call last):
-         File "/home/willkg/mozilla/everett/everett/manager.py", line 908, in __call__
-           return parser(val)
-         File "/home/willkg/mozilla/everett/everett/manager.py", line 109, in parse_bool
-           raise ValueError('"%s" is not a valid bool value' % val)
-       ValueError: "monkey" is not a valid bool value
+   During handling of the above exception, another exception occurred:
 
-       During handling of the above exception, another exception occurred:
-
-       Traceback (most recent call last):
-         File "configuration_handling_exceptions.py", line 13, in <module>
-           some_val = config('debug_mode', parser=bool)
-         File "/home/willkg/mozilla/everett/everett/manager.py", line 936, in __call__
-           raise InvalidValueError(msg)
-       everett.InvalidValueError: ValueError: "monkey" is not a valid bool value
-       namespace=None key=debug_mode requires a value parseable by everett.manager.parse_bool
-
-
-**In Python 2**
-
-    In Python 2, parsers can raise any kind of exception and Everett can't
-    wrap that nicely in a :py:class:`everett.ConfigurationError` without
-    losing information, so it doesn't try.
-
-    If you're using Python 2, you'll have to catch everything and handle it
-    on your own.
-
-    For example:
-
-    .. literalinclude:: code/configuration_handling_exceptions_2.py
-
-
-    This logs this::
-
-       ERROR:root:gah!
-       Traceback (most recent call last):
-         File "./configuration_handling_exceptions_2.py", line 14, in <module>
-           some_val = config('debug_mode', parser=bool)
-         File "/home/willkg/mozilla/everett/everett/manager.py", line 908, in __call__
-           return parser(val)
-         File "/home/willkg/mozilla/everett/everett/manager.py", line 109, in parse_bool
-           raise ValueError('"%s" is not a valid bool value' % val)
-       ValueError: ValueError: "monkey" is not a valid bool value
-       namespace=None key=debug_mode requires a value parseable by everett.manager.parse_bool
-
-
-.. Note::
-
-   November 28th, 2016: This is irritating. If you have better ideas on how to
-   support Python 2 and 3, maintain the tracebacks, but yield a better exception
-   class, I'd love to know.
+   Traceback (most recent call last):
+     File "configuration_handling_exceptions.py", line 13, in <module>
+       some_val = config('debug_mode', parser=bool)
+     File "/home/willkg/mozilla/everett/everett/manager.py", line 936, in __call__
+       raise InvalidValueError(msg)
+   everett.InvalidValueError: ValueError: "monkey" is not a valid bool value
+   namespace=None key=debug_mode requires a value parseable by everett.manager.parse_bool
 
 
 Namespaces
@@ -356,15 +319,14 @@ Then you end up with ``SOURCE_DB_USERNAME`` and friends and
 Parsers
 =======
 
-Python types are parsers: str, int, unicode (Python 2 only), float
-------------------------------------------------------------------
+Python types are parsers: str, int, float
+-----------------------------------------
 
 Python types can convert strings to Python values. You can use these as
 parsers:
 
 * ``str``
 * ``int``
-* ``unicode`` (Python 2 only)
 * ``float``
 
 

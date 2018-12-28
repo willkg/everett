@@ -48,7 +48,7 @@ def init_app():
     config = ConfigManager.from_dict({})
     app_config = AppConfig(config)
 
-    logging.basicConfig(loglevel=app_config('loglevel'))
+    logging.basicConfig(level=app_config('loglevel'))
 
     if app_config('debug'):
         logging.info('debug mode!')

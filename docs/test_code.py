@@ -12,10 +12,10 @@ def main():
         # FIXME(willkg): We should do this better but it's running in the
         # environment that's running Sphinx.
         if fn.endswith('_3.py'):
-            print 'Skipping %s (python3)...' % fn
+            print('Skipping %s (python3)...' % fn)
             continue
 
-        print 'Running %s...' % fn
+        print('Running %s...' % fn)
         subprocess.check_output(['python', 'code/%s' % fn])
 
 

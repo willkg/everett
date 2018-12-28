@@ -16,8 +16,8 @@ covered here, add an item to the `issue tracker
 .. contents::
 
 
-Reducing repetition of configuration details
-============================================
+Centralizing configuration specification
+========================================
 
 It's easy to set up a :py:class:`everett.manager.ConfigManager` and then call it
 for configuration. However, with any non-trivial application, it's likely you're
@@ -40,7 +40,7 @@ Couple of nice things here. First, is that if you do Sphinx documentation, you
 can use ``autocomponent`` to automatically document your configuration based on
 the code. Second, you can use
 :py:meth:`everett.component.RequiredConfigMixin.get_runtime_config` to print out
-the runtime configuratino at startup.
+the runtime configuration at startup.
 
 
 Using components that share configuration by passing arguments

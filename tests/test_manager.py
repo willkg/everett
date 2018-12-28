@@ -6,7 +6,6 @@ import argparse
 import os
 
 import pytest
-import six
 
 from everett import (
     ConfigurationError,
@@ -96,12 +95,8 @@ def test_parse_bool_with_config():
     })
 
     # Test key is there, but value is bad
-    if six.PY3:
-        with pytest.raises(InvalidValueError) as excinfo:
-            config('foo', parser=bool)
-    else:
-        with pytest.raises(ValueError) as excinfo:
-            config('foo', parser=bool)
+    with pytest.raises(InvalidValueError) as excinfo:
+        config('foo', parser=bool)
     assert (
         str(excinfo.value) ==
         'ValueError: "bar" is not a valid bool value\n'
@@ -109,12 +104,8 @@ def test_parse_bool_with_config():
     )
 
     # Test key is not there and default is bad
-    if six.PY3:
-        with pytest.raises(InvalidValueError) as excinfo:
-            config('phil', default='foo', parser=bool)
-    else:
-        with pytest.raises(ValueError) as excinfo:
-            config('phil', default='foo', parser=bool)
+    with pytest.raises(InvalidValueError) as excinfo:
+        config('phil', default='foo', parser=bool)
     assert (
         str(excinfo.value) ==
         'ValueError: "foo" is not a valid bool value\n'
@@ -141,30 +132,19 @@ def test_parse_class_config():
         'bar_cls': 'doesnotexist.class',
     })
 
-    if six.PY3:
-        with pytest.raises(InvalidValueError) as exc_info:
-            config('foo_cls', parser=parse_class)
-    else:
-        with pytest.raises(ValueError) as exc_info:
-            config('foo_cls', parser=parse_class)
+    with pytest.raises(InvalidValueError) as exc_info:
+        config('foo_cls', parser=parse_class)
     assert (
         str(exc_info.value) ==
         'ValueError: "doesnotexist" is not a valid member of hashlib\n'
         'namespace=None key=foo_cls requires a value parseable by everett.manager.parse_class'
     )
 
-    if six.PY3:
-        with pytest.raises(InvalidValueError) as exc_info:
-            config('bar_cls', parser=parse_class)
-    else:
-        with pytest.raises(ImportError) as exc_info:
-            config('bar_cls', parser=parse_class)
+    with pytest.raises(InvalidValueError) as exc_info:
+        config('bar_cls', parser=parse_class)
     assert (
         str(exc_info.value) in
         [
-            # Python 2
-            'ImportError: No module named doesnotexist\n'
-            'namespace=None key=bar_cls requires a value parseable by everett.manager.parse_class',
             # Python 3
             'ImportError: No module named \'doesnotexist\'\n'
             'namespace=None key=bar_cls requires a value parseable by everett.manager.parse_class',
@@ -199,12 +179,8 @@ def test_ListOf_error():
     config = ConfigManager.from_dict({
         'bools': 't,f,badbool'
     })
-    if six.PY3:
-        with pytest.raises(InvalidValueError) as exc_info:
-            config('bools', parser=ListOf(bool))
-    else:
-        with pytest.raises(ValueError) as exc_info:
-            config('bools', parser=ListOf(bool))
+    with pytest.raises(InvalidValueError) as exc_info:
+        config('bools', parser=ListOf(bool))
 
     assert (
         str(exc_info.value) ==
@@ -438,18 +414,16 @@ def test_config():
     )
 
 
-@pytest.mark.skipif(six.PY2, reason='requires python 3')
 def test_invalidvalueerror():
     config = ConfigManager.from_dict({
         'foo_bar': 'bat'
     })
-    if six.PY3:
-        with pytest.raises(InvalidValueError) as excinfo:
-            config('bar', namespace='foo', parser=bool)
+    with pytest.raises(InvalidValueError) as excinfo:
+        config('bar', namespace='foo', parser=bool)
 
-            assert excinfo.value.namespace == 'foo'
-            assert excinfo.value.key == 'bar'
-            assert excinfo.value.parser == bool
+        assert excinfo.value.namespace == 'foo'
+        assert excinfo.value.key == 'bar'
+        assert excinfo.value.parser == bool
 
 
 def test_configurationmissingerror():
@@ -505,12 +479,8 @@ def test_config_manager_doc():
     )
 
     # Test ConfigManager doc shows up
-    if six.PY3:
-        with pytest.raises(ConfigurationError) as exc_info:
-            config('foo', parser=int)
-    else:
-        with pytest.raises(ValueError) as exc_info:
-            config('foo', parser=int)
+    with pytest.raises(ConfigurationError) as exc_info:
+        config('foo', parser=int)
     assert(
         str(exc_info.value) ==
         'ValueError: invalid literal for int() with base 10: \'bar\'\n'
@@ -519,12 +489,8 @@ def test_config_manager_doc():
     )
 
     # Test config doc and ConfigManager doc show up
-    if six.PY3:
-        with pytest.raises(ConfigurationError) as exc_info:
-            config('foo', parser=int, doc='Port to listen on.')
-    else:
-        with pytest.raises(ValueError) as exc_info:
-            config('foo', parser=int, doc='Port to listen on.')
+    with pytest.raises(ConfigurationError) as exc_info:
+        config('foo', parser=int, doc='Port to listen on.')
     assert(
         str(exc_info.value) ==
         'ValueError: invalid literal for int() with base 10: \'bar\'\n'
