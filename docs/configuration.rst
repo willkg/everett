@@ -319,8 +319,8 @@ Then you end up with ``SOURCE_DB_USERNAME`` and friends and
 Parsers
 =======
 
-Python types are parsers: str, int, float
------------------------------------------
+Python types are parsers: str, int, float, pathlib.Path
+-------------------------------------------------------
 
 Python types can convert strings to Python values. You can use these as
 parsers:
@@ -328,6 +328,7 @@ parsers:
 * ``str``
 * ``int``
 * ``float``
+* ``pathlib.Path``
 
 
 bools
