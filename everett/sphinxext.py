@@ -134,7 +134,7 @@ from docutils.statemachine import ViewList
 from sphinx import addnodes
 from sphinx.directives import ObjectDescription
 from sphinx.domains import Domain, ObjType
-from sphinx.locale import l_, _
+from sphinx.locale import _
 from sphinx.roles import XRefRole
 from sphinx.util.docfields import TypedField
 from sphinx.util.docstrings import prepare_docstring
@@ -182,7 +182,7 @@ class EverettComponent(ObjectDescription):
     """
 
     doc_field_types = [
-        TypedField('options', label=l_('Options'),
+        TypedField('options', label=_('Options'),
                    names=('option', 'opt'),
                    typerolename='obj', typenames=('parser',),
                    can_collapse=True),
@@ -244,7 +244,7 @@ class EverettDomain(Domain):
     label = 'Everett'
 
     object_types = {
-        'component': ObjType(l_('component'), 'comp'),
+        'component': ObjType(_('component'), 'comp'),
     }
     directives = {
         'component': EverettComponent,
