@@ -13,16 +13,20 @@ Everett is a Python configuration library for your app.
 Goals
 =====
 
-This library tries to do configuration with minimal "fanciness".
+Goals of Everett:
 
-Configuration with Everett:
+1. flexible configuration from multiple configured environments
+2. easy testing with configuration
+3. easy documentation of configuration for users
+
+From that, Everett has the following features:
 
 * is composeable and flexible
 * makes it easier to provide helpful error messages for users trying to
   configure your software
 * supports auto-documentation of configuration with a Sphinx
   ``autocomponent`` directive
-* supports easy testing with configuration override
+* has an API for testing configuration variations in your tests
 * can pull configuration from a variety of specified sources (environment,
   ini files, dict, write-your-own)
 * supports parsing values (bool, int, lists of things, classes,
@@ -56,8 +60,9 @@ Quick start
 Fast start example
 ------------------
 
-You have an app and want it to look for configuration in an ``.env`` file then
-the environment. You can do this::
+You have an app and want it to look for configuration first in an ``.env``
+file in the current working directory, then then in the process environment.
+You can do this::
 
     from everett.manager import ConfigManager
 
@@ -73,7 +78,7 @@ When you outgrow that or need different variations of it, you can change
 that to creating a ``ConfigManager`` from scratch.
 
 
-More control example
+More complex example
 --------------------
 
 We have an app and want to pull configuration from an INI file stored in
@@ -96,11 +101,11 @@ First, we set up our ``ConfigManager``::
         return ConfigManager(
             # Specify one or more configuration environments in
             # the order they should be checked
-            [
-                # Looks in OS environment first
+            environments=[
+                # Look in OS process environment first
                 ConfigOSEnv(),
 
-                # Looks in INI files in order specified
+                # Look in INI files in order specified
                 ConfigIniEnv([
                     os.environ.get('MYAPP_INI'),
                     '~/.myapp.ini',
@@ -108,10 +113,11 @@ First, we set up our ``ConfigManager``::
                 ]),
             ],
 
-            # Make it easy for users to find your configuration
-            # docs
+            # Provide users a link to documentation for when they hit
+            # configuration errors
             doc='Check https://example.com/configuration for docs.'
         )
+
 
 Then we use it::
 
@@ -120,15 +126,10 @@ Then we use it::
             doc='Switch debug mode on and off.')
 
 
-    def main(args):
-        config = get_config()
+    config = get_config()
 
-        if is_debug(config):
-            print('DEBUG MODE ON!')
-
-
-    if __name__ == '__main__':
-        sys.exit(main(sys.argv[1:]))
+    if is_debug(config):
+        print('DEBUG MODE ON!')
 
 
 Let's write some tests that verify behavior based on the ``debug``
@@ -142,6 +143,7 @@ configuration value::
     @config_override(DEBUG='true')
     def test_debug_true():
         assert is_debug(get_config()) is True
+
 
     @config_override(DEBUG='false')
     def test_debug_false():
@@ -158,13 +160,80 @@ the documentation for the configuration option and the ``ConfigManager``::
     Check https://example.com/configuration for docs.
 
 
-What can you use Everett with
------------------------------
+Wrapping configuration in a configuration class
+-----------------------------------------------
 
-Everett works with frameworks that have configuration infrastructure like
-Django and Flask.
+Everett supports wrapping your configuration in an instance. Let's rewrite
+the above example using a configuration class.
 
-Everett works with non-web things like scripts and servers and other things.
+First, create a configuration class::
+
+    import os
+    import sys
+
+    from everett.component import RequiredConfigMixin, ConfigOptions
+    from everett.manager import ConfigManager, ConfigOSEnv, ConfigIniEnv
+
+
+    class AppConfig(RequiredConfigMixin):
+        required_config = ConfigOptions()
+        required_config.add_option(
+            'debug',
+            parser=bool,
+            default='false',
+            doc='Switch debug mode on and off.')
+        )
+    
+
+Then we set up our ``ConfigManager``::
+
+    def get_config():
+        manager = ConfigManager(
+            # Specify one or more configuration environments in
+            # the order they should be checked
+            environments=[
+                # Look in OS process environment first
+                ConfigOSEnv(),
+
+                # Look in INI files in order specified
+                ConfigIniEnv([
+                    os.environ.get('MYAPP_INI'),
+                    '~/.myapp.ini',
+                    '/etc/myapp.ini'
+                ]),
+            ],
+
+            # Provide users a link to documentation for when they hit
+            # configuration errors
+            doc='Check https://example.com/configuration for docs.'
+        )
+
+        # Bind the manager to the configuration class
+        return manager.with_options(AppConfig())
+
+
+Then use it::
+
+    config = get_config()
+
+    if config('debug'):
+        print('DEBUG MODE ON!')
+
+
+Further, you can auto-generate configuration documentation by including the
+``everett.sphinxext`` Sphinx extension and using the ``autocomponent``
+directive::
+
+    .. autocomponent:: path.to.AppConfig
+
+
+That kind of looks the same, but it has a few niceties:
+
+1. your application configuration is centralized in one place instead
+   of spread out across your code base
+
+2. you can use the ``autocomponent`` Sphinx directive to auto-generate
+   configuration documentation for your users
 
 
 Everett components
@@ -260,6 +329,7 @@ Run::
     $ git clone https://github.com/willkg/everett
 
     # Create a virtualenvironment
+    $ mkvirtualenv --python /usr/bin/python3 everett
     ...
 
     # Install Everett and dev requirements

@@ -4,13 +4,17 @@ History
 1.0 (In development)
 --------------------
 
+Backwards incompatible changes:
+
+* Dropped support for Python 3.3 and added support for Python 3.7. Thank you,
+  pjz! (#68)
+
+* Dropped support for Python 2.7. (#73)
+
 Features:
 
 
 Fixes:
-
-* Dropped support for Python 3.3 and added support for Python 3.7. Thank you,
-  pjz! (#68)
 
 * Fixed list parsing and file discovery in ConfigIniEnv so they match the
   docs and are more consistent with other envs. Thank you, apollo13! (#71)

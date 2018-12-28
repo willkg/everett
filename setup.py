@@ -33,7 +33,6 @@ setup(
     author_email='willkg@mozilla.com',
     url='https://github.com/willkg/everett',
     install_requires=[
-        'six',
         'configobj',
     ],
     packages=[
@@ -51,12 +50,10 @@ setup(
         'Intended Audience :: Developers',
         'License :: OSI Approved :: Mozilla Public License 2.0 (MPL 2.0)',
         'Natural Language :: English',
-        'Programming Language :: Python :: 2',
-        'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.3',
         'Programming Language :: Python :: 3.4',
         'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
+        'Programming Language :: Python :: 3.7',
     ],
 )

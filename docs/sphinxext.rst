@@ -2,7 +2,8 @@
 Using the Sphinx extension
 ==========================
 
-No one likes to spend hours updating configuration documentation.
+No one likes to spend hours updating configuration documentation. Often, it's
+accidentally forgotten or overlooked when maintaining a project.
 
 No one likes to spend hours trying to get something to work only to discover the
 configuration documentation is out of date, missing important information, or
