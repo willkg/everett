@@ -326,6 +326,11 @@ Run::
 
     $ pip install everett
 
+If you want to use the ``ConfigIniEnv``, you need to install its requirements
+as well::
+
+    $ pip install everett[ini]
+
 
 Install for hacking
 -------------------
