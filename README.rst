@@ -89,12 +89,18 @@ We want to pull infrastructure values from the environment.
 
 Values from the environment should override values from the INI file.
 
-First, we set up our ``ConfigManager``::
+First, we need to install the additional requirements for INI file
+environments::
+
+    pip install everett[ini]
+
+Then we set up our ``ConfigManager``::
 
     import os
     import sys
 
-    from everett.manager import ConfigManager, ConfigOSEnv, ConfigIniEnv
+    from everett.ext.inifile import ConfigIniEnv
+    from everett.manager import ConfigManager, ConfigOSEnv
 
 
     def get_config():
@@ -172,7 +178,8 @@ First, create a configuration class::
     import sys
 
     from everett.component import RequiredConfigMixin, ConfigOptions
-    from everett.manager import ConfigManager, ConfigOSEnv, ConfigIniEnv
+    from everett.ext.inifile import ConfigIniEnv
+    from everett.manager import ConfigManager, ConfigOSEnv
 
 
     class AppConfig(RequiredConfigMixin):
@@ -318,6 +325,11 @@ Install from PyPI
 Run::
 
     $ pip install everett
+
+If you want to use the ``ConfigIniEnv``, you need to install its requirements
+as well::
+
+    $ pip install everett[ini]
 
 
 Install for hacking

@@ -32,9 +32,10 @@ setup(
     author="Will Kahn-Greene",
     author_email='willkg@mozilla.com',
     url='https://github.com/willkg/everett',
-    install_requires=[
-        'configobj',
-    ],
+    install_requires=[],
+    extras_require={
+        'ini': ['configobj'],
+    },
     packages=[
         'everett',
     ],

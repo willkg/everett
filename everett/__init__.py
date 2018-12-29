@@ -3,6 +3,15 @@
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 
+__author__ = 'Will Kahn-Greene'
+__email__ = 'willkg@mozilla.com'
+
+# yyyymmdd
+__releasedate__ = ''
+# x.y or x.y.dev0
+__version__ = '1.0.dev0'
+
+
 # NoValue instances are always false
 class NoValue(object):
     def __nonzero__(self):
@@ -49,12 +58,3 @@ class ConfigurationMissingError(DetailedConfigurationError):
 class InvalidValueError(DetailedConfigurationError):
     """Indicates that the value is not valid"""
     pass
-
-
-__author__ = 'Will Kahn-Greene'
-__email__ = 'willkg@mozilla.com'
-
-# yyyymmdd
-__releasedate__ = ''
-# x.y or x.y.dev0
-__version__ = '1.0.dev0'

@@ -11,10 +11,24 @@ Backwards incompatible changes:
 
 * Dropped support for Python 2.7. (#73)
 
+* Moved ``ConfigIniEnv`` to a different module. Now you need to import it
+  like this::
+
+      from everett.ext.inifile import ConfigIniEnv
+
+  (#79)
+
 Features:
 
 
 Fixes:
+
+* Everett no longer requires ``configobj``--it's now optional. If you use
+  ``ConfigIniEnv``, you can install it with::
+
+      $ pip install everett[ini]
+
+  (#79)
 
 * Fixed list parsing and file discovery in ConfigIniEnv so they match the
   docs and are more consistent with other envs. Thank you, apollo13! (#71)

@@ -104,7 +104,7 @@ ConfigEnvFileEnv
 ConfigIniEnv
 ------------
 
-.. autoclass:: everett.manager.ConfigIniEnv
+.. autoclass:: everett.ext.inifile.ConfigIniEnv
    :noindex:
 
 

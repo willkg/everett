@@ -1,7 +1,7 @@
 import os
+from everett.ext.inifile import ConfigIniEnv
 from everett.manager import (
     ConfigDictEnv,
-    ConfigIniEnv,
     ConfigManager,
     ConfigOSEnv
 )

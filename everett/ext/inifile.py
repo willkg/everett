@@ -1,0 +1,146 @@
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+"""This module holds the ConfigIniEnv environment. This requires you
+to install the configobj library.
+
+"""
+
+import os
+
+from configobj import ConfigObj
+
+from everett.manager import get_key_from_envs, listify
+
+
+class ConfigIniEnv(object):
+    """Source for pulling configuration from INI files
+
+    This requires the "configobj" Python library. You can install that with::
+
+        pip install everett[ini]
+
+    Takes a path or list of possible paths to look for the INI file and uses
+    the first one it finds.
+
+    If it finds no INI files in the possible paths, then this configuration
+    source will be a no-op.
+
+    This will expand ``~`` as well as work relative to the current working
+    directory.
+
+    This example looks just for the INI file specified in the environment::
+
+        from everett.manager import ConfigManager
+        from everett.ext.inifile import ConfigIniEnv
+
+        config = ConfigManager([
+            ConfigIniEnv(os.environ.get('FOO_INI'))
+        ])
+
+
+    If there's no ``FOO_INI`` in the environment, then the path will be
+    ignored.
+
+    Here's an example that looks for the INI file specified in the environment
+    variable ``FOO_INI`` and failing that will look for ``.antenna.ini`` in the
+    user's home directory::
+
+        from everett.manager import ConfigManager
+        from everett.ext.inifile import ConfigIniEnv
+
+        config = ConfigManager([
+            ConfigIniEnv([
+                os.environ.get('FOO_INI'),
+                '~/.antenna.ini'
+            ])
+        ])
+
+
+    This example looks for a ``config/local.ini`` file which overrides values
+    in a ``config/base.ini`` file both are relative to the current working
+    directory::
+
+        from everett.manager import ConfigManager
+        from everett.ext.inifile import ConfigIniEnv
+
+        config = ConfigManager([
+            ConfigIniEnv('config/local.ini'),
+            ConfigIniEnv('config/base.ini')
+        ])
+
+
+    Note how you can have multiple ``ConfigIniEnv`` files and this is how you
+    can set Everett up to have values in one INI file override values in
+    another INI file.
+
+    INI files must have a "main" section. This is where keys that aren't in a
+    namespace are placed.
+
+    Minimal INI file::
+
+        [main]
+
+
+    In the INI file, namespace is a section. So key "user" in namespace "foo"
+    is::
+
+        [foo]
+        user=someval
+
+
+    Everett uses configobj, so it supports nested sections like this::
+
+        [main]
+        foo=bar
+
+        [namespace]
+        foo2=bar2
+
+          [[namespace2]]
+          foo3=bar3
+
+
+    Which gives you these:
+
+    * ``FOO``
+    * ``NAMESPACE_FOO2``
+    * ``NAMESPACE_NAMESPACE2_FOO3``
+
+    See more details here:
+    http://configobj.readthedocs.io/en/latest/configobj.html#the-config-file-format
+
+    """
+    def __init__(self, possible_paths):
+        self.cfg = {}
+        possible_paths = listify(possible_paths)
+
+        for path in possible_paths:
+            if not path:
+                continue
+
+            path = os.path.abspath(os.path.expanduser(path.strip()))
+            if path and os.path.isfile(path):
+                self.cfg.update(self.parse_ini_file(path))
+                break
+
+    def parse_ini_file(self, path):
+        cfgobj = ConfigObj(path, list_values=False)
+
+        def extract_section(namespace, d):
+            cfg = {}
+            for key, val in d.items():
+                if isinstance(d[key], dict):
+                    cfg.update(extract_section(namespace + [key], d[key]))
+                else:
+                    cfg['_'.join(namespace + [key]).upper()] = val
+
+            return cfg
+
+        return extract_section([], cfgobj.dict())
+
+    def get(self, key, namespace=None):
+        # NOTE(willkg): The "main" section is considered the root mainspace.
+        namespace = namespace or ['main']
+        return get_key_from_envs(self.cfg, key, namespace)
