@@ -2,8 +2,11 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-"""This module holds the ConfigIniEnv environment. This requires you
-to install the configobj library.
+"""This module holds the ConfigIniEnv environment.
+
+To use this, you must install the optional requirements::
+
+    $ pip install everett[ini]
 
 """
 
@@ -17,12 +20,12 @@ from everett.manager import get_key_from_envs, listify
 class ConfigIniEnv(object):
     """Source for pulling configuration from INI files
 
-    This requires the "configobj" Python library. You can install that with::
+    This requires optional dependencies. You can install them with::
 
-        pip install everett[ini]
+        $ pip install everett[ini]
 
-    Takes a path or list of possible paths to look for the INI file and uses
-    the first one it finds.
+    Takes a path or list of possible paths to look for a INI file. It uses
+    the first INI file it can find.
 
     If it finds no INI files in the possible paths, then this configuration
     source will be a no-op.

@@ -35,6 +35,7 @@ setup(
     install_requires=[],
     extras_require={
         'ini': ['configobj'],
+        'yaml': ['PyYAML']
     },
     packages=[
         'everett',

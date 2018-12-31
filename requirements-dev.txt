@@ -1,4 +1,4 @@
--e .[ini]
+-e .[ini,yaml]
 
 pytest==4.0.2
 pytest-wholenodeid==0.2

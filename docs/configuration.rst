@@ -87,38 +87,45 @@ are safe in these ways.
 Configuration sources
 =====================
 
-ConfigOSEnv
------------
+Dict (ConfigDictEnv)
+--------------------
+
+.. autoclass:: everett.manager.ConfigDictEnv
+   :noindex:
+
+
+Process environment (ConfigOSEnv)
+---------------------------------
 
 .. autoclass:: everett.manager.ConfigOSEnv
    :noindex:
 
 
-ConfigEnvFileEnv
-----------------
+ENV files (ConfigEnvFileEnv)
+----------------------------
 
 .. autoclass:: everett.manager.ConfigEnvFileEnv
    :noindex:
 
 
-ConfigIniEnv
-------------
-
-.. autoclass:: everett.ext.inifile.ConfigIniEnv
-   :noindex:
-
-
-ConfigObjEnv
-------------
+Python objects (ConfigObjEnv)
+-----------------------------
 
 .. autoclass:: everett.manager.ConfigObjEnv
    :noindex:
 
 
-ConfigDictEnv
--------------
+INI files (ConfigIniEnv)
+------------------------
 
-.. autoclass:: everett.manager.ConfigDictEnv
+.. autoclass:: everett.ext.inifile.ConfigIniEnv
+   :noindex:
+
+
+YAML files (ConfigYamlEnv)
+--------------------------
+
+.. autoclass:: everett.ext.yamlfile.ConfigYamlEnv
    :noindex:
 
 
@@ -319,8 +326,8 @@ Then you end up with ``SOURCE_DB_USERNAME`` and friends and
 Parsers
 =======
 
-Python types are parsers: str, int, float, pathlib.Path
--------------------------------------------------------
+Python types like str, int, float, pathlib.Path
+-----------------------------------------------
 
 Python types can convert strings to Python values. You can use these as
 parsers:
@@ -354,8 +361,8 @@ string specifying a module and class and returns the class.
    :noindex:
 
 
-ListOf
-------
+ListOf(parser)
+--------------
 
 Everett provides a special ``everett.manager.ListOf`` parser which
 parses a list of some other type. For example::
