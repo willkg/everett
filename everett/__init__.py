@@ -7,9 +7,9 @@ __author__ = 'Will Kahn-Greene'
 __email__ = 'willkg@mozilla.com'
 
 # yyyymmdd
-__releasedate__ = ''
-# x.y or x.y.dev0
-__version__ = '1.0.dev0'
+__releasedate__ = '20190107'
+# x.y.z or x.y.z.dev0
+__version__ = '1.0.0'
 
 
 # NoValue instances are always false
