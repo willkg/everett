@@ -28,7 +28,7 @@ From that, Everett has the following features:
   ``autocomponent`` directive
 * has an API for testing configuration variations in your tests
 * can pull configuration from a variety of specified sources (environment,
-  ini files, dict, write-your-own)
+  INI files, YAML files, dict, write-your-own)
 * supports parsing values (bool, int, lists of things, classes,
   write-your-own)
 * supports key namespaces
