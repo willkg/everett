@@ -1,15 +1,15 @@
 History
 =======
 
-1.0 (In development)
---------------------
+1.0.0 (January 7th, 2019)
+-------------------------
 
 Backwards incompatible changes:
 
+* Dropped support for Python 2.7. Everett no longer supports Python 2. (#73)
+
 * Dropped support for Python 3.3 and added support for Python 3.7. Thank you,
   pjz! (#68)
-
-* Dropped support for Python 2.7. (#73)
 
 * Moved ``ConfigIniEnv`` to a different module. Now you need to import it
   like this::
@@ -20,6 +20,9 @@ Backwards incompatible changes:
 
 Features:
 
+* Everett now logs configuration discovery in the ``everett`` logger at the
+  ``logging.DEBUG`` level. This is helpful for trouble-shooting some kinds of
+  issues. (#74)
 
 Fixes:
 
@@ -33,7 +36,10 @@ Fixes:
 * Fixed list parsing and file discovery in ConfigIniEnv so they match the
   docs and are more consistent with other envs. Thank you, apollo13! (#71)
 
-* Added a ``.basic_config()`` for fast opinionated setup.
+* Added a ``.basic_config()`` for fast opinionated setup that uses the
+  process environment and a ``.env`` file in the current working directory.
+
+* Switching to semver.
 
 
 0.9 (April 7th, 2017)
