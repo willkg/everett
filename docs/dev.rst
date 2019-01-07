@@ -12,8 +12,8 @@ Release process
 
 3. Update version numbers in ``everett/__init__.py``.
 
-   1. Set ``__version__`` to something like ``0.4``.
-   2. Set ``__releasedate__`` to something like ``20120731``.
+   1. Set ``__version__`` to something like ``1.0.0`` (use semver).
+   2. Set ``__releasedate__`` to something like ``20190107``.
 
 4. Update ``HISTORY.rst``
 
@@ -28,18 +28,18 @@ Release process
 
 6. Tag the release::
 
-       $ git tag -a v0.4
+       $ git tag -a v1.0.0
 
    Copy the details from ``HISTORY.rst`` into the tag comment.
 
-7. Push everything::
-
-       $ git push --tags official master
-
-8. Update PyPI::
+7. Update PyPI::
 
        $ rm -rf dist/*
        $ python setup.py sdist bdist_wheel
        $ twine upload dist/*
+
+8. Push everything::
+
+       $ git push --tags official master
 
 9. Announce the release.
