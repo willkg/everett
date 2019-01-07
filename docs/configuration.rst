@@ -468,3 +468,17 @@ For example, say we wanted to implement a parser that returned yes/no/no-answer:
 Say you wanted to make a parser class that's line delimited:
 
 .. literalinclude:: code/configuration_parser2.py
+
+
+Trouble-shooting and logging what happened
+==========================================
+
+If you have a non-trivial Everett configuration, it might be difficult to
+figure out exactly why a key lookup failed.
+
+Everett logs to the ``everett`` logger at the ``logging.DEBUG`` level. You
+can enable this logging and get a clearer idea of what's going on.
+
+See `Python logging documentation
+<https://docs.python.org/3/library/logging.html>`_ for details on enabling
+logging.
