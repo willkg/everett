@@ -10,12 +10,16 @@ To use this, you must install the optional requirements::
 
 """
 
+import logging
 import os
 
 import yaml
 
-from everett import ConfigurationError
-from everett.manager import get_key_from_envs, listify
+from everett import ConfigurationError, NO_VALUE
+from everett.manager import generate_uppercase_key, get_key_from_envs, listify
+
+
+logger = logging.getLogger('everett')
 
 
 class ConfigYamlEnv(object):
@@ -105,6 +109,7 @@ class ConfigYamlEnv(object):
     """
     def __init__(self, possible_paths):
         self.cfg = {}
+        self.path = None
         possible_paths = listify(possible_paths)
 
         for path in possible_paths:
@@ -113,8 +118,12 @@ class ConfigYamlEnv(object):
 
             path = os.path.abspath(os.path.expanduser(path.strip()))
             if path and os.path.isfile(path):
+                self.path = path
                 self.cfg = self.parse_yaml_file(path)
                 break
+
+        if not self.path:
+            logger.debug('No YAML file found: %s', possible_paths)
 
     def parse_yaml_file(self, path):
         with open(path, 'r') as fp:
@@ -146,4 +155,12 @@ class ConfigYamlEnv(object):
         return traverse([], data)
 
     def get(self, key, namespace=None):
-        return get_key_from_envs(self.cfg, key, namespace)
+        if not self.path:
+            return NO_VALUE
+
+        logger.debug('Searching %r for key: %s, namepsace: %s', self, key, namespace)
+        full_key = generate_uppercase_key(key, namespace)
+        return get_key_from_envs(self.cfg, full_key)
+
+    def __repr__(self):
+        return '<ConfigYamlEnv: %s>' % self.path

@@ -21,6 +21,7 @@ from everett.manager import (
     ConfigObjEnv,
     ListOf,
     config_override,
+    generate_uppercase_key,
     get_key_from_envs,
     get_parser,
     listify,
@@ -323,29 +324,38 @@ def test_parse_env_file():
     )
 
 
+@pytest.mark.parametrize('key, ns, expected', [
+    ('k', None, 'K'),
+    ('a_b', None, 'A_B'),
+
+    ('k', 'ns', 'NS_K'),
+
+    ('k', ['ns1', 'ns2'], 'NS1_NS2_K'),
+    ('k', ['ns1', '', 'ns2'], 'NS1_NS2_K'),
+])
+def test_generate_uppercase_key(key, ns, expected):
+    full_key = generate_uppercase_key(key, ns)
+    assert full_key == expected
+
+
 def test_get_key_from_envs():
-    assert get_key_from_envs({'K': 'v'}, 'k') == 'v'
+    assert get_key_from_envs({'K': 'v'}, 'K') == 'v'
     assert get_key_from_envs([{'K': 'v'},
-                              {'L': 'w'}], 'l') == 'w'
-    assert get_key_from_envs({'T_T': 'sad'},
-                             't', namespace='t') == 'sad'
-    assert get_key_from_envs({'O_A_O': 'strange'},
-                             'o', namespace=['o', 'a']) == 'strange'
-    assert get_key_from_envs({'K': 'v'}, 'q') is NO_VALUE
+                              {'L': 'w'}], 'L') == 'w'
+    assert get_key_from_envs({'K': 'v'}, 'Q') is NO_VALUE
     # first match wins
-    assert get_key_from_envs([
+    envs = [
         {'K': 'v'},
         {'L': 'w'},
         {'K': 'z'},
-    ], 'k') == 'v'
+    ]
+    assert get_key_from_envs(envs, 'K') == 'v'
     # works with reversed iterator
-    assert get_key_from_envs(reversed([
-        {'L': 'v'}, {'L': 'w'},
-    ]), 'l') == 'w'
+    envs = reversed([{'L': 'v'}, {'L': 'w'}])
+    assert get_key_from_envs(envs, 'L') == 'w'
     # works with os.environ
     os.environ['DUDE_ABIDES'] = 'yeah, man'
-    assert get_key_from_envs(os.environ,
-                             'abides', namespace='dude') == 'yeah, man'
+    assert get_key_from_envs(os.environ, 'DUDE_ABIDES') == 'yeah, man'
 
 
 def test_config():
