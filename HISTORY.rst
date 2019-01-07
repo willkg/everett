@@ -24,6 +24,17 @@ Features:
   ``logging.DEBUG`` level. This is helpful for trouble-shooting some kinds of
   issues. (#74)
 
+* Everett now has a YAML configuration environment. In order to use it, you
+  need to install its requirements::
+
+      $ pip install everett[yaml]
+
+  Then you can import it like this::
+
+      from everett.ext.yamlfile import ConfigYamlEnv
+
+  (#72)
+
 Fixes:
 
 * Everett no longer requires ``configobj``--it's now optional. If you use
