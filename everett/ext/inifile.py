@@ -10,11 +10,16 @@ To use this, you must install the optional requirements::
 
 """
 
+import logging
 import os
 
 from configobj import ConfigObj
 
-from everett.manager import get_key_from_envs, listify
+from everett import NO_VALUE
+from everett.manager import generate_uppercase_key, get_key_from_envs, listify
+
+
+logger = logging.getLogger('everett')
 
 
 class ConfigIniEnv(object):
@@ -117,6 +122,7 @@ class ConfigIniEnv(object):
     """
     def __init__(self, possible_paths):
         self.cfg = {}
+        self.path = None
         possible_paths = listify(possible_paths)
 
         for path in possible_paths:
@@ -125,8 +131,12 @@ class ConfigIniEnv(object):
 
             path = os.path.abspath(os.path.expanduser(path.strip()))
             if path and os.path.isfile(path):
+                self.path = path
                 self.cfg.update(self.parse_ini_file(path))
                 break
+
+        if not self.path:
+            logger.debug('No INI file found: %s', possible_paths)
 
     def parse_ini_file(self, path):
         cfgobj = ConfigObj(path, list_values=False)
@@ -144,6 +154,14 @@ class ConfigIniEnv(object):
         return extract_section([], cfgobj.dict())
 
     def get(self, key, namespace=None):
+        if not self.path:
+            return NO_VALUE
+
         # NOTE(willkg): The "main" section is considered the root mainspace.
         namespace = namespace or ['main']
-        return get_key_from_envs(self.cfg, key, namespace)
+        logger.debug('Searching %r for key: %s, namespace: %s', self, key, namespace)
+        full_key = generate_uppercase_key(key, namespace)
+        return get_key_from_envs(self.cfg, full_key)
+
+    def __repr__(self):
+        return '<ConfigIniEnv: %s>' % self.path

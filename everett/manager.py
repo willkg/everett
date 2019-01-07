@@ -10,6 +10,7 @@ configuration from specified sources in the order you specify.
 from functools import wraps
 import importlib
 import inspect
+import logging
 import os
 import re
 import sys
@@ -29,6 +30,8 @@ _CONFIG_OVERRIDE = []
 
 # Regex for valid keys in an env file
 ENV_KEY_RE = re.compile(r'^[a-z][a-z0-9_]*$', flags=re.IGNORECASE)
+
+logger = logging.getLogger('everett')
 
 
 def qualname(thing):
@@ -181,23 +184,26 @@ def listify(thing):
     return thing
 
 
-def get_key_from_envs(envs, key, namespace=None):
+def generate_uppercase_key(key, namespace=None):
+    if namespace:
+        namespace = [part for part in listify(namespace) if part]
+        key = '_'.join(namespace + [key])
+
+    key = key.upper()
+    return key
+
+
+def get_key_from_envs(envs, key):
     """Return the value of a key from the given dict respecting namespaces.
 
     Data can also be a list of data dicts.
 
     """
-    # if it barks like a dict, make it a list
-    # have to use `get` since dicts and lists
-    # both have __getitem__
+    # if it barks like a dict, make it a list have to use `get` since dicts and
+    # lists both have __getitem__
     if hasattr(envs, 'get'):
         envs = [envs]
 
-    if namespace:
-        namespace = listify(namespace)
-        key = '_'.join(namespace + [key])
-
-    key = key.upper()
     for env in envs:
         if key in env:
             return env[key]
@@ -245,7 +251,12 @@ class ConfigOverrideEnv(object):
         # Short-circuit to reduce overhead.
         if not _CONFIG_OVERRIDE:
             return NO_VALUE
-        return get_key_from_envs(reversed(_CONFIG_OVERRIDE), key, namespace)
+        full_key = generate_uppercase_key(key, namespace)
+        logger.debug('Searching %s for %s', self, full_key)
+        return get_key_from_envs(reversed(_CONFIG_OVERRIDE), full_key)
+
+    def __repr__(self):
+        return '<ConfigOverrideEnv>'
 
 
 class ConfigObjEnv(object):
@@ -292,12 +303,10 @@ class ConfigObjEnv(object):
         self.obj = obj
 
     def get(self, key, namespace=None):
-        if namespace is not None:
-            full_key = '_'.join(namespace) + '_' + key
-        else:
-            full_key = key
-
+        full_key = generate_uppercase_key(key, namespace)
         full_key = full_key.lower()
+
+        logger.debug('Searching %s for %s', self, full_key)
 
         # Build a map of lowercase -> actual key
         obj_keys = {
@@ -317,6 +326,9 @@ class ConfigObjEnv(object):
                 return str(val)
 
         return NO_VALUE
+
+    def __repr__(self):
+        return '<ConfigObjEnv>'
 
 
 class ConfigDictEnv(object):
@@ -377,9 +389,12 @@ class ConfigDictEnv(object):
         )
 
     def get(self, key, namespace=None):
-        if namespace is not None:
-            namespace = [part.upper() for part in listify(namespace)]
-        return get_key_from_envs(self.cfg, key.upper(), namespace)
+        full_key = generate_uppercase_key(key, namespace)
+        logger.debug('Searching %s for %s', self, full_key)
+        return get_key_from_envs(self.cfg, full_key)
+
+    def __repr__(self):
+        return '<ConfigDictEnv: %r>' % self.cfg
 
 
 class ConfigEnvFileEnv(object):
@@ -431,9 +446,11 @@ class ConfigEnvFileEnv(object):
         DB_PORT=5432
 
     """
-    data = None
 
     def __init__(self, possible_paths):
+        self.data = {}
+        self.path = None
+
         possible_paths = listify(possible_paths)
         for path in possible_paths:
             if not path:
@@ -441,15 +458,18 @@ class ConfigEnvFileEnv(object):
 
             path = os.path.abspath(os.path.expanduser(path.strip()))
             if path and os.path.isfile(path):
+                self.path = path
                 with open(path) as envfile:
                     self.data = parse_env_file(envfile)
                     break
 
     def get(self, key, namespace=None):
-        if not self.data:
-            return NO_VALUE
+        full_key = generate_uppercase_key(key, namespace)
+        logger.debug('Searching %s for %s', self, full_key)
+        return get_key_from_envs(self.data, full_key)
 
-        return get_key_from_envs(self.data, key, namespace)
+    def __repr__(self):
+        return '<ConfigEnvFileEnv: %s>' % self.path
 
 
 class ConfigOSEnv(object):
@@ -495,7 +515,12 @@ class ConfigOSEnv(object):
 
     """
     def get(self, key, namespace=None):
-        return get_key_from_envs(os.environ, key, namespace)
+        full_key = generate_uppercase_key(key, namespace)
+        logger.debug('Searching %s for %s', self, full_key)
+        return get_key_from_envs(os.environ, full_key)
+
+    def __repr__(self):
+        return '<ConfigOSEnv>'
 
 
 class ConfigManagerBase(object):
@@ -843,13 +868,17 @@ class ConfigManager(ConfigManagerBase):
             else:
                 use_namespace = namespace
 
+            logger.debug('Looking up key: %s, namespace: %s', possible_key, namespace)
+
             # Go through environments in reverse order
             for env in self.envs:
                 val = env.get(possible_key, use_namespace)
 
                 if val is not NO_VALUE:
                     try:
-                        return parser(val)
+                        parsed_val = parser(val)
+                        logger.debug('Returning raw: %r, parsed: %r', val, parsed_val)
+                        return parsed_val
                     except ConfigurationError:
                         # Re-raise ConfigurationError and friends since that's
                         # what we want to be raising.
@@ -875,7 +904,9 @@ class ConfigManager(ConfigManagerBase):
         # Return the default if there is one
         if default is not NO_VALUE:
             try:
-                return parser(default)
+                parsed_val = parser(default)
+                logger.debug('Returning default raw: %r, parsed: %r', default, parsed_val)
+                return parsed_val
             except ConfigurationError:
                 # Re-raise ConfigurationError and friends since that's
                 # what we want to be raising.
@@ -914,6 +945,7 @@ class ConfigManager(ConfigManagerBase):
 
             raise ConfigurationMissingError(msg, namespace, key, parser)
 
+        logger.debug('Found nothing--returning NO_VALUE')
         # Otherwise return NO_VALUE
         return NO_VALUE
 
