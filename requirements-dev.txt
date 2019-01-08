@@ -6,3 +6,4 @@ tox==3.6.1
 twine==1.12.1
 Sphinx==1.8.3
 flake8==3.6.0
+check-manifest==0.37

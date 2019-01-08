@@ -7,7 +7,7 @@
 
 import os
 import re
-from setuptools import setup
+from setuptools import find_packages, setup
 
 
 def get_version():
@@ -37,9 +37,7 @@ setup(
         'ini': ['configobj'],
         'yaml': ['PyYAML']
     },
-    packages=[
-        'everett',
-    ],
+    packages=find_packages(exclude=['tests*']),
     package_dir={
         'everett': 'everett'
     },
