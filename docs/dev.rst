@@ -22,9 +22,10 @@ Release process
 
 5. Verify correctness.
 
-   1. Run tests.
-   2. Build docs (this runs example code).
-   3. Verify all that works.
+   1. Run ``check-manifest``.
+   2. Run tests.
+   3. Build docs (this runs example code).
+   4. Verify all that works.
 
 6. Tag the release::
 

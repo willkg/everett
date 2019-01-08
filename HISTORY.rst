@@ -1,6 +1,16 @@
 History
 =======
 
+1.0.1 (In development)
+----------------------
+
+Fixes:
+
+* Docs issues.
+
+* Package missing ``everett.ext``. (#84)
+
+
 1.0.0 (January 7th, 2019)
 -------------------------
 
