@@ -38,7 +38,7 @@ setup(
         'yaml': ['PyYAML']
     },
     packages=[
-        'everett',
+        'everett', 'everett.ext',
     ],
     package_dir={
         'everett': 'everett'
