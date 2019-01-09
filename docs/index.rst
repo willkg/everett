@@ -10,7 +10,8 @@ Contents
    history
    configuration
    components
-   sphinxext
+   documenting
+   testing
    recipes
    library
    dev

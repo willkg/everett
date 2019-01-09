@@ -951,29 +951,7 @@ class ConfigManager(ConfigManagerBase):
 
 
 class ConfigOverride(object):
-    """Allows you to override config for writing tests
-
-    This can be used as a class decorator::
-
-        @config_override(FOO='bar', BAZ='bat')
-        class FooTestClass(object):
-            ...
-
-
-    This can be used as a function decorator::
-
-        @config_override(FOO='bar')
-        def test_foo():
-            ...
-
-
-    This can also be used as a context manager::
-
-        def test_foo():
-            with config_override(FOO='bar'):
-                ...
-
-    """
+    """Handles contexts and decoration for overriding config in testing"""
     def __init__(self, **cfg):
         self._cfg = cfg
 
@@ -1020,5 +998,28 @@ class ConfigOverride(object):
             return self.decorate(class_or_fun)
 
 
-# This gives it a better name
-config_override = ConfigOverride
+def config_override(**cfg):
+    """Allows you to override config for writing tests
+
+    This can be used as a class decorator::
+
+        @config_override(FOO='bar', BAZ='bat')
+        class FooTestClass(object):
+            ...
+
+
+    This can be used as a function decorator::
+
+        @config_override(FOO='bar')
+        def test_foo():
+            ...
+
+
+    This can also be used as a context manager::
+
+        def test_foo():
+            with config_override(FOO='bar'):
+                ...
+
+    """
+    return ConfigOverride(**cfg)

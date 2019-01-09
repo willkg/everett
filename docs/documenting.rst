@@ -1,6 +1,6 @@
-==========================
-Using the Sphinx extension
-==========================
+===========
+Documenting
+===========
 
 No one likes to spend hours updating configuration documentation. Often, it's
 accidentally forgotten or overlooked when maintaining a project.
