@@ -545,9 +545,6 @@ class ConfigManagerBase(object):
     def with_options(self, component):
         options = component.get_required_config()
         component_name = _get_component_name(component)
-
-        # If this is a config that's not nestable, we want to unwrap it one
-        # level because otherwise lookups won't work.
         return BoundConfig(self._get_base_config(), component_name, options)
 
     def with_namespace(self, namespace):
