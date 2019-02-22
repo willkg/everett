@@ -41,19 +41,6 @@ Everett is inspired by `python-decouple
 <https://configman.readthedocs.io/en/latest/>`_.
 
 
-Why not other libs?
-===================
-
-Most other libraries I looked at had one or more of the following issues:
-
-* were tied to a specific web app framework
-* didn't allow you to specify configuration sources
-* provided poor error messages when users configure things wrong
-* had a global configuration object
-* made it really hard to override specific configuration when writing tests
-* had no facilities for auto-generating configuration documentation
-
-
 Quick start
 ===========
 
@@ -71,7 +58,7 @@ You can do this::
 
 Then you can use it like this::
 
-    debug_mode = config('debug', parser=bool)
+    debug_mode = config('debug', default='False', parser=bool)
 
 
 When you outgrow that or need different variations of it, you can change
@@ -93,6 +80,7 @@ First, we need to install the additional requirements for INI file
 environments::
 
     pip install everett[ini]
+
 
 Then we set up our ``ConfigManager``::
 
@@ -128,7 +116,7 @@ Then we set up our ``ConfigManager``::
 Then we use it::
 
     def is_debug(config):
-        return config('debug', parser=bool,
+        return config('debug', default='False', parser=bool,
             doc='Switch debug mode on and off.')
 
 
@@ -156,8 +144,8 @@ configuration value::
         assert is_debug(get_config()) is False
 
 
-If the user sets ``DEBUG`` wrong, they get a helpful error message with
-the documentation for the configuration option and the ``ConfigManager``::
+If the user sets ``DEBUG`` with a bad value, they get a helpful error message
+with the documentation for the configuration option and the ``ConfigManager``::
 
     $ DEBUG=foo python myprogram.py
     <traceback>
@@ -166,11 +154,12 @@ the documentation for the configuration option and the ``ConfigManager``::
     Check https://example.com/configuration for docs.
 
 
-Wrapping configuration in a configuration class
------------------------------------------------
+Configuration classes
+---------------------
 
-Everett supports wrapping your configuration in an instance. Let's rewrite
-the above example using a configuration class.
+Everett supports centralizing your configuration in a class. Instead of having
+configuration-related bits defined across your codebase, you can define it in
+a class. Let's rewrite the above example using a configuration class.
 
 First, create a configuration class::
 
@@ -215,7 +204,9 @@ Then we set up our ``ConfigManager``::
             doc='Check https://example.com/configuration for docs.'
         )
 
-        # Bind the manager to the configuration class
+        # Apply the configuration class to the configuration manager
+        # so that it handles option properties like defaults, parsers,
+        # documentation, and so on.
         return manager.with_options(AppConfig())
 
 
@@ -234,7 +225,7 @@ directive::
     .. autocomponent:: path.to.AppConfig
 
 
-That kind of looks the same, but it has a few niceties:
+That has some niceties:
 
 1. your application configuration is centralized in one place instead
    of spread out across your code base
@@ -246,8 +237,9 @@ That kind of looks the same, but it has a few niceties:
 Everett components
 ------------------
 
-Everett supports components. Say your app needs to connect to RabbitMQ.
-With Everett, you can wrap the configuration up with the component::
+Everett supports components that require configuration. Say your app needs to
+connect to RabbitMQ. With Everett, you can define the component's configuration
+needs in the component class::
 
     from everett.component import RequiredConfigMixin, ConfigOptions
 
@@ -272,7 +264,7 @@ With Everett, you can wrap the configuration up with the component::
         def __init__(self, config):
             # Bind the configuration to just the configuration this
             # component requires such that this component is
-            # self-contained.
+            # self-contained
             self.config = config.with_options(self)
 
             self.host = self.config('host')
@@ -280,30 +272,39 @@ With Everett, you can wrap the configuration up with the component::
             self.queue_name = self.config('queue_name')
 
 
-Then instantiate a ``RabbitMQComponent``, but with configuration in the ``rmq``
-namespace::
+Then instantiate a ``RabbitMQComponent`` that looks for configuration keys
+in the ``rmq`` namespace::
 
     queue = RabbitMQComponent(config.with_namespace('rmq'))
 
 
-In your environment, you would provide ``RMQ_HOST``, etc for this component.
+The ``RabbitMQComponent`` has a ``HOST`` key, so your configuration would
+need to define ``RMQ_HOST``.
 
 You can auto-generate configuration documentation for this component in your
 Sphinx docs by including the ``everett.sphinxext`` Sphinx extension and
 using the ``autocomponent`` directive::
 
     .. autocomponent:: path.to.RabbitMQComponent
+       :namespace: rmq
 
 
 Say your app actually needs to connect to two separate queues--one for regular
 processing and one for priority processing::
 
-    regular_queue = RabbitMQComponent(
-        config.with_namespace('regular').with_namespace('rmq')
-    )
-    priority_queue = RabbitMQComponent(
-        config.with_namespace('priority').with_namespace('rmq')
-    )
+    from everett.manager import ConfigManager
+
+    config = ConfigManager.basic_config()
+
+    # Apply the "rmq" namespace to the configuration so all keys are
+    # prepended with RMQ_
+    rmq_config = config.with_namespace('rmq')
+
+    # Create a RabbitMQComponent with RMQ_REGULAR_ prepended to keys
+    regular_queue = RabbitMQComponent(rmq_config.with_namespace('regular'))
+
+    # Create a RabbitMQComponent with RMQ_PRIORITY_ prepended to keys
+    priority_queue = RabbitMQComponent(rmq_config.with_namespace('priority'))
 
 
 In your environment, you provide the regular queue configuration with
@@ -331,6 +332,11 @@ as well::
 
     $ pip install everett[ini]
 
+If you want to use the ``ConfigYamlEnv``, you need to install its requirements
+as well::
+
+    $ pip install everett[yaml]
+
 
 Install for hacking
 -------------------
@@ -346,3 +352,16 @@ Run::
 
     # Install Everett and dev requirements
     $ pip install -r requirements-dev.txt
+
+
+Why not other libs?
+===================
+
+Most other libraries I looked at had one or more of the following issues:
+
+* were tied to a specific web app framework
+* didn't allow you to specify configuration sources
+* provided poor error messages when users configure things wrong
+* had a global configuration object
+* made it really hard to override specific configuration when writing tests
+* had no facilities for auto-generating configuration documentation

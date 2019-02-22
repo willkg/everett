@@ -11,10 +11,18 @@ Setting up configuration in your app
 Create a ConfigManager and specify sources
 ------------------------------------------
 
-Configuration is handled by a ``ConfigManager``. When you instantiate the
-``ConfigManager``, you pass it a list of sources that it should look at when
-resolving configuration requests. The list of sources are consulted in the order
-you specify.
+Configuration is handled by a ``ConfigManager``. The ``ConfigManager`` handles
+looking up configuration keys across specified sources to resolve them to
+a value.
+
+You can create a basic ``ConfigManager`` like this:
+
+.. literalinclude:: code/configuration_basic.py
+   :language: python
+
+
+You can also specify the source environments in the order you want them
+looked at.
 
 For example:
 
@@ -26,16 +34,14 @@ Specify pointer to configuration errors docs
 --------------------------------------------
 
 In addition to a list of sources, you can provide a ``doc``. You can use this to
-guide users trying to use your software and hitting configuration errors to
-documentation for your configuration.
+guide users hitting configuration errors to configuration documentation.
 
-Here's a trivial program:
+For example:
 
 .. literalinclude:: code/configuration_doc.py
 
 
-Let's configure the program wrong and run it in Python 3 and see what it tells
-us:
+Let's configure the program wrong and run it to see what it tells us:
 
 ::
 
@@ -69,7 +75,7 @@ us:
 
 
 Here, we see the documentation for the configuration item, the documentation
-from the ``ConfigManager`` and the specific Python exception information.
+from the ``ConfigManager``, and the specific Python exception information.
 
 
 Where to put ConfigManager
@@ -204,6 +210,9 @@ Some more examples:
     There is a default provided, so if this configuration variable isn't set in
     the specified sources, the default will be false.
 
+    Note that the default value is always a string that's parseable by the
+    parser.
+
 ``config('username', namespace='db')``
     The key is "username".
 
@@ -212,6 +221,9 @@ Some more examples:
     There's no default, so if there's no "username" in namespace "db"
     configuration variable set in the sources, this will raise a
     ``everett.ConfigurationError``.
+
+    If you're looking up values in the process environment, then the full
+    key would be ``DB_USERNAME``.
 
 ``config('password', namespace='postgres', alternate_keys=['db_password', 'root:postgres_password'])``
     The key is "password".
@@ -253,9 +265,9 @@ Some more examples:
 Handling exceptions when extracting values
 ==========================================
 
-Getting configuration should always return a subclass of
-:py:class:`everett.ConfigurationError`. This makes it easier to
-programmatically figure out what happened.
+When the namespaced key isn't found in any of the sources, then Everett will
+always a subclass of :py:class:`everett.ConfigurationError`. This makes it
+easier to programmatically figure out what happened.
 
 For example:
 

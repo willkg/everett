@@ -2,7 +2,7 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-"""This module holds the ConfigYamlEnv environment.
+"""Holds the ConfigYamlEnv environment.
 
 To use this, you must install the optional requirements::
 
@@ -23,7 +23,7 @@ logger = logging.getLogger('everett')
 
 
 class ConfigYamlEnv(object):
-    """Source for pulling configuration from YAML files
+    """Source for pulling configuration from YAML files.
 
     This requires optional dependencies. You can install them with::
 
@@ -107,6 +107,7 @@ class ConfigYamlEnv(object):
     * ``NAMESPACE_NAMEPSACE2_FOO``
 
     """
+
     def __init__(self, possible_paths):
         self.cfg = {}
         self.path = None
@@ -126,6 +127,7 @@ class ConfigYamlEnv(object):
             logger.debug('No YAML file found: %s', possible_paths)
 
     def parse_yaml_file(self, path):
+        """Parse yaml file at ``path`` and return a dict."""
         with open(path, 'r') as fp:
             data = yaml.safe_load(fp)
 
@@ -155,6 +157,7 @@ class ConfigYamlEnv(object):
         return traverse([], data)
 
     def get(self, key, namespace=None):
+        """Retrieve value for key."""
         if not self.path:
             return NO_VALUE
 

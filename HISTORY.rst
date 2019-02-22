@@ -1,6 +1,24 @@
 History
 =======
 
+1.0.2 (In development)
+----------------------
+
+Fixes:
+
+* Improve documentation.
+
+* Fix problems when there are nested ``BoundConfigs``. Now they work
+  correctly. (#90)
+
+* Add "meta" to options letting you declare additional data on the option
+  when you're adding it.
+
+  For example, this lets you do things like mark options as "secrets"
+  so that you know which ones to ``******`` out when logging your
+  configuration. (#88)
+
+
 1.0.1 (January 8th, 2019)
 -------------------------
 
