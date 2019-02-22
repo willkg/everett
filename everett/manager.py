@@ -523,7 +523,17 @@ class ConfigOSEnv(object):
         return '<ConfigOSEnv>'
 
 
+def _get_component_name(component):
+    if inspect.isclass(component):
+        return component.__name__
+    else:
+        return component.__class__.__name__
+
+
 class ConfigManagerBase(object):
+    def _get_base_config(self):
+        return self
+
     def get_namespace(self):
         """Retrieves the complete namespace for this config object
 
@@ -534,10 +544,17 @@ class ConfigManagerBase(object):
 
     def with_options(self, component):
         options = component.get_required_config()
-        return BoundConfig(self, options)
+        component_name = _get_component_name(component)
+
+        # If this is a config that's not nestable, we want to unwrap it one
+        # level because otherwise lookups won't work.
+        return BoundConfig(self._get_base_config(), component_name, options)
 
     def with_namespace(self, namespace):
-        return NamespacedConfig(self, namespace)
+        return NamespacedConfig(self._get_base_config(), namespace)
+
+    def __repr__(self):
+        return '<ConfigManagerBase>'
 
 
 class BoundConfig(ConfigManagerBase):
@@ -551,9 +568,13 @@ class BoundConfig(ConfigManagerBase):
     options.
 
     """
-    def __init__(self, config, options):
+    def __init__(self, config, component_name, options):
         self.config = config
+        self.component_name = component_name
         self.options = options
+
+    def _get_base_config(self):
+        return self.config
 
     def get_namespace(self):
         """Retrieves the complete namespace for this config object
@@ -607,6 +628,9 @@ class BoundConfig(ConfigManagerBase):
             raise_error=raise_error,
             raw_value=raw_value
         )
+
+    def __repr__(self):
+        return '<BoundConfig(%s): namespace:%s>' % (self.component_name, self.get_namespace())
 
 
 class NamespacedConfig(ConfigManagerBase):
@@ -673,6 +697,9 @@ class NamespacedConfig(ConfigManagerBase):
             raise_error=raise_error,
             raw_value=raw_value
         )
+
+    def __repr__(self):
+        return '<NamespacedConfig: namespace:%s>' % self.get_namespace()
 
 
 class ConfigManager(ConfigManagerBase):
@@ -948,6 +975,9 @@ class ConfigManager(ConfigManagerBase):
         logger.debug('Found nothing--returning NO_VALUE')
         # Otherwise return NO_VALUE
         return NO_VALUE
+
+    def __repr__(self):
+        return '<ConfigManager>'
 
 
 class ConfigOverride(object):
