@@ -100,6 +100,35 @@ def test_with_options():
         comp2.config('bar')
 
 
+def test_nested_options():
+    """Verify nested BoundOptions works."""
+    config = ConfigManager.from_dict({})
+
+    class Foo(RequiredConfigMixin):
+        required_config = ConfigOptions()
+        required_config.add_option(
+            'option1',
+            default='opt1default',
+            parser=str
+        )
+
+    class Bar(RequiredConfigMixin):
+        required_config = ConfigOptions()
+        required_config.add_option(
+            'option2',
+            default='opt2default',
+            parser=str
+        )
+
+    config = ConfigManager.basic_config()
+    config = config.with_options(Foo)
+    config = config.with_options(Bar)
+
+    assert config('option2') == 'opt2default'
+    with pytest.raises(ConfigurationError):
+        config('option1')
+
+
 def test_default_comes_from_options():
     """Verify that the default is picked up from options"""
     config = ConfigManager([])
