@@ -13,12 +13,14 @@ from everett.manager import BoundConfig
 
 
 class Option(object):
-    def __init__(self, key, default=NO_VALUE, alternate_keys=NO_VALUE, doc='', parser=str):
+    def __init__(self, key, default=NO_VALUE, alternate_keys=NO_VALUE, doc='',
+                 parser=str, meta=None):
         self.key = key
         self.default = default
         self.alternate_keys = alternate_keys
         self.doc = doc
         self.parser = parser
+        self.meta = meta or {}
 
     def __eq__(self, obj):
         return (
@@ -27,7 +29,8 @@ class Option(object):
             obj.default == self.default and
             obj.alternate_keys == self.alternate_keys and
             obj.doc == self.doc and
-            obj.parser == self.parser
+            obj.parser == self.parser and
+            obj.meta == self.meta
         )
 
 
@@ -37,7 +40,7 @@ class ConfigOptions(object):
         self.options = OrderedDict()
 
     def add_option(self, key, default=NO_VALUE, alternate_keys=NO_VALUE,
-                   doc='', parser=str):
+                   doc='', parser=str, **meta):
         """Adds an option to the group
 
         :arg key: the key to look up
@@ -53,8 +56,11 @@ class ConfigOptions(object):
 
         :arg parser: the parser for converting this value to a Python object
 
+        :arg meta: catch-all for other key/value pairs you want to association
+            with this option
+
         """
-        option = Option(key, default, alternate_keys, doc, parser)
+        option = Option(key, default, alternate_keys, doc, parser, meta)
         self.options[key] = option
 
     def update(self, new_options):
