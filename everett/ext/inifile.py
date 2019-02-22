@@ -2,7 +2,7 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-"""This module holds the ConfigIniEnv environment.
+"""Holds the ConfigIniEnv environment.
 
 To use this, you must install the optional requirements::
 
@@ -23,7 +23,7 @@ logger = logging.getLogger('everett')
 
 
 class ConfigIniEnv(object):
-    """Source for pulling configuration from INI files
+    """Source for pulling configuration from INI files.
 
     This requires optional dependencies. You can install them with::
 
@@ -120,6 +120,7 @@ class ConfigIniEnv(object):
     http://configobj.readthedocs.io/en/latest/configobj.html#the-config-file-format
 
     """
+
     def __init__(self, possible_paths):
         self.cfg = {}
         self.path = None
@@ -139,6 +140,7 @@ class ConfigIniEnv(object):
             logger.debug('No INI file found: %s', possible_paths)
 
     def parse_ini_file(self, path):
+        """Parse ini file at ``path`` and return dict."""
         cfgobj = ConfigObj(path, list_values=False)
 
         def extract_section(namespace, d):
@@ -154,6 +156,7 @@ class ConfigIniEnv(object):
         return extract_section([], cfgobj.dict())
 
     def get(self, key, namespace=None):
+        """Retrieve value for key."""
         if not self.path:
             return NO_VALUE
 

@@ -3,6 +3,8 @@
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 
+"""Everett is a Pythonl library for configuration."""
+
 __author__ = 'Will Kahn-Greene'
 __email__ = 'willkg@mozilla.com'
 
@@ -12,8 +14,8 @@ __releasedate__ = ''
 __version__ = '1.0.2.dev0'
 
 
-# NoValue instances are always false
-class NoValue(object):
+# _NoValue instances are always false
+class _NoValue(object):
     def __nonzero__(self):
         return False
 
@@ -25,21 +27,24 @@ class NoValue(object):
 
 
 # Singleton indicating a non-value
-NO_VALUE = NoValue()
+NO_VALUE = _NoValue()
 
 
 class ConfigurationError(Exception):
-    """Configuration error base class"""
+    """Configuration error base class."""
+
     pass
 
 
 class InvalidKeyError(ConfigurationError):
-    """Indicates the key is not valid for this component"""
+    """Error that indicates the key is not valid for this component."""
+
     pass
 
 
 class DetailedConfigurationError(ConfigurationError):
-    """Base class for configuration errors that have a msg, namespace, key, and parser"""
+    """Base class for configuration errors that have a msg, namespace, key, and parser."""
+
     def __init__(self, *args, **kwargs):
         self.namespace = args[1]
         self.key = args[2]
@@ -51,10 +56,12 @@ class DetailedConfigurationError(ConfigurationError):
 
 
 class ConfigurationMissingError(DetailedConfigurationError):
-    """Indicates that required configuration is missing"""
+    """Error that indicates that required configuration is missing."""
+
     pass
 
 
 class InvalidValueError(DetailedConfigurationError):
-    """Indicates that the value is not valid"""
+    """Error that indicates that the value is not valid."""
+
     pass

@@ -2,8 +2,7 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-"""Contains the autocomponent Sphinx extension for auto-documenting components
-with configuration.
+"""Sphinx extension for auto-documenting components with configuration.
 
 The ``autocomponent`` declaration will pull out the class docstring as well as
 configuration requirements, throw it all in a blender and spit it out.
@@ -145,7 +144,7 @@ from everett.manager import qualname
 
 
 def split_clspath(clspath):
-    """Simple split of clspath into module and class names
+    """Split clspath into module and class names.
 
     Note: This is a really simplistic implementation.
 
@@ -154,7 +153,7 @@ def split_clspath(clspath):
 
 
 def import_class(clspath):
-    """Given a clspath, returns the class
+    """Given a clspath, returns the class.
 
     Note: This is a really simplistic implementation.
 
@@ -166,6 +165,7 @@ def import_class(clspath):
 
 
 def upper_lower_none(arg):
+    """Validate arg value as "upper", "lower", or None."""
     if not arg:
         return arg
 
@@ -177,9 +177,7 @@ def upper_lower_none(arg):
 
 
 class EverettComponent(ObjectDescription):
-    """
-    Description of an Everett component""
-    """
+    """Description of an Everett component."""
 
     doc_field_types = [
         TypedField('options', label=_('Options'),
@@ -191,8 +189,8 @@ class EverettComponent(ObjectDescription):
     allow_nesting = False
 
     def handle_signature(self, sig, signode):
+        """Create a signature for this thing."""
         if sig != 'Configuration':
-            # Add "component" to the beginning if it's a specific component
             signode.clear()
 
             # Add "component" which is the type of this thing
@@ -216,6 +214,7 @@ class EverettComponent(ObjectDescription):
         return sig
 
     def add_target_and_index(self, name, sig, signode):
+        """Add a target and index for this thing."""
         targetname = '%s-%s' % (self.objtype, name)
 
         if targetname not in self.state.document.ids:
@@ -239,7 +238,8 @@ class EverettComponent(ObjectDescription):
 
 
 class EverettDomain(Domain):
-    """Everett domain for component configuration"""
+    """Everett domain for component configuration."""
+
     name = 'everett'
     label = 'Everett'
 
@@ -427,6 +427,7 @@ class AutoComponentDirective(Directive):
 
 
 def setup(app):
+    """Register domain and directive in Sphinx."""
     app.add_domain(EverettDomain)
     app.add_directive('autocomponent', AutoComponentDirective)
 

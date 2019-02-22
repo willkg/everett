@@ -7,12 +7,12 @@ Contents
 .. toctree::
    :maxdepth: 2
 
-   history
    configuration
    components
    documenting
    testing
    recipes
+   history
    library
    dev
 

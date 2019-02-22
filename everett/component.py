@@ -2,9 +2,7 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-"""Module holding infrastructure for building components.
-
-"""
+"""Module holding infrastructure for building components."""
 
 from collections import OrderedDict
 
@@ -13,6 +11,8 @@ from everett.manager import BoundConfig
 
 
 class Option(object):
+    """A single option comprised of a key and settings."""
+
     def __init__(self, key, default=NO_VALUE, alternate_keys=NO_VALUE, doc='',
                  parser=str, meta=None):
         self.key = key
@@ -35,13 +35,14 @@ class Option(object):
 
 
 class ConfigOptions(object):
-    """Class for holding a collection of config options"""
+    """A collection of config options."""
+
     def __init__(self):
         self.options = OrderedDict()
 
     def add_option(self, key, default=NO_VALUE, alternate_keys=NO_VALUE,
                    doc='', parser=str, **meta):
-        """Adds an option to the group
+        """Add an option to the group.
 
         :arg key: the key to look up
 
@@ -64,6 +65,7 @@ class ConfigOptions(object):
         self.options[key] = option
 
     def update(self, new_options):
+        """Update this ConfigOptions using data from another."""
         for option in new_options:
             if option.key in self.options:
                 del self.options[option.key]
@@ -77,7 +79,7 @@ class ConfigOptions(object):
 
 
 class RequiredConfigMixin(object):
-    """Mixin for component classes that have required configuration
+    """Mixin for component classes that have required configuration.
 
     As with all mixins, make sure this is earlier in the class list.
 
@@ -93,9 +95,12 @@ class RequiredConfigMixin(object):
                 self.config = config.with_options(self)
 
     """
+
     @classmethod
     def get_required_config(cls):
-        """Rolls up the configuration for class and parent classes
+        """Roll up configuration options for this class and parent classes.
+
+        This handles subclasses overriding options in parent classes.
 
         :returns: final ``ConfigOptions`` representing all configuration for
             this class
@@ -110,7 +115,7 @@ class RequiredConfigMixin(object):
         return options
 
     def get_runtime_config(self, namespace=None):
-        """Roll up the runtime config for this class and all children
+        """Roll up the runtime config for this class and all children.
 
         Implement this to call ``.get_runtime_config()`` on child components or
         to adjust how it works.
