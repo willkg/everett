@@ -3,15 +3,15 @@
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 
-"""Everett is a Pythonl library for configuration."""
+"""Everett is a Python library for configuration."""
 
 __author__ = 'Will Kahn-Greene'
 __email__ = 'willkg@mozilla.com'
 
 # yyyymmdd
-__releasedate__ = ''
+__releasedate__ = '20190222'
 # x.y.z or x.y.z.dev0
-__version__ = '1.0.2.dev0'
+__version__ = '1.0.2'
 
 
 # _NoValue instances are always false

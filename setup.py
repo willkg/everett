@@ -42,7 +42,7 @@ setup(
         'everett': 'everett'
     },
     include_package_data=True,
-    license="MPLv2",
+    license='MPLv2',
     zip_safe=False,
     keywords='conf config configuration component',
     classifiers=[
