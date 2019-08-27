@@ -37,6 +37,13 @@ nsbaz:
         foo: "bat2"
 """
 
+YAML_LISTS = """\
+foo:
+  - bar
+  - baz
+  - bal
+"""
+
 
 class TestConfigYamlEnv:
     def test_missing_file(self):
@@ -100,3 +107,11 @@ class TestConfigYamlEnv:
 
         with pytest.raises(ConfigurationError):
             ConfigYamlEnv([str(yaml_filename)])
+
+    def test_lists(self, tmpdir):
+        yaml_filename = tmpdir / 'config.yaml'
+        yaml_filename.write(YAML_LISTS)
+
+        cie = ConfigYamlEnv([str(yaml_filename)])
+        assert cie.get('foo') == 'bar,baz,bal'
+

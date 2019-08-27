@@ -137,20 +137,21 @@ class ConfigYamlEnv(object):
         def traverse(namespace, d):
             cfg = {}
             for key, val in d.items():
-                if isinstance(d[key], dict):
-                    cfg.update(traverse(namespace + [key], d[key]))
-                else:
-                    if not isinstance(val, str):
-                        # All values should be double-quoted strings so they
-                        # parse as strings; anything else is a configuration
-                        # error at parse-time
-                        raise ConfigurationError(
-                            'Invalid value %r in file %s: values must be double-quoted strings' % (
-                                val, path
-                            )
-                        )
-
+                if isinstance(val, dict):
+                    cfg.update(traverse(namespace + [key], val))
+                elif isinstance(val, list):
+                    cfg['_'.join(namespace + [key]).upper()] = ','.join(val)
+                elif isinstance(val, str):
                     cfg['_'.join(namespace + [key]).upper()] = val
+                else:
+                    # All values should be double-quoted strings so they
+                    # parse as strings; anything else is a configuration
+                    # error at parse-time
+                    raise ConfigurationError(
+                        'Invalid value %r in file %s: values must be double-quoted strings' % (
+                            val, path
+                        )
+                    )
 
             return cfg
 
