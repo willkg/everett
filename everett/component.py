@@ -61,7 +61,14 @@ class ConfigOptions(object):
             with this option
 
         """
-        option = Option(key, default, alternate_keys, doc, parser, meta)
+        option = Option(
+            key=key,
+            default=default,
+            alternate_keys=alternate_keys,
+            doc=doc,
+            parser=parser,
+            meta=meta
+        )
         self.options[key] = option
 
     def update(self, new_options):
@@ -160,5 +167,5 @@ class RequiredConfigMixin(object):
         if cfg is None or not isinstance(cfg, BoundConfig):
             return
 
-        for key, opt in self.get_required_config().options.items():
-            yield (namespace, key, self.config(key, raise_error=False, raw_value=True), opt)
+        for opt in self.get_required_config():
+            yield (namespace, opt.key, self.config(opt.key, raise_error=False, raw_value=True), opt)
