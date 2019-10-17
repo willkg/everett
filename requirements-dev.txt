@@ -1,9 +1,8 @@
 -e .[ini,yaml]
 
-pytest==4.0.2
-pytest-wholenodeid==0.2
-tox==3.6.1
-twine==1.12.1
-Sphinx==1.8.3
-flake8==3.6.0
-check-manifest==0.37
+check-manifest==0.40
+flake8==3.7.8
+pytest==5.2.1
+Sphinx==2.2.0
+tox==3.14.0
+twine==2.0.0 ; python_version >= '3.6'

@@ -9,5 +9,13 @@ jobs:
     steps:
       - checkout
       - run:
+          name: update things
+          command: |
+              pip install --upgrade pip
+              pip install -U virtualenv
+              pip install -U tox
+              pip list
+
+      - run:
           name: run tests
           command: tox
