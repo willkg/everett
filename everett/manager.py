@@ -537,10 +537,11 @@ class ConfigOSEnv(object):
 
 
 def _get_component_name(component):
-    if inspect.isclass(component):
-        return component.__name__
+    if not inspect.isclass(component):
+        cls = component.__class__
     else:
-        return component.__class__.__name__
+        cls = component
+    return cls.__module__ + '.' + cls.__name__
 
 
 class ConfigManagerBase(object):
@@ -911,7 +912,7 @@ class ConfigManager(ConfigManagerBase):
             else:
                 use_namespace = namespace
 
-            logger.debug('Looking up key: %s, namespace: %s', possible_key, namespace)
+            logger.debug('Looking up key: %s, namespace: %s', possible_key, use_namespace)
 
             # Go through environments in reverse order
             for env in self.envs:
