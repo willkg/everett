@@ -1,6 +1,15 @@
 History
 =======
 
+1.0.3 (in development)
+----------------------
+
+Backwards incompatible changes:
+
+* Dropped support for Python 3.4. (#96)
+  pjz! (#68)
+
+
 1.0.2 (February 22nd, 2019)
 ---------------------------
 
