@@ -34,125 +34,101 @@ from everett.manager import (
 def test_no_value():
     assert bool(NO_VALUE) is False
     assert NO_VALUE is not True
-    assert str(NO_VALUE) == 'NO_VALUE'
+    assert str(NO_VALUE) == "NO_VALUE"
 
 
 def test_parse_bool_error():
     with pytest.raises(ValueError):
-        parse_bool('')
+        parse_bool("")
 
 
-@pytest.mark.parametrize('data,expected', [
-    (None, []),
-    ('', ['']),
-    ([], []),
-    ('foo', ['foo']),
-    (['foo'], ['foo']),
-    (['foo', 'bar'], ['foo', 'bar'])
-])
+@pytest.mark.parametrize(
+    "data,expected",
+    [
+        (None, []),
+        ("", [""]),
+        ([], []),
+        ("foo", ["foo"]),
+        (["foo"], ["foo"]),
+        (["foo", "bar"], ["foo", "bar"]),
+    ],
+)
 def test_listify(data, expected):
     assert listify(data) == expected
 
 
-@pytest.mark.parametrize('data', [
-    't',
-    'true',
-    'True',
-    'TRUE',
-    'y',
-    'yes',
-    'YES',
-    '1',
-    'on',
-    'On',
-    'ON',
-])
+@pytest.mark.parametrize(
+    "data", ["t", "true", "True", "TRUE", "y", "yes", "YES", "1", "on", "On", "ON"]
+)
 def test_parse_bool_true(data):
     assert parse_bool(data) is True
 
 
-@pytest.mark.parametrize('data', [
-    'f',
-    'false',
-    'False',
-    'FALSE',
-    'n',
-    'no',
-    'No',
-    'NO',
-    '0',
-    'off',
-    'Off',
-    'OFF',
-])
+@pytest.mark.parametrize(
+    "data",
+    ["f", "false", "False", "FALSE", "n", "no", "No", "NO", "0", "off", "Off", "OFF"],
+)
 def test_parse_bool_false(data):
     assert parse_bool(data) is False
 
 
 def test_parse_bool_with_config():
-    config = ConfigManager.from_dict({
-        'foo': 'bar'
-    })
+    config = ConfigManager.from_dict({"foo": "bar"})
 
     # Test key is there, but value is bad
     with pytest.raises(InvalidValueError) as excinfo:
-        config('foo', parser=bool)
+        config("foo", parser=bool)
     assert (
-        str(excinfo.value) ==
-        'ValueError: "bar" is not a valid bool value\n'
-        'namespace=None key=foo requires a value parseable by everett.manager.parse_bool'
+        str(excinfo.value) == 'ValueError: "bar" is not a valid bool value\n'
+        "namespace=None key=foo requires a value parseable by everett.manager.parse_bool"
     )
 
     # Test key is not there and default is bad
     with pytest.raises(InvalidValueError) as excinfo:
-        config('phil', default='foo', parser=bool)
+        config("phil", default="foo", parser=bool)
     assert (
-        str(excinfo.value) ==
-        'ValueError: "foo" is not a valid bool value\n'
-        'namespace=None key=phil requires a default value parseable by everett.manager.parse_bool'
+        str(excinfo.value) == 'ValueError: "foo" is not a valid bool value\n'
+        "namespace=None key=phil requires a default value parseable by everett.manager.parse_bool"
     )
 
 
 def test_parse_missing_class():
     with pytest.raises(ImportError):
-        parse_class('doesnotexist.class')
+        parse_class("doesnotexist.class")
 
     with pytest.raises(ValueError):
-        parse_class('hashlib.doesnotexist')
+        parse_class("hashlib.doesnotexist")
 
 
 def test_parse_class():
     from hashlib import md5
-    assert parse_class('hashlib.md5') == md5
+
+    assert parse_class("hashlib.md5") == md5
 
 
 def test_parse_class_config():
-    config = ConfigManager.from_dict({
-        'foo_cls': 'hashlib.doesnotexist',
-        'bar_cls': 'doesnotexist.class',
-    })
-
-    with pytest.raises(InvalidValueError) as exc_info:
-        config('foo_cls', parser=parse_class)
-    assert (
-        str(exc_info.value) ==
-        'ValueError: "doesnotexist" is not a valid member of hashlib\n'
-        'namespace=None key=foo_cls requires a value parseable by everett.manager.parse_class'
+    config = ConfigManager.from_dict(
+        {"foo_cls": "hashlib.doesnotexist", "bar_cls": "doesnotexist.class"}
     )
 
     with pytest.raises(InvalidValueError) as exc_info:
-        config('bar_cls', parser=parse_class)
+        config("foo_cls", parser=parse_class)
     assert (
-        str(exc_info.value) in
-        [
-            # Python 3
-            'ImportError: No module named \'doesnotexist\'\n'
-            'namespace=None key=bar_cls requires a value parseable by everett.manager.parse_class',
-            # Python 3.6
-            'ModuleNotFoundError: No module named \'doesnotexist\'\n'
-            'namespace=None key=bar_cls requires a value parseable by everett.manager.parse_class'
-        ]
+        str(exc_info.value)
+        == 'ValueError: "doesnotexist" is not a valid member of hashlib\n'
+        "namespace=None key=foo_cls requires a value parseable by everett.manager.parse_class"
     )
+
+    with pytest.raises(InvalidValueError) as exc_info:
+        config("bar_cls", parser=parse_class)
+    assert str(exc_info.value) in [
+        # Python 3
+        "ImportError: No module named 'doesnotexist'\n"
+        "namespace=None key=bar_cls requires a value parseable by everett.manager.parse_class",
+        # Python 3.6
+        "ModuleNotFoundError: No module named 'doesnotexist'\n"
+        "namespace=None key=bar_cls requires a value parseable by everett.manager.parse_class",
+    ]
 
 
 def test_get_parser():
@@ -164,28 +140,26 @@ def test_get_parser():
     # work.
     def foo():
         pass
+
     assert get_parser(foo) == foo
 
 
 def test_ListOf():
-    assert ListOf(str)('') == []
-    assert ListOf(str)('foo') == ['foo']
-    assert ListOf(bool)('t,f') == [True, False]
-    assert ListOf(int)('1,2,3') == [1, 2, 3]
-    assert ListOf(int, delimiter=':')('1:2') == [1, 2]
+    assert ListOf(str)("") == []
+    assert ListOf(str)("foo") == ["foo"]
+    assert ListOf(bool)("t,f") == [True, False]
+    assert ListOf(int)("1,2,3") == [1, 2, 3]
+    assert ListOf(int, delimiter=":")("1:2") == [1, 2]
 
 
 def test_ListOf_error():
-    config = ConfigManager.from_dict({
-        'bools': 't,f,badbool'
-    })
+    config = ConfigManager.from_dict({"bools": "t,f,badbool"})
     with pytest.raises(InvalidValueError) as exc_info:
-        config('bools', parser=ListOf(bool))
+        config("bools", parser=ListOf(bool))
 
     assert (
-        str(exc_info.value) ==
-        'ValueError: "badbool" is not a valid bool value\n'
-        'namespace=None key=bools requires a value parseable by <ListOf(bool)>'
+        str(exc_info.value) == 'ValueError: "badbool" is not a valid bool value\n'
+        "namespace=None key=bools requires a value parseable by <ListOf(bool)>"
     )
 
 
@@ -195,213 +169,186 @@ class TestConfigObjEnv:
             pass
 
         obj = Namespace()
-        setattr(obj, 'foo', 'bar')
-        setattr(obj, 'foo_baz', 'bar')
+        setattr(obj, "foo", "bar")
+        setattr(obj, "foo_baz", "bar")
 
         coe = ConfigObjEnv(obj)
-        assert coe.get('foo') == 'bar'
-        assert coe.get('FOO') == 'bar'
-        assert coe.get('FOO_BAZ') == 'bar'
+        assert coe.get("foo") == "bar"
+        assert coe.get("FOO") == "bar"
+        assert coe.get("FOO_BAZ") == "bar"
 
     def test_with_argparse(self):
         parser = argparse.ArgumentParser()
-        parser.add_argument(
-            '--debug', help='to debug or not to debug'
-        )
+        parser.add_argument("--debug", help="to debug or not to debug")
         parsed_vals = parser.parse_known_args([])[0]
 
-        config = ConfigManager([
-            ConfigObjEnv(parsed_vals)
-        ])
+        config = ConfigManager([ConfigObjEnv(parsed_vals)])
 
-        assert config('debug', parser=bool, raise_error=False) is NO_VALUE
+        assert config("debug", parser=bool, raise_error=False) is NO_VALUE
 
-        parsed_vals = parser.parse_known_args(['--debug=y'])[0]
+        parsed_vals = parser.parse_known_args(["--debug=y"])[0]
 
-        config = ConfigManager([
-            ConfigObjEnv(parsed_vals)
-        ])
+        config = ConfigManager([ConfigObjEnv(parsed_vals)])
 
-        assert config('debug', parser=bool) is True
+        assert config("debug", parser=bool) is True
 
     def test_with_argparse_actions(self):
         parser = argparse.ArgumentParser()
         parser.add_argument(
-            '--debug', help='to debug or not to debug', action='store_true'
+            "--debug", help="to debug or not to debug", action="store_true"
         )
         parsed_vals = parser.parse_known_args([])[0]
 
-        config = ConfigManager([
-            ConfigObjEnv(parsed_vals)
-        ])
+        config = ConfigManager([ConfigObjEnv(parsed_vals)])
 
         # What happens is that argparse doesn't see an arg, so saves
         # debug=False. ConfigObjEnv converts that to "False". That gets parsed
         # as False by the Everett parse_bool function. That's kind of
         # roundabout but "works" for some/most cases.
-        assert config('debug', parser=bool) is False
+        assert config("debug", parser=bool) is False
 
-        parsed_vals = parser.parse_known_args(['--debug'])[0]
+        parsed_vals = parser.parse_known_args(["--debug"])[0]
 
-        config = ConfigManager([
-            ConfigObjEnv(parsed_vals)
-        ])
+        config = ConfigManager([ConfigObjEnv(parsed_vals)])
 
-        assert config('debug', parser=bool) is True
+        assert config("debug", parser=bool) is True
 
 
 def test_ConfigDictEnv():
-    cde = ConfigDictEnv({
-        'FOO': 'bar',
-        'A_FOO': 'a_bar',
-        'A_B_FOO': 'a_b_bar',
-        'lower_foo': 'bar'
-    })
-    assert cde.get('foo') == 'bar'
-    assert cde.get('foo', namespace=['a']) == 'a_bar'
-    assert cde.get('foo', namespace=['a', 'b']) == 'a_b_bar'
-    assert cde.get('FOO', namespace=['a']) == 'a_bar'
-    assert cde.get('foo', namespace=['A']) == 'a_bar'
-    assert cde.get('FOO', namespace=['A']) == 'a_bar'
+    cde = ConfigDictEnv(
+        {"FOO": "bar", "A_FOO": "a_bar", "A_B_FOO": "a_b_bar", "lower_foo": "bar"}
+    )
+    assert cde.get("foo") == "bar"
+    assert cde.get("foo", namespace=["a"]) == "a_bar"
+    assert cde.get("foo", namespace=["a", "b"]) == "a_b_bar"
+    assert cde.get("FOO", namespace=["a"]) == "a_bar"
+    assert cde.get("foo", namespace=["A"]) == "a_bar"
+    assert cde.get("FOO", namespace=["A"]) == "a_bar"
 
-    cde = ConfigDictEnv({
-        'foo': 'bar',
-    })
-    assert cde.get('foo') == 'bar'
-    assert cde.get('FOO') == 'bar'
+    cde = ConfigDictEnv({"foo": "bar"})
+    assert cde.get("foo") == "bar"
+    assert cde.get("FOO") == "bar"
 
 
 def test_ConfigOSEnv():
-    os.environ['EVERETT_TEST_FOO'] = 'bar'
-    os.environ['EVERETT_TEST_FOO'] = 'bar'
+    os.environ["EVERETT_TEST_FOO"] = "bar"
+    os.environ["EVERETT_TEST_FOO"] = "bar"
     cose = ConfigOSEnv()
 
-    assert cose.get('everett_test_foo') == 'bar'
-    assert cose.get('EVERETT_test_foo') == 'bar'
-    assert cose.get('foo', namespace=['everett', 'test']) == 'bar'
+    assert cose.get("everett_test_foo") == "bar"
+    assert cose.get("EVERETT_test_foo") == "bar"
+    assert cose.get("foo", namespace=["everett", "test"]) == "bar"
 
 
 def test_ConfigEnvFileEnv(datadir):
-    env_filename = os.path.join(datadir, '.env')
-    cefe = ConfigEnvFileEnv(['/does/not/exist/.env', env_filename])
-    assert cefe.get('not_a', namespace='youre') == 'golfer'
-    assert cefe.get('loglevel') == 'walter'
-    assert cefe.get('LOGLEVEL') == 'walter'
-    assert cefe.get('missing') is NO_VALUE
+    env_filename = os.path.join(datadir, ".env")
+    cefe = ConfigEnvFileEnv(["/does/not/exist/.env", env_filename])
+    assert cefe.get("not_a", namespace="youre") == "golfer"
+    assert cefe.get("loglevel") == "walter"
+    assert cefe.get("LOGLEVEL") == "walter"
+    assert cefe.get("missing") is NO_VALUE
     assert cefe.data == {
-        'LOGLEVEL': 'walter',
-        'DEBUG': 'True',
-        'YOURE_NOT_A': 'golfer',
-        'DATABASE_URL': 'sqlite:///kahlua.db',
+        "LOGLEVEL": "walter",
+        "DEBUG": "True",
+        "YOURE_NOT_A": "golfer",
+        "DATABASE_URL": "sqlite:///kahlua.db",
     }
 
     cefe = ConfigEnvFileEnv(env_filename)
-    assert cefe.get('not_a', namespace='youre') == 'golfer'
+    assert cefe.get("not_a", namespace="youre") == "golfer"
 
-    cefe = ConfigEnvFileEnv('/does/not/exist/.env')
-    assert cefe.get('loglevel') is NO_VALUE
+    cefe = ConfigEnvFileEnv("/does/not/exist/.env")
+    assert cefe.get("loglevel") is NO_VALUE
 
 
 def test_parse_env_file():
-    assert parse_env_file(['PLAN9=outerspace']) == {'PLAN9': 'outerspace'}
+    assert parse_env_file(["PLAN9=outerspace"]) == {"PLAN9": "outerspace"}
     with pytest.raises(ConfigurationError) as exc_info:
-        parse_env_file(['3AMIGOS=infamous'])
+        parse_env_file(["3AMIGOS=infamous"])
+    assert str(exc_info.value) == 'Invalid variable name "3AMIGOS" in env file (line 1)'
+    with pytest.raises(ConfigurationError) as exc_info:
+        parse_env_file(["INVALID-CHAR=value"])
     assert (
-        str(exc_info.value) ==
-        'Invalid variable name "3AMIGOS" in env file (line 1)'
+        str(exc_info.value)
+        == 'Invalid variable name "INVALID-CHAR" in env file (line 1)'
     )
     with pytest.raises(ConfigurationError) as exc_info:
-        parse_env_file(['INVALID-CHAR=value'])
-    assert (
-        str(exc_info.value) ==
-        'Invalid variable name "INVALID-CHAR" in env file (line 1)'
-    )
-    with pytest.raises(ConfigurationError) as exc_info:
-        parse_env_file(['', 'MISSING-equals'])
-    assert (
-        str(exc_info.value) ==
-        'Env file line missing = operator (line 2)'
-    )
+        parse_env_file(["", "MISSING-equals"])
+    assert str(exc_info.value) == "Env file line missing = operator (line 2)"
 
 
-@pytest.mark.parametrize('key, ns, expected', [
-    ('k', None, 'K'),
-    ('a_b', None, 'A_B'),
-
-    ('k', 'ns', 'NS_K'),
-
-    ('k', ['ns1', 'ns2'], 'NS1_NS2_K'),
-    ('k', ['ns1', '', 'ns2'], 'NS1_NS2_K'),
-])
+@pytest.mark.parametrize(
+    "key, ns, expected",
+    [
+        ("k", None, "K"),
+        ("a_b", None, "A_B"),
+        ("k", "ns", "NS_K"),
+        ("k", ["ns1", "ns2"], "NS1_NS2_K"),
+        ("k", ["ns1", "", "ns2"], "NS1_NS2_K"),
+    ],
+)
 def test_generate_uppercase_key(key, ns, expected):
     full_key = generate_uppercase_key(key, ns)
     assert full_key == expected
 
 
 def test_get_key_from_envs():
-    assert get_key_from_envs({'K': 'v'}, 'K') == 'v'
-    assert get_key_from_envs([{'K': 'v'},
-                              {'L': 'w'}], 'L') == 'w'
-    assert get_key_from_envs({'K': 'v'}, 'Q') is NO_VALUE
+    assert get_key_from_envs({"K": "v"}, "K") == "v"
+    assert get_key_from_envs([{"K": "v"}, {"L": "w"}], "L") == "w"
+    assert get_key_from_envs({"K": "v"}, "Q") is NO_VALUE
     # first match wins
-    envs = [
-        {'K': 'v'},
-        {'L': 'w'},
-        {'K': 'z'},
-    ]
-    assert get_key_from_envs(envs, 'K') == 'v'
+    envs = [{"K": "v"}, {"L": "w"}, {"K": "z"}]
+    assert get_key_from_envs(envs, "K") == "v"
     # works with reversed iterator
-    envs = reversed([{'L': 'v'}, {'L': 'w'}])
-    assert get_key_from_envs(envs, 'L') == 'w'
+    envs = reversed([{"L": "v"}, {"L": "w"}])
+    assert get_key_from_envs(envs, "L") == "w"
     # works with os.environ
-    os.environ['DUDE_ABIDES'] = 'yeah, man'
-    assert get_key_from_envs(os.environ, 'DUDE_ABIDES') == 'yeah, man'
+    os.environ["DUDE_ABIDES"] = "yeah, man"
+    assert get_key_from_envs(os.environ, "DUDE_ABIDES") == "yeah, man"
 
 
 def test_config():
     config = ConfigManager([])
 
     # Don't raise an error and no default yields NO_VALUE
-    assert config('DOESNOTEXISTNOWAY', raise_error=False) is NO_VALUE
+    assert config("DOESNOTEXISTNOWAY", raise_error=False) is NO_VALUE
 
     # Defaults to raising an error
     with pytest.raises(ConfigurationMissingError) as exc_info:
-        config('DOESNOTEXISTNOWAY')
+        config("DOESNOTEXISTNOWAY")
     assert (
-        str(exc_info.value) ==
-        'namespace=None key=DOESNOTEXISTNOWAY requires a value parseable by str'
+        str(exc_info.value)
+        == "namespace=None key=DOESNOTEXISTNOWAY requires a value parseable by str"
     )
 
     # Raises an error if raise_error is True
     with pytest.raises(ConfigurationMissingError) as exc_info:
-        config('DOESNOTEXISTNOWAY', raise_error=True)
+        config("DOESNOTEXISTNOWAY", raise_error=True)
     assert (
-        str(exc_info.value) ==
-        'namespace=None key=DOESNOTEXISTNOWAY requires a value parseable by str'
+        str(exc_info.value)
+        == "namespace=None key=DOESNOTEXISTNOWAY requires a value parseable by str"
     )
 
     # With a default, returns the default
-    assert config('DOESNOTEXISTNOWAY', default='ohreally') == 'ohreally'
+    assert config("DOESNOTEXISTNOWAY", default="ohreally") == "ohreally"
 
     # Test doc
     with pytest.raises(ConfigurationMissingError) as exc_info:
-        config('DOESNOTEXISTNOWAY', doc='Nothing to see here.')
+        config("DOESNOTEXISTNOWAY", doc="Nothing to see here.")
     assert (
-        str(exc_info.value) ==
-        'namespace=None key=DOESNOTEXISTNOWAY requires a value parseable by str\n'
-        'Nothing to see here.'
+        str(exc_info.value)
+        == "namespace=None key=DOESNOTEXISTNOWAY requires a value parseable by str\n"
+        "Nothing to see here."
     )
 
 
 def test_invalidvalueerror():
-    config = ConfigManager.from_dict({
-        'foo_bar': 'bat'
-    })
+    config = ConfigManager.from_dict({"foo_bar": "bat"})
     with pytest.raises(InvalidValueError) as excinfo:
-        config('bar', namespace='foo', parser=bool)
+        config("bar", namespace="foo", parser=bool)
 
-        assert excinfo.value.namespace == 'foo'
-        assert excinfo.value.key == 'bar'
+        assert excinfo.value.namespace == "foo"
+        assert excinfo.value.key == "bar"
         assert excinfo.value.parser == bool
 
 
@@ -411,71 +358,66 @@ def test_configurationmissingerror():
 
     # Defaults to raising an error
     with pytest.raises(ConfigurationMissingError) as exc_info:
-        config('DOESNOTEXISTNOWAY', namespace='foo')
+        config("DOESNOTEXISTNOWAY", namespace="foo")
 
     assert (
-        exc_info.value.args[0] ==
-        'namespace=foo key=DOESNOTEXISTNOWAY requires a value parseable by str'
+        exc_info.value.args[0]
+        == "namespace=foo key=DOESNOTEXISTNOWAY requires a value parseable by str"
     )
-    assert exc_info.value.namespace == 'foo'
-    assert exc_info.value.key == 'DOESNOTEXISTNOWAY'
+    assert exc_info.value.namespace == "foo"
+    assert exc_info.value.key == "DOESNOTEXISTNOWAY"
     assert exc_info.value.parser == str
 
 
 def test_config_from_dict():
     config = ConfigManager.from_dict({})
 
-    assert config('FOO', raise_error=False) is NO_VALUE
+    assert config("FOO", raise_error=False) is NO_VALUE
 
-    config = ConfigManager.from_dict({
-        'FOO': 'bar'
-    })
+    config = ConfigManager.from_dict({"FOO": "bar"})
 
-    assert config('FOO', raise_error=False) == 'bar'
+    assert config("FOO", raise_error=False) == "bar"
 
 
 def test_basic_config(datadir):
-    os.environ['EVERETT_BASIC_CONFIG_TEST'] = 'foo'
-    env_filename = os.path.join(datadir, '.env')
+    os.environ["EVERETT_BASIC_CONFIG_TEST"] = "foo"
+    env_filename = os.path.join(datadir, ".env")
     config = ConfigManager.basic_config(env_filename)
 
     # This doesn't exist in either the environment or the env file
-    assert config('FOO', raise_error=False) is NO_VALUE
+    assert config("FOO", raise_error=False) is NO_VALUE
 
     # This exists in the environment
-    assert config('EVERETT_BASIC_CONFIG_TEST') == 'foo'
+    assert config("EVERETT_BASIC_CONFIG_TEST") == "foo"
 
     # This exists in the env file
-    assert config('LOGLEVEL') == 'walter'
+    assert config("LOGLEVEL") == "walter"
 
 
 def test_config_manager_doc():
     config = ConfigManager(
-        [
-            ConfigDictEnv({'foo': 'bar'}),
-        ],
-        doc='See http://example.com/configuration'
+        [ConfigDictEnv({"foo": "bar"})], doc="See http://example.com/configuration"
     )
 
     # Test ConfigManager doc shows up
     with pytest.raises(ConfigurationError) as exc_info:
-        config('foo', parser=int)
-    assert(
-        str(exc_info.value) ==
-        'ValueError: invalid literal for int() with base 10: \'bar\'\n'
-        'namespace=None key=foo requires a value parseable by int\n'
-        'See http://example.com/configuration'
+        config("foo", parser=int)
+    assert (
+        str(exc_info.value)
+        == "ValueError: invalid literal for int() with base 10: 'bar'\n"
+        "namespace=None key=foo requires a value parseable by int\n"
+        "See http://example.com/configuration"
     )
 
     # Test config doc and ConfigManager doc show up
     with pytest.raises(ConfigurationError) as exc_info:
-        config('foo', parser=int, doc='Port to listen on.')
-    assert(
-        str(exc_info.value) ==
-        'ValueError: invalid literal for int() with base 10: \'bar\'\n'
-        'namespace=None key=foo requires a value parseable by int\n'
-        'Port to listen on.\n'
-        'See http://example.com/configuration'
+        config("foo", parser=int, doc="Port to listen on.")
+    assert (
+        str(exc_info.value)
+        == "ValueError: invalid literal for int() with base 10: 'bar'\n"
+        "namespace=None key=foo requires a value parseable by int\n"
+        "Port to listen on.\n"
+        "See http://example.com/configuration"
     )
 
 
@@ -483,109 +425,107 @@ def test_config_override():
     config = ConfigManager([])
 
     # Make sure the key doesn't exist
-    assert config('DOESNOTEXISTNOWAY', raise_error=False) is NO_VALUE
+    assert config("DOESNOTEXISTNOWAY", raise_error=False) is NO_VALUE
 
     # Try one override
-    with config_override(DOESNOTEXISTNOWAY='bar'):
-        assert config('DOESNOTEXISTNOWAY') == 'bar'
+    with config_override(DOESNOTEXISTNOWAY="bar"):
+        assert config("DOESNOTEXISTNOWAY") == "bar"
 
     # Try nested overrides--innermost one rules supreme!
-    with config_override(DOESNOTEXISTNOWAY='bar'):
-        with config_override(DOESNOTEXISTNOWAY='bat'):
-            assert config('DOESNOTEXISTNOWAY') == 'bat'
+    with config_override(DOESNOTEXISTNOWAY="bar"):
+        with config_override(DOESNOTEXISTNOWAY="bat"):
+            assert config("DOESNOTEXISTNOWAY") == "bat"
 
 
 def test_default_must_be_string():
     config = ConfigManager([])
 
     with pytest.raises(ConfigurationError):
-        assert config('DOESNOTEXIST', default=True)
+        assert config("DOESNOTEXIST", default=True)
 
 
 def test_with_namespace():
-    config = ConfigManager([
-        ConfigDictEnv({
-            'FOO_BAR': 'foobaz',
-            'BAR': 'baz',
-            'BAT': 'bat',
-        })
-    ])
+    config = ConfigManager(
+        [ConfigDictEnv({"FOO_BAR": "foobaz", "BAR": "baz", "BAT": "bat"})]
+    )
 
     # Verify the values first
-    assert config('bar', namespace=['foo']) == 'foobaz'
-    assert config('bar') == 'baz'
-    assert config('bat') == 'bat'
+    assert config("bar", namespace=["foo"]) == "foobaz"
+    assert config("bar") == "baz"
+    assert config("bat") == "bat"
 
     # Create the namespaced config
-    config_with_namespace = config.with_namespace('foo')
-    assert config_with_namespace('bar') == 'foobaz'
+    config_with_namespace = config.with_namespace("foo")
+    assert config_with_namespace("bar") == "foobaz"
 
     # Verify 'bat' is not available because it's not in the namespace
     with pytest.raises(ConfigurationError):
-        config_with_namespace('bat')
+        config_with_namespace("bat")
 
 
 def test_get_namespace():
-    config = ConfigManager.from_dict({
-        'FOO': 'abc',
-        'FOO_BAR': 'abc',
-        'FOO_BAR_BAZ': 'abc',
-    })
+    config = ConfigManager.from_dict(
+        {"FOO": "abc", "FOO_BAR": "abc", "FOO_BAR_BAZ": "abc"}
+    )
     assert config.get_namespace() == []
 
-    ns_foo_config = config.with_namespace('foo')
-    assert ns_foo_config.get_namespace() == ['foo']
+    ns_foo_config = config.with_namespace("foo")
+    assert ns_foo_config.get_namespace() == ["foo"]
 
-    ns_foo_bar_config = ns_foo_config.with_namespace('bar')
-    assert ns_foo_bar_config.get_namespace() == ['foo', 'bar']
+    ns_foo_bar_config = ns_foo_config.with_namespace("bar")
+    assert ns_foo_bar_config.get_namespace() == ["foo", "bar"]
 
 
-@pytest.mark.parametrize('key,alternate_keys,expected', [
-    # key, alternate keys, expected
-    ('FOO', [], 'foo_abc'),
-    ('FOO', ['FOO_BAR'], 'foo_abc'),
-    ('BAD_KEY', ['FOO_BAR'], 'foo_bar_abc'),
-    ('BAD_KEY', ['BAD_KEY1', 'BAD_KEY2', 'FOO_BAR_BAZ'], 'foo_bar_baz_abc'),
-])
+@pytest.mark.parametrize(
+    "key,alternate_keys,expected",
+    [
+        # key, alternate keys, expected
+        ("FOO", [], "foo_abc"),
+        ("FOO", ["FOO_BAR"], "foo_abc"),
+        ("BAD_KEY", ["FOO_BAR"], "foo_bar_abc"),
+        ("BAD_KEY", ["BAD_KEY1", "BAD_KEY2", "FOO_BAR_BAZ"], "foo_bar_baz_abc"),
+    ],
+)
 def test_alternate_keys(key, alternate_keys, expected):
-    config = ConfigManager.from_dict({
-        'FOO': 'foo_abc',
-        'FOO_BAR': 'foo_bar_abc',
-        'FOO_BAR_BAZ': 'foo_bar_baz_abc',
-    })
+    config = ConfigManager.from_dict(
+        {"FOO": "foo_abc", "FOO_BAR": "foo_bar_abc", "FOO_BAR_BAZ": "foo_bar_baz_abc"}
+    )
 
     assert config(key, alternate_keys=alternate_keys) == expected
 
 
-@pytest.mark.parametrize('key,alternate_keys,expected', [
-    # key, alternate keys, expected
-    ('BAR', [], 'foo_bar_abc'),
-    ('BAD_KEY', ['BAD_KEY1', 'BAR_BAZ'], 'foo_bar_baz_abc'),
-    ('bad_key', ['bad_key1', 'bar_baz'], 'foo_bar_baz_abc'),
-    ('bad_key', ['root:common_foo'], 'common_foo_abc')
-])
+@pytest.mark.parametrize(
+    "key,alternate_keys,expected",
+    [
+        # key, alternate keys, expected
+        ("BAR", [], "foo_bar_abc"),
+        ("BAD_KEY", ["BAD_KEY1", "BAR_BAZ"], "foo_bar_baz_abc"),
+        ("bad_key", ["bad_key1", "bar_baz"], "foo_bar_baz_abc"),
+        ("bad_key", ["root:common_foo"], "common_foo_abc"),
+    ],
+)
 def test_alternate_keys_with_namespace(key, alternate_keys, expected):
-    config = ConfigManager.from_dict({
-        'COMMON_FOO': 'common_foo_abc',
-        'FOO': 'foo_abc',
-        'FOO_BAR': 'foo_bar_abc',
-        'FOO_BAR_BAZ': 'foo_bar_baz_abc',
-    })
+    config = ConfigManager.from_dict(
+        {
+            "COMMON_FOO": "common_foo_abc",
+            "FOO": "foo_abc",
+            "FOO_BAR": "foo_bar_abc",
+            "FOO_BAR_BAZ": "foo_bar_baz_abc",
+        }
+    )
 
-    config = config.with_namespace('FOO')
+    config = config.with_namespace("FOO")
 
     assert config(key, alternate_keys=alternate_keys) == expected
 
 
 def test_raw_value():
-    config = ConfigManager.from_dict({
-        'FOO_BAR': '1'
-    })
-    assert config('FOO_BAR', parser=int) == 1
-    assert config('FOO_BAR', parser=int, raw_value=True) == '1'
+    config = ConfigManager.from_dict({"FOO_BAR": "1"})
+    assert config("FOO_BAR", parser=int) == 1
+    assert config("FOO_BAR", parser=int, raw_value=True) == "1"
 
-    assert str(config('NOEXIST', parser=int, raise_error=False)) == 'NO_VALUE'
+    assert str(config("NOEXIST", parser=int, raise_error=False)) == "NO_VALUE"
 
-    config = config.with_namespace('FOO')
-    assert config('BAR', parser=int) == 1
-    assert config('BAR', parser=int, raw_value=True) == '1'
+    config = config.with_namespace("FOO")
+    assert config("BAR", parser=int) == 1
+    assert config("BAR", parser=int, raw_value=True) == "1"

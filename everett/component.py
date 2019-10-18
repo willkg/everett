@@ -13,8 +13,15 @@ from everett.manager import BoundConfig
 class Option(object):
     """A single option comprised of a key and settings."""
 
-    def __init__(self, key, default=NO_VALUE, alternate_keys=NO_VALUE, doc='',
-                 parser=str, meta=None):
+    def __init__(
+        self,
+        key,
+        default=NO_VALUE,
+        alternate_keys=NO_VALUE,
+        doc="",
+        parser=str,
+        meta=None,
+    ):
         self.key = key
         self.default = default
         self.alternate_keys = alternate_keys
@@ -24,13 +31,13 @@ class Option(object):
 
     def __eq__(self, obj):
         return (
-            isinstance(obj, Option) and
-            obj.key == self.key and
-            obj.default == self.default and
-            obj.alternate_keys == self.alternate_keys and
-            obj.doc == self.doc and
-            obj.parser == self.parser and
-            obj.meta == self.meta
+            isinstance(obj, Option)
+            and obj.key == self.key
+            and obj.default == self.default
+            and obj.alternate_keys == self.alternate_keys
+            and obj.doc == self.doc
+            and obj.parser == self.parser
+            and obj.meta == self.meta
         )
 
 
@@ -40,8 +47,9 @@ class ConfigOptions(object):
     def __init__(self):
         self.options = OrderedDict()
 
-    def add_option(self, key, default=NO_VALUE, alternate_keys=NO_VALUE,
-                   doc='', parser=str, **meta):
+    def add_option(
+        self, key, default=NO_VALUE, alternate_keys=NO_VALUE, doc="", parser=str, **meta
+    ):
         """Add an option to the group.
 
         :arg key: the key to look up
@@ -67,7 +75,7 @@ class ConfigOptions(object):
             alternate_keys=alternate_keys,
             doc=doc,
             parser=parser,
-            meta=meta
+            meta=meta,
         )
         self.options[key] = option
 
@@ -163,9 +171,14 @@ class RequiredConfigMixin(object):
         """
         namespace = namespace or []
 
-        cfg = getattr(self, 'config', None)
+        cfg = getattr(self, "config", None)
         if cfg is None or not isinstance(cfg, BoundConfig):
             return
 
         for opt in self.get_required_config():
-            yield (namespace, opt.key, self.config(opt.key, raise_error=False, raw_value=True), opt)
+            yield (
+                namespace,
+                opt.key,
+                self.config(opt.key, raise_error=False, raw_value=True),
+                opt,
+            )

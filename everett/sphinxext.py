@@ -149,7 +149,7 @@ def split_clspath(clspath):
     Note: This is a really simplistic implementation.
 
     """
-    return clspath.rsplit('.', 1)
+    return clspath.rsplit(".", 1)
 
 
 def import_class(clspath):
@@ -170,7 +170,7 @@ def upper_lower_none(arg):
         return arg
 
     arg = arg.strip().lower()
-    if arg in ['upper', 'lower']:
+    if arg in ["upper", "lower"]:
         return arg
 
     raise ValueError('argument must be "upper", "lower" or None')
@@ -180,30 +180,34 @@ class EverettComponent(ObjectDescription):
     """Description of an Everett component."""
 
     doc_field_types = [
-        TypedField('options', label=_('Options'),
-                   names=('option', 'opt'),
-                   typerolename='obj', typenames=('parser',),
-                   can_collapse=True),
+        TypedField(
+            "options",
+            label=_("Options"),
+            names=("option", "opt"),
+            typerolename="obj",
+            typenames=("parser",),
+            can_collapse=True,
+        )
     ]
 
     allow_nesting = False
 
     def handle_signature(self, sig, signode):
         """Create a signature for this thing."""
-        if sig != 'Configuration':
+        if sig != "Configuration":
             signode.clear()
 
             # Add "component" which is the type of this thing
-            signode += addnodes.desc_annotation('component ', 'component ')
+            signode += addnodes.desc_annotation("component ", "component ")
 
-            if '.' in sig:
-                modname, clsname = sig.rsplit('.', 1)
+            if "." in sig:
+                modname, clsname = sig.rsplit(".", 1)
             else:
-                modname, clsname = '', sig
+                modname, clsname = "", sig
 
             # If there's a module name, then we add the module
             if modname:
-                signode += addnodes.desc_addname(modname + '.', modname + '.')
+                signode += addnodes.desc_addname(modname + ".", modname + ".")
 
             # Add the class name
             signode += addnodes.desc_name(clsname, clsname)
@@ -215,61 +219,55 @@ class EverettComponent(ObjectDescription):
 
     def add_target_and_index(self, name, sig, signode):
         """Add a target and index for this thing."""
-        targetname = '%s-%s' % (self.objtype, name)
+        targetname = "%s-%s" % (self.objtype, name)
 
         if targetname not in self.state.document.ids:
-            signode['names'].append(targetname)
-            signode['ids'].append(targetname)
-            signode['first'] = (not self.names)
+            signode["names"].append(targetname)
+            signode["ids"].append(targetname)
+            signode["first"] = not self.names
             self.state.document.note_explicit_target(signode)
 
-            objects = self.env.domaindata['everett']['objects']
+            objects = self.env.domaindata["everett"]["objects"]
             key = (self.objtype, name)
             if key in objects:
                 self.state_machine.reporter.warning(
-                    'duplicate description of %s %s, ' % (self.objtype, name) +
-                    'other instance in ' + self.env.doc2path(objects[key]),
-                    line=self.lineno
+                    "duplicate description of %s %s, " % (self.objtype, name)
+                    + "other instance in "
+                    + self.env.doc2path(objects[key]),
+                    line=self.lineno,
                 )
             objects[key] = self.env.docname
 
-        indextext = _('%s (component)') % name
-        self.indexnode['entries'].append(('single', indextext, targetname, '', None))
+        indextext = _("%s (component)") % name
+        self.indexnode["entries"].append(("single", indextext, targetname, "", None))
 
 
 class EverettDomain(Domain):
     """Everett domain for component configuration."""
 
-    name = 'everett'
-    label = 'Everett'
+    name = "everett"
+    label = "Everett"
 
-    object_types = {
-        'component': ObjType(_('component'), 'comp'),
-    }
-    directives = {
-        'component': EverettComponent,
-    }
-    roles = {
-        'component': XRefRole(),
-        'comp': XRefRole(),
-    }
+    object_types = {"component": ObjType(_("component"), "comp")}
+    directives = {"component": EverettComponent}
+    roles = {"component": XRefRole(), "comp": XRefRole()}
     initial_data = {
         # (typ, clspath) -> sphinx document name
-        'objects': {},
+        "objects": {}
     }
 
     def clear_doc(self, docname):
-        for (typ, name), doc in list(self.data['objects'].items()):
+        for (typ, name), doc in list(self.data["objects"].items()):
             if doc == docname:
-                del self.data['objects'][typ, name]
+                del self.data["objects"][typ, name]
 
     def merge_domaindata(self, docnames, otherdata):
-        for (typ, name), doc in otherdata['objects'].items():
+        for (typ, name), doc in otherdata["objects"].items():
             if doc in docnames:
-                self.data['objects'][typ, name] = doc
+                self.data["objects"][typ, name] = doc
 
     def resolve_xref(self, env, fromdocname, builder, typ, target, node, contnode):
-        objects = self.data['objects']
+        objects = self.data["objects"]
         objtypes = self.objtypes_for_role(typ) or []
 
         for objtype in objtypes:
@@ -280,23 +278,23 @@ class EverettDomain(Domain):
                         builder,
                         fromdocname,
                         objects[typ, clspath],
-                        objtype + '-' + target,
+                        objtype + "-" + target,
                         contnode,
-                        target + ' ' + objtype
+                        target + " " + objtype,
                     )
 
                 # Try looking it up by the class name--this lets people use
                 # shorthand in their roles
-                if '.' in clspath:
+                if "." in clspath:
                     modname, clsname = split_clspath(clspath)
                     if (objtype, target) == (typ, clsname):
                         return make_refnode(
                             builder,
                             fromdocname,
                             objects[typ, clspath],
-                            objtype + '-' + clspath,
+                            objtype + "-" + clspath,
                             contnode,
-                            target + ' ' + objtype
+                            target + " " + objtype,
                         )
 
 
@@ -310,16 +308,13 @@ class AutoComponentDirective(Directive):
         # Whether or not to show the class docstring--if None, don't show the
         # docstring, if empty string use __doc__, otherwise use the value of
         # the attribute on the class
-        'show-docstring': directives.unchanged,
-
+        "show-docstring": directives.unchanged,
         # Whether or not to hide the class name
-        'hide-classname': directives.flag,
-
+        "hide-classname": directives.flag,
         # Prepend a specified namespace
-        'namespace': directives.unchanged,
-
+        "namespace": directives.unchanged,
         # Render keys in specified case
-        'case': upper_lower_none,
+        "case": upper_lower_none,
     }
 
     def add_line(self, line, source, *lineno):
@@ -329,87 +324,91 @@ class AutoComponentDirective(Directive):
     def generate_docs(self, clspath, more_content):
         """Generate documentation for this configman class"""
         obj = import_class(clspath)
-        sourcename = 'docstring of %s' % clspath
+        sourcename = "docstring of %s" % clspath
         all_options = []
-        indent = '    '
+        indent = "    "
         config = obj.get_required_config()
 
         if config.options:
             # Go through options and figure out relevant information
             for option in config:
-                if 'namespace' in self.options:
-                    namespaced_key = self.options['namespace'] + '_' + option.key
+                if "namespace" in self.options:
+                    namespaced_key = self.options["namespace"] + "_" + option.key
                 else:
                     namespaced_key = option.key
 
-                if 'case' in self.options:
-                    if self.options['case'] == 'upper':
+                if "case" in self.options:
+                    if self.options["case"] == "upper":
                         namespaced_key = namespaced_key.upper()
-                    elif self.options['case'] == 'lower':
+                    elif self.options["case"] == "lower":
                         namespaced_key = namespaced_key.lower()
 
-                all_options.append({
-                    'key': namespaced_key,
-                    'parser': qualname(option.parser),
-                    'doc': option.doc,
-                    'default': option.default,
-                })
+                all_options.append(
+                    {
+                        "key": namespaced_key,
+                        "parser": qualname(option.parser),
+                        "doc": option.doc,
+                        "default": option.default,
+                    }
+                )
 
-        if 'hide-classname' not in self.options:
+        if "hide-classname" not in self.options:
             modname, clsname = split_clspath(clspath)
             component_name = clspath
             component_index = clsname
         else:
-            component_name = 'Configuration'
-            component_index = 'Configuration'
+            component_name = "Configuration"
+            component_index = "Configuration"
 
         if all_options:
             # Add index entries for options first so they link to the right
             # place; we do it this way so that we don't have to make options a
             # real object type and then we don't get to use TypedField
             # formatting
-            self.add_line('.. index::', sourcename)
+            self.add_line(".. index::", sourcename)
             for option in all_options:
-                self.add_line('   single: %s; (%s)' % (option['key'], component_index), sourcename)
-            self.add_line('', '')
+                self.add_line(
+                    "   single: %s; (%s)" % (option["key"], component_index), sourcename
+                )
+            self.add_line("", "")
 
         # Add the classname or 'Configuration'
-        self.add_line('.. everett:component:: %s' % component_name, sourcename)
-        self.add_line('', sourcename)
+        self.add_line(".. everett:component:: %s" % component_name, sourcename)
+        self.add_line("", sourcename)
 
         # Add the docstring if there is one and if show-docstring
-        if 'show-docstring' in self.options:
-            docstring_attr = self.options['show-docstring'] or '__doc__'
+        if "show-docstring" in self.options:
+            docstring_attr = self.options["show-docstring"] or "__doc__"
             docstring = getattr(obj, docstring_attr, None)
             if docstring:
                 docstringlines = prepare_docstring(docstring, ignore=1)
                 for i, line in enumerate(docstringlines):
                     self.add_line(indent + line, sourcename, i)
-                self.add_line('', '')
+                self.add_line("", "")
 
         # Add content from the directive if there was any
         if more_content:
             for line, src in zip(more_content.data, more_content.items):
                 self.add_line(indent + line, src[0], src[1])
-            self.add_line('', '')
+            self.add_line("", "")
 
         if all_options:
             # Now list the options
-            sourcename = 'class definition'
+            sourcename = "class definition"
 
             for option in all_options:
                 self.add_line(
-                    '%s:option %s %s:' % (indent, option['parser'], option['key']),
-                    sourcename
+                    "%s:option %s %s:" % (indent, option["parser"], option["key"]),
+                    sourcename,
                 )
-                self.add_line('%s    %s' % (indent, option['doc']), sourcename)
-                if option['default'] is not NO_VALUE:
-                    self.add_line('', '')
+                self.add_line("%s    %s" % (indent, option["doc"]), sourcename)
+                if option["default"] is not NO_VALUE:
+                    self.add_line("", "")
                     self.add_line(
-                        '%s    Defaults to ``%r``.' % (indent, option['default']),
-                        sourcename
+                        "%s    Defaults to ``%r``." % (indent, option["default"]),
+                        sourcename,
                     )
-                self.add_line('', '')
+                self.add_line("", "")
 
     def run(self):
         self.reporter = self.state.document.reporter
@@ -429,10 +428,10 @@ class AutoComponentDirective(Directive):
 def setup(app):
     """Register domain and directive in Sphinx."""
     app.add_domain(EverettDomain)
-    app.add_directive('autocomponent', AutoComponentDirective)
+    app.add_directive("autocomponent", AutoComponentDirective)
 
     return {
-        'version': __version__,
-        'parallel_read_safe': True,
-        'parallel_write_safe': True
+        "version": __version__,
+        "parallel_read_safe": True,
+        "parallel_write_safe": True,
     }

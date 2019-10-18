@@ -31,9 +31,9 @@ from everett import (
 _CONFIG_OVERRIDE = []
 
 # Regex for valid keys in an env file
-ENV_KEY_RE = re.compile(r'^[a-z][a-z0-9_]*$', flags=re.IGNORECASE)
+ENV_KEY_RE = re.compile(r"^[a-z][a-z0-9_]*$", flags=re.IGNORECASE)
 
-logger = logging.getLogger('everett')
+logger = logging.getLogger("everett")
 
 
 def qualname(thing):
@@ -52,22 +52,22 @@ def qualname(thing):
 
     # Add the module, unless it's a builtin
     mod = inspect.getmodule(thing)
-    if mod and mod.__name__ not in ('__main__', '__builtin__', 'builtins'):
+    if mod and mod.__name__ not in ("__main__", "__builtin__", "builtins"):
         parts.append(mod.__name__)
 
     # If there's a __qualname__, use that
-    if hasattr(thing, '__qualname__'):
+    if hasattr(thing, "__qualname__"):
         parts.append(thing.__qualname__)
-        return '.'.join(parts)
+        return ".".join(parts)
 
     # If it's a module
     if inspect.ismodule(thing):
-        return '.'.join(parts)
+        return ".".join(parts)
 
     # If it's a class
     if inspect.isclass(thing):
         parts.append(thing.__name__)
-        return '.'.join(parts)
+        return ".".join(parts)
 
     # If it's a function
     if isinstance(thing, (types.FunctionType, types.MethodType)):
@@ -84,7 +84,7 @@ def qualname(thing):
         elif inspect.isfunction(thing):
             parts.append(thing.__name__)
 
-        return '.'.join(parts)
+        return ".".join(parts)
 
     # It's an instance, so ... let's call repr on it
     return repr(thing)
@@ -102,8 +102,8 @@ def parse_bool(val):
     False
 
     """
-    true_vals = ('t', 'true', 'yes', 'y', '1', 'on')
-    false_vals = ('f', 'false', 'no', 'n', '0', 'off')
+    true_vals = ("t", "true", "yes", "y", "1", "on")
+    false_vals = ("f", "false", "no", "n", "0", "off")
 
     val = val.lower()
     if val in true_vals:
@@ -126,17 +126,19 @@ def parse_env_file(envfile):
     data = {}
     for line_no, line in enumerate(envfile):
         line = line.strip()
-        if not line or line.startswith('#'):
+        if not line or line.startswith("#"):
             continue
-        if '=' not in line:
-            raise ConfigurationError('Env file line missing = operator (line %s)' % (line_no + 1))
-        k, v = line.split('=', 1)
+        if "=" not in line:
+            raise ConfigurationError(
+                "Env file line missing = operator (line %s)" % (line_no + 1)
+            )
+        k, v = line.split("=", 1)
         k = k.strip()
         if not ENV_KEY_RE.match(k):
             raise ConfigurationError(
                 'Invalid variable name "%s" in env file (line %s)' % (k, (line_no + 1))
             )
-        v = v.strip().strip('\'"')
+        v = v.strip().strip("'\"")
         data[k] = v
 
     return data
@@ -149,13 +151,13 @@ def parse_class(val):
     <built-in function openssl_md5>
 
     """
-    module, class_name = val.rsplit('.', 1)
+    module, class_name = val.rsplit(".", 1)
     module = importlib.import_module(module)
     try:
         return getattr(module, class_name)
     except AttributeError:
-        raise ValueError('"%s" is not a valid member of %s' % (
-            class_name, qualname(module))
+        raise ValueError(
+            '"%s" is not a valid member of %s' % (class_name, qualname(module))
         )
 
 
@@ -190,7 +192,7 @@ def generate_uppercase_key(key, namespace=None):
     """Given a key and a namespace, generates a final uppercase key."""
     if namespace:
         namespace = [part for part in listify(namespace) if part]
-        key = '_'.join(namespace + [key])
+        key = "_".join(namespace + [key])
 
     key = key.upper()
     return key
@@ -204,7 +206,7 @@ def get_key_from_envs(envs, key):
     """
     # if it barks like a dict, make it a list have to use `get` since dicts and
     # lists both have __getitem__
-    if hasattr(envs, 'get'):
+    if hasattr(envs, "get"):
         envs = [envs]
 
     for env in envs:
@@ -234,7 +236,7 @@ class ListOf(object):
 
     """
 
-    def __init__(self, parser, delimiter=','):
+    def __init__(self, parser, delimiter=","):
         self.sub_parser = parser
         self.delimiter = delimiter
 
@@ -246,7 +248,7 @@ class ListOf(object):
             return []
 
     def __repr__(self):
-        return '<ListOf(%s)>' % qualname(self.sub_parser)
+        return "<ListOf(%s)>" % qualname(self.sub_parser)
 
 
 class ConfigOverrideEnv(object):
@@ -258,11 +260,11 @@ class ConfigOverrideEnv(object):
         if not _CONFIG_OVERRIDE:
             return NO_VALUE
         full_key = generate_uppercase_key(key, namespace)
-        logger.debug('Searching %s for %s', self, full_key)
+        logger.debug("Searching %s for %s", self, full_key)
         return get_key_from_envs(reversed(_CONFIG_OVERRIDE), full_key)
 
     def __repr__(self):
-        return '<ConfigOverrideEnv>'
+        return "<ConfigOverrideEnv>"
 
 
 class ConfigObjEnv(object):
@@ -314,12 +316,11 @@ class ConfigObjEnv(object):
         full_key = generate_uppercase_key(key, namespace)
         full_key = full_key.lower()
 
-        logger.debug('Searching %s for %s', self, full_key)
+        logger.debug("Searching %s for %s", self, full_key)
 
         # Build a map of lowercase -> actual key
         obj_keys = {
-            item.lower(): item
-            for item in dir(self.obj) if not item.startswith('__')
+            item.lower(): item for item in dir(self.obj) if not item.startswith("__")
         }
 
         if full_key in obj_keys:
@@ -336,7 +337,7 @@ class ConfigObjEnv(object):
         return NO_VALUE
 
     def __repr__(self):
-        return '<ConfigObjEnv>'
+        return "<ConfigObjEnv>"
 
 
 class ConfigDictEnv(object):
@@ -393,18 +394,16 @@ class ConfigDictEnv(object):
     """
 
     def __init__(self, cfg):
-        self.cfg = dict(
-            (key.upper(), val) for key, val in cfg.items()
-        )
+        self.cfg = dict((key.upper(), val) for key, val in cfg.items())
 
     def get(self, key, namespace=None):
         """Retrieve value for key."""
         full_key = generate_uppercase_key(key, namespace)
-        logger.debug('Searching %s for %s', self, full_key)
+        logger.debug("Searching %s for %s", self, full_key)
         return get_key_from_envs(self.cfg, full_key)
 
     def __repr__(self):
-        return '<ConfigDictEnv: %r>' % self.cfg
+        return "<ConfigDictEnv: %r>" % self.cfg
 
 
 class ConfigEnvFileEnv(object):
@@ -476,11 +475,11 @@ class ConfigEnvFileEnv(object):
     def get(self, key, namespace=None):
         """Retrieve value for key."""
         full_key = generate_uppercase_key(key, namespace)
-        logger.debug('Searching %s for %s', self, full_key)
+        logger.debug("Searching %s for %s", self, full_key)
         return get_key_from_envs(self.data, full_key)
 
     def __repr__(self):
-        return '<ConfigEnvFileEnv: %s>' % self.path
+        return "<ConfigEnvFileEnv: %s>" % self.path
 
 
 class ConfigOSEnv(object):
@@ -529,11 +528,11 @@ class ConfigOSEnv(object):
     def get(self, key, namespace=None):
         """Retrieve value for key."""
         full_key = generate_uppercase_key(key, namespace)
-        logger.debug('Searching %s for %s', self, full_key)
+        logger.debug("Searching %s for %s", self, full_key)
         return get_key_from_envs(os.environ, full_key)
 
     def __repr__(self):
-        return '<ConfigOSEnv>'
+        return "<ConfigOSEnv>"
 
 
 def _get_component_name(component):
@@ -541,7 +540,7 @@ def _get_component_name(component):
         cls = component.__class__
     else:
         cls = component
-    return cls.__module__ + '.' + cls.__name__
+    return cls.__module__ + "." + cls.__name__
 
 
 class ConfigManagerBase(object):
@@ -569,7 +568,7 @@ class ConfigManagerBase(object):
         return NamespacedConfig(self._get_base_config(), namespace)
 
     def __repr__(self):
-        return '<ConfigManagerBase>'
+        return "<ConfigManagerBase>"
 
 
 class BoundConfig(ConfigManagerBase):
@@ -600,9 +599,17 @@ class BoundConfig(ConfigManagerBase):
         """
         return self.config.get_namespace()
 
-    def __call__(self, key, namespace=None, default=NO_VALUE,
-                 alternate_keys=NO_VALUE, doc='', parser=str, raise_error=True,
-                 raw_value=False):
+    def __call__(
+        self,
+        key,
+        namespace=None,
+        default=NO_VALUE,
+        alternate_keys=NO_VALUE,
+        doc="",
+        parser=str,
+        raise_error=True,
+        raw_value=False,
+    ):
         """Return a config value bound to a component's options.
 
         :arg key: the key to look up
@@ -630,7 +637,7 @@ class BoundConfig(ConfigManagerBase):
         except KeyError:
             if raise_error:
                 raise InvalidKeyError(
-                    '%s is not a valid key for this component' % (key,)
+                    "%s is not a valid key for this component" % (key,)
                 )
             return None
 
@@ -642,11 +649,14 @@ class BoundConfig(ConfigManagerBase):
             doc=option.doc,
             parser=option.parser,
             raise_error=raise_error,
-            raw_value=raw_value
+            raw_value=raw_value,
         )
 
     def __repr__(self):
-        return '<BoundConfig(%s): namespace:%s>' % (self.component_name, self.get_namespace())
+        return "<BoundConfig(%s): namespace:%s>" % (
+            self.component_name,
+            self.get_namespace(),
+        )
 
 
 class NamespacedConfig(ConfigManagerBase):
@@ -669,9 +679,17 @@ class NamespacedConfig(ConfigManagerBase):
         """
         return self.config.get_namespace() + [self.namespace]
 
-    def __call__(self, key, namespace=None, default=NO_VALUE,
-                 alternate_keys=NO_VALUE, doc='', parser=str, raise_error=True,
-                 raw_value=False):
+    def __call__(
+        self,
+        key,
+        namespace=None,
+        default=NO_VALUE,
+        alternate_keys=NO_VALUE,
+        doc="",
+        parser=str,
+        raise_error=True,
+        raw_value=False,
+    ):
         """Return a config value bound to a component's options.
 
         :arg key: the key to look up
@@ -712,17 +730,17 @@ class NamespacedConfig(ConfigManagerBase):
             alternate_keys=alternate_keys,
             parser=parser,
             raise_error=raise_error,
-            raw_value=raw_value
+            raw_value=raw_value,
         )
 
     def __repr__(self):
-        return '<NamespacedConfig: namespace:%s>' % self.get_namespace()
+        return "<NamespacedConfig: namespace:%s>" % self.get_namespace()
 
 
 class ConfigManager(ConfigManagerBase):
     """Manage multiple configuration environment layers."""
 
-    def __init__(self, environments, doc='', with_override=True):
+    def __init__(self, environments, doc="", with_override=True):
         """Instantiate a ConfigManager.
 
         :arg environents: list of configuration sources to look through in
@@ -744,7 +762,7 @@ class ConfigManager(ConfigManagerBase):
         self.doc = doc
 
     @classmethod
-    def basic_config(cls, env_file='.env'):
+    def basic_config(cls, env_file=".env"):
         """Return a basic ConfigManager.
 
         This sets up a ConfigManager that will look for configuration in
@@ -777,12 +795,7 @@ class ConfigManager(ConfigManagerBase):
         :returns: a :py:class:`everett.manager.ConfigManager`
 
         """
-        return cls(
-            environments=[
-                ConfigOSEnv(),
-                ConfigEnvFileEnv([env_file])
-            ]
-        )
+        return cls(environments=[ConfigOSEnv(), ConfigEnvFileEnv([env_file])])
 
     @classmethod
     def from_dict(cls, dict_config):
@@ -805,9 +818,17 @@ class ConfigManager(ConfigManagerBase):
         """
         return cls([ConfigDictEnv(dict_config)])
 
-    def __call__(self, key, namespace=None, default=NO_VALUE,
-                 alternate_keys=NO_VALUE, doc='', parser=str, raise_error=True,
-                 raw_value=False):
+    def __call__(
+        self,
+        key,
+        namespace=None,
+        default=NO_VALUE,
+        alternate_keys=NO_VALUE,
+        doc="",
+        parser=str,
+        raise_error=True,
+        raw_value=False,
+    ):
         """Return a parsed value from the environment.
 
         :arg key: the key to look up
@@ -883,9 +904,7 @@ class ConfigManager(ConfigManagerBase):
 
         """
         if not (default is NO_VALUE or isinstance(default, str)):
-            raise ConfigurationError(
-                'default value %r is not a string' % (default,)
-            )
+            raise ConfigurationError("default value %r is not a string" % (default,))
 
         if raw_value:
             # If we're returning raw values, then we can just use str which is
@@ -895,9 +914,7 @@ class ConfigManager(ConfigManagerBase):
             parser = get_parser(parser)
 
         def build_msg(*pargs):
-            return '\n'.join([
-                item for item in pargs if item
-            ])
+            return "\n".join([item for item in pargs if item])
 
         # Go through all possible keys
         all_keys = [key]
@@ -905,14 +922,16 @@ class ConfigManager(ConfigManagerBase):
             all_keys = all_keys + alternate_keys
 
         for possible_key in all_keys:
-            if possible_key.startswith('root:'):
+            if possible_key.startswith("root:"):
                 # If this is a root-anchored key, we drop the namespace.
                 possible_key = possible_key[5:]
                 use_namespace = None
             else:
                 use_namespace = namespace
 
-            logger.debug('Looking up key: %s, namespace: %s', possible_key, use_namespace)
+            logger.debug(
+                "Looking up key: %s, namespace: %s", possible_key, use_namespace
+            )
 
             # Go through environments in reverse order
             for env in self.envs:
@@ -921,7 +940,7 @@ class ConfigManager(ConfigManagerBase):
                 if val is not NO_VALUE:
                     try:
                         parsed_val = parser(val)
-                        logger.debug('Returning raw: %r, parsed: %r', val, parsed_val)
+                        logger.debug("Returning raw: %r, parsed: %r", val, parsed_val)
                         return parsed_val
                     except ConfigurationError:
                         # Re-raise ConfigurationError and friends since that's
@@ -930,17 +949,16 @@ class ConfigManager(ConfigManagerBase):
                     except Exception:
                         exc_info = sys.exc_info()
                         msg = build_msg(
-                            '%(class)s: %(msg)s' % {
-                                'class': exc_info[0].__name__,
-                                'msg': str(exc_info[1])
-                            },
-                            'namespace=%(namespace)s key=%(key)s requires a value parseable by %(parser)s' % {  # noqa
-                                'namespace': use_namespace,
-                                'key': key,
-                                'parser': qualname(parser)
+                            "%(class)s: %(msg)s"
+                            % {"class": exc_info[0].__name__, "msg": str(exc_info[1])},
+                            "namespace=%(namespace)s key=%(key)s requires a value parseable by %(parser)s"
+                            % {  # noqa
+                                "namespace": use_namespace,
+                                "key": key,
+                                "parser": qualname(parser),
                             },
                             doc,
-                            self.doc
+                            self.doc,
                         )
 
                         raise InvalidValueError(msg, namespace, key, parser)
@@ -949,7 +967,9 @@ class ConfigManager(ConfigManagerBase):
         if default is not NO_VALUE:
             try:
                 parsed_val = parser(default)
-                logger.debug('Returning default raw: %r, parsed: %r', default, parsed_val)
+                logger.debug(
+                    "Returning default raw: %r, parsed: %r", default, parsed_val
+                )
                 return parsed_val
             except ConfigurationError:
                 # Re-raise ConfigurationError and friends since that's
@@ -960,17 +980,16 @@ class ConfigManager(ConfigManagerBase):
                 # configuration error. We might want to denote that better.
                 exc_info = sys.exc_info()
                 msg = build_msg(
-                    '%(class)s: %(msg)s' % {
-                        'class': exc_info[0].__name__,
-                        'msg': str(exc_info[1])
-                    },
-                    'namespace=%(namespace)s key=%(key)s requires a default value parseable by %(parser)s' % {  # noqa
-                        'namespace': namespace,
-                        'key': key,
-                        'parser': qualname(parser)
+                    "%(class)s: %(msg)s"
+                    % {"class": exc_info[0].__name__, "msg": str(exc_info[1])},
+                    "namespace=%(namespace)s key=%(key)s requires a default value parseable by %(parser)s"
+                    % {  # noqa
+                        "namespace": namespace,
+                        "key": key,
+                        "parser": qualname(parser),
                     },
                     doc,
-                    self.doc
+                    self.doc,
                 )
 
                 raise InvalidValueError(msg, namespace, key, parser)
@@ -978,23 +997,20 @@ class ConfigManager(ConfigManagerBase):
         # No value specified and no default, so raise an error to the user
         if raise_error:
             msg = build_msg(
-                'namespace=%(namespace)s key=%(key)s requires a value parseable by %(parser)s' % {
-                    'namespace': namespace,
-                    'key': key,
-                    'parser': qualname(parser)
-                },
+                "namespace=%(namespace)s key=%(key)s requires a value parseable by %(parser)s"
+                % {"namespace": namespace, "key": key, "parser": qualname(parser)},
                 doc,
-                self.doc
+                self.doc,
             )
 
             raise ConfigurationMissingError(msg, namespace, key, parser)
 
-        logger.debug('Found nothing--returning NO_VALUE')
+        logger.debug("Found nothing--returning NO_VALUE")
         # Otherwise return NO_VALUE
         return NO_VALUE
 
     def __repr__(self):
-        return '<ConfigManager>'
+        return "<ConfigManager>"
 
 
 class ConfigOverride(object):
@@ -1023,6 +1039,7 @@ class ConfigOverride(object):
 
     def decorate(self, fun):
         """Decorate a function for overriding configuration."""
+
         @wraps(fun)
         def _decorated(*args, **kwargs):
             # Push the config, run the function and pop it afterwards.
@@ -1031,6 +1048,7 @@ class ConfigOverride(object):
                 return fun(*args, **kwargs)
             finally:
                 self.pop_config()
+
         return _decorated
 
     def __call__(self, class_or_fun):
@@ -1039,7 +1057,7 @@ class ConfigOverride(object):
             # that start with 'test'.
             for attr in class_or_fun.__dict__.keys():
                 prop = getattr(class_or_fun, attr)
-                if attr.startswith('test') and callable(prop):
+                if attr.startswith("test") and callable(prop):
                     setattr(class_or_fun, attr, self.decorate(prop))
             return class_or_fun
 
