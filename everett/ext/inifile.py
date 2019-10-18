@@ -19,7 +19,7 @@ from everett import NO_VALUE
 from everett.manager import generate_uppercase_key, get_key_from_envs, listify
 
 
-logger = logging.getLogger('everett')
+logger = logging.getLogger("everett")
 
 
 class ConfigIniEnv(object):
@@ -137,7 +137,7 @@ class ConfigIniEnv(object):
                 break
 
         if not self.path:
-            logger.debug('No INI file found: %s', possible_paths)
+            logger.debug("No INI file found: %s", possible_paths)
 
     def parse_ini_file(self, path):
         """Parse ini file at ``path`` and return dict."""
@@ -149,7 +149,7 @@ class ConfigIniEnv(object):
                 if isinstance(d[key], dict):
                     cfg.update(extract_section(namespace + [key], d[key]))
                 else:
-                    cfg['_'.join(namespace + [key]).upper()] = val
+                    cfg["_".join(namespace + [key]).upper()] = val
 
             return cfg
 
@@ -161,10 +161,10 @@ class ConfigIniEnv(object):
             return NO_VALUE
 
         # NOTE(willkg): The "main" section is considered the root mainspace.
-        namespace = namespace or ['main']
-        logger.debug('Searching %r for key: %s, namespace: %s', self, key, namespace)
+        namespace = namespace or ["main"]
+        logger.debug("Searching %r for key: %s, namespace: %s", self, key, namespace)
         full_key = generate_uppercase_key(key, namespace)
         return get_key_from_envs(self.cfg, full_key)
 
     def __repr__(self):
-        return '<ConfigIniEnv: %s>' % self.path
+        return "<ConfigIniEnv: %s>" % self.path

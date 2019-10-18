@@ -5,25 +5,22 @@
 import pytest
 
 from everett import ConfigurationError
-from everett.component import (
-    ConfigOptions,
-    Option,
-    RequiredConfigMixin,
-)
+from everett.component import ConfigOptions, Option, RequiredConfigMixin
 from everett.manager import ConfigManager, ConfigDictEnv
 
 
 def test_get_required_config():
     """Verify that get_required_config works for a trivial component"""
+
     class Component(RequiredConfigMixin):
         required_config = ConfigOptions()
-        required_config.add_option('user', doc='no help')
+        required_config.add_option("user", doc="no help")
 
         def __init__(self, config):
             self.config = config.with_options(self)
 
     required = Component.get_required_config()
-    assert [op.key for op in required] == ['user']
+    assert [op.key for op in required] == ["user"]
 
 
 def test_get_required_config_complex_mro():
@@ -33,71 +30,61 @@ def test_get_required_config_complex_mro():
     right components and in the right order.
 
     """
+
     class ComponentBase(RequiredConfigMixin):
         def __init__(self, config):
             self.config = config.with_options(self)
 
     class A(ComponentBase):
         required_config = ConfigOptions()
-        required_config.add_option('a', default='')
+        required_config.add_option("a", default="")
 
     class B(ComponentBase):
         required_config = ConfigOptions()
-        required_config.add_option('b', default='')
-        required_config.add_option('bd', default='')
+        required_config.add_option("b", default="")
+        required_config.add_option("bd", default="")
 
     class C(B, A):
         required_config = ConfigOptions()
         # Note: This overrides B's b.
-        required_config.add_option('b', default='')
-        required_config.add_option('c', default='')
+        required_config.add_option("b", default="")
+        required_config.add_option("c", default="")
 
     required = C.get_required_config()
     assert [op.key for op in required] == [
-        'a',   # From A
-        'bd',  # From B
-        'b',   # From C (overrides B's)
-        'c'    # From C
+        "a",  # From A
+        "bd",  # From B
+        "b",  # From C (overrides B's)
+        "c",  # From C
     ]
 
 
 def test_with_options():
     """Verify .with_options() restricts configuration"""
-    config = ConfigManager([
-        ConfigDictEnv({
-            'FOO_BAR': 'a',
-            'FOO_BAZ': 'b',
-
-            'BAR': 'c',
-            'BAZ': 'd',
-        })
-    ])
+    config = ConfigManager(
+        [ConfigDictEnv({"FOO_BAR": "a", "FOO_BAZ": "b", "BAR": "c", "BAZ": "d"})]
+    )
 
     class SomeComponent(RequiredConfigMixin):
         required_config = ConfigOptions()
-        required_config.add_option(
-            'baz',
-            default='',
-            doc='some help here',
-            parser=str
-        )
+        required_config.add_option("baz", default="", doc="some help here", parser=str)
 
         def __init__(self, config):
             self.config = config.with_options(self)
 
     # Create the component with regular config
     comp = SomeComponent(config)
-    assert comp.config('baz') == 'd'
+    assert comp.config("baz") == "d"
     with pytest.raises(ConfigurationError):
         # This is not a valid option for this component
-        comp.config('bar')
+        comp.config("bar")
 
     # Create the component with config in the "foo" namespace
-    comp2 = SomeComponent(config.with_namespace('foo'))
-    assert comp2.config('baz') == 'b'
+    comp2 = SomeComponent(config.with_namespace("foo"))
+    assert comp2.config("baz") == "b"
     with pytest.raises(ConfigurationError):
         # This is not a valid option for this component
-        comp2.config('bar')
+        comp2.config("bar")
 
 
 def test_nested_options():
@@ -106,27 +93,19 @@ def test_nested_options():
 
     class Foo(RequiredConfigMixin):
         required_config = ConfigOptions()
-        required_config.add_option(
-            'option1',
-            default='opt1default',
-            parser=str
-        )
+        required_config.add_option("option1", default="opt1default", parser=str)
 
     class Bar(RequiredConfigMixin):
         required_config = ConfigOptions()
-        required_config.add_option(
-            'option2',
-            default='opt2default',
-            parser=str
-        )
+        required_config.add_option("option2", default="opt2default", parser=str)
 
     config = ConfigManager.basic_config()
     config = config.with_options(Foo)
     config = config.with_options(Bar)
 
-    assert config('option2') == 'opt2default'
+    assert config("option2") == "opt2default"
     with pytest.raises(ConfigurationError):
-        config('option1')
+        config("option1")
 
 
 def test_default_comes_from_options():
@@ -135,54 +114,39 @@ def test_default_comes_from_options():
 
     class SomeComponent(RequiredConfigMixin):
         required_config = ConfigOptions()
-        required_config.add_option(
-            'foo',
-            default='abc'
-        )
+        required_config.add_option("foo", default="abc")
 
         def __init__(self, config):
             self.config = config.with_options(self)
 
     comp = SomeComponent(config)
-    assert comp.config('foo') == 'abc'
+    assert comp.config("foo") == "abc"
 
 
 def test_parser_comes_from_options():
     """Verify the parser is picked up from options"""
-    config = ConfigManager([
-        ConfigDictEnv({
-            'FOO': '1'
-        })
-    ])
+    config = ConfigManager([ConfigDictEnv({"FOO": "1"})])
 
     class SomeComponent(RequiredConfigMixin):
         required_config = ConfigOptions()
-        required_config.add_option(
-            'foo',
-            parser=int
-        )
+        required_config.add_option("foo", parser=int)
 
         def __init__(self, config):
             self.config = config.with_options(self)
 
     comp = SomeComponent(config)
-    assert comp.config('foo') == 1
+    assert comp.config("foo") == 1
 
 
 def test_get_namespace():
-    config = ConfigManager.from_dict({
-        'FOO': 'abc',
-        'FOO_BAR': 'abc',
-        'FOO_BAR_BAZ': 'abc',
-    })
+    config = ConfigManager.from_dict(
+        {"FOO": "abc", "FOO_BAR": "abc", "FOO_BAR_BAZ": "abc"}
+    )
     assert config.get_namespace() == []
 
     class SomeComponent(RequiredConfigMixin):
         required_config = ConfigOptions()
-        required_config.add_option(
-            'foo',
-            parser=int
-        )
+        required_config.add_option("foo", parser=int)
 
         def __init__(self, config):
             self.config = config.with_options(self)
@@ -193,24 +157,18 @@ def test_get_namespace():
     comp = SomeComponent(config)
     assert comp.my_namespace_is() == []
 
-    comp = SomeComponent(config.with_namespace('foo'))
-    assert comp.my_namespace_is() == ['foo']
+    comp = SomeComponent(config.with_namespace("foo"))
+    assert comp.my_namespace_is() == ["foo"]
 
 
 def test_alternate_keys():
-    config = ConfigManager.from_dict({
-        'COMMON': 'common_abc',
-        'FOO': 'abc',
-        'FOO_BAR': 'abc',
-        'FOO_BAR_BAZ': 'abc',
-    })
+    config = ConfigManager.from_dict(
+        {"COMMON": "common_abc", "FOO": "abc", "FOO_BAR": "abc", "FOO_BAR_BAZ": "abc"}
+    )
 
     class SomeComponent(RequiredConfigMixin):
         required_config = ConfigOptions()
-        required_config.add_option(
-            'bad_key',
-            alternate_keys=['root:common']
-        )
+        required_config.add_option("bad_key", alternate_keys=["root:common"])
 
         def __init__(self, config):
             self.config = config.with_options(self)
@@ -218,21 +176,15 @@ def test_alternate_keys():
     comp = SomeComponent(config)
 
     # The key is invalid, so it tries the alternate keys
-    assert comp.config('bad_key') == 'common_abc'
+    assert comp.config("bad_key") == "common_abc"
 
 
 def test_doc():
-    config = ConfigManager.from_dict({
-        'FOO_BAR': 'bat'
-    })
+    config = ConfigManager.from_dict({"FOO_BAR": "bat"})
 
     class SomeComponent(RequiredConfigMixin):
         required_config = ConfigOptions()
-        required_config.add_option(
-            'foo_bar',
-            parser=int,
-            doc='omg!'
-        )
+        required_config.add_option("foo_bar", parser=int, doc="omg!")
 
         def __init__(self, config):
             self.config = config.with_options(self)
@@ -241,51 +193,46 @@ def test_doc():
 
     try:
         # This throws an exception becase "bat" is not an int
-        comp.config('foo_bar')
+        comp.config("foo_bar")
     except Exception as exc:
         # We're going to lazily assert that omg! is in exc msg because if it
         # is, it came from the option and that's what we want to know.
-        assert 'omg!' in str(exc)
+        assert "omg!" in str(exc)
 
 
 def test_raw_value():
-    config = ConfigManager.from_dict({
-        'FOO_BAR': '1'
-    })
+    config = ConfigManager.from_dict({"FOO_BAR": "1"})
 
     class SomeComponent(RequiredConfigMixin):
         required_config = ConfigOptions()
-        required_config.add_option(
-            'foo_bar',
-            parser=int
-        )
+        required_config.add_option("foo_bar", parser=int)
 
         def __init__(self, config):
             self.config = config.with_options(self)
 
     comp = SomeComponent(config)
 
-    assert comp.config('foo_bar') == 1
-    assert comp.config('foo_bar', raw_value=True) == '1'
+    assert comp.config("foo_bar") == 1
+    assert comp.config("foo_bar", raw_value=True) == "1"
 
     class SomeComponent(RequiredConfigMixin):
         required_config = ConfigOptions()
-        required_config.add_option('bar', parser=int)
+        required_config.add_option("bar", parser=int)
 
         def __init__(self, config):
             self.config = config.with_options(self)
 
-    comp = SomeComponent(config.with_namespace('foo'))
+    comp = SomeComponent(config.with_namespace("foo"))
 
-    assert comp.config('bar') == 1
-    assert comp.config('bar', raw_value=True) == '1'
+    assert comp.config("bar") == 1
+    assert comp.config("bar", raw_value=True) == "1"
 
 
 class TestRuntimeConfig:
     def test_no_self_config(self):
         class ComponentA(RequiredConfigMixin):
             required_config = ConfigOptions()
-            required_config.add_option('bar', parser=int)
+            required_config.add_option("bar", parser=int)
 
             def __init__(self):
                 pass
@@ -296,69 +243,61 @@ class TestRuntimeConfig:
     def test_not_bound_config(self):
         class ComponentA(RequiredConfigMixin):
             required_config = ConfigOptions()
-            required_config.add_option('bar', parser=int)
+            required_config.add_option("bar", parser=int)
 
             def __init__(self):
-                self.config = 'boo'
+                self.config = "boo"
 
         comp = ComponentA()
         assert list(comp.get_runtime_config()) == []
 
     def test_bound_config(self):
-        config = ConfigManager.from_dict({
-            'foo': 12345
-        })
+        config = ConfigManager.from_dict({"foo": 12345})
 
         class ComponentA(RequiredConfigMixin):
             required_config = ConfigOptions()
-            required_config.add_option('foo', parser=int)
-            required_config.add_option('bar', parser=int, default='1')
+            required_config.add_option("foo", parser=int)
+            required_config.add_option("bar", parser=int, default="1")
 
             def __init__(self, config):
                 self.config = config.with_options(self)
 
         comp = ComponentA(config)
-        assert (
-            list(comp.get_runtime_config()) ==
-            [
-                ([], 'foo', '12345', Option(key='foo', parser=int)),
-                ([], 'bar', '1', Option(key='bar', parser=int, default='1')),
-            ]
-        )
+        assert list(comp.get_runtime_config()) == [
+            ([], "foo", "12345", Option(key="foo", parser=int)),
+            ([], "bar", "1", Option(key="bar", parser=int, default="1")),
+        ]
 
     def test_tree(self):
         config = ConfigManager.from_dict({})
 
         class ComponentB(RequiredConfigMixin):
             required_config = ConfigOptions()
-            required_config.add_option('foo', parser=int, default='2')
-            required_config.add_option('bar', parser=int, default='1')
+            required_config.add_option("foo", parser=int, default="2")
+            required_config.add_option("bar", parser=int, default="1")
 
             def __init__(self, config):
                 self.config = config.with_options(self)
 
         class ComponentA(RequiredConfigMixin):
             required_config = ConfigOptions()
-            required_config.add_option('baz', default='abc')
+            required_config.add_option("baz", default="abc")
 
             def __init__(self, config):
                 self.config = config.with_options(self)
-                self.comp = ComponentB(config.with_namespace('biff'))
+                self.comp = ComponentB(config.with_namespace("biff"))
 
             def get_runtime_config(self, namespace=None):
                 for item in super(ComponentA, self).get_runtime_config(namespace):
                     yield item
 
-                for item in self.comp.get_runtime_config(['biff']):
+                for item in self.comp.get_runtime_config(["biff"]):
                     yield item
 
         comp = ComponentA(config)
 
-        assert (
-            list(comp.get_runtime_config()) ==
-            [
-                ([], 'baz', 'abc', Option(key='baz', default='abc')),
-                (['biff'], 'foo', '2', Option(key='foo', parser=int, default='2')),
-                (['biff'], 'bar', '1', Option(key='bar', parser=int, default='1')),
-            ]
-        )
+        assert list(comp.get_runtime_config()) == [
+            ([], "baz", "abc", Option(key="baz", default="abc")),
+            (["biff"], "foo", "2", Option(key="foo", parser=int, default="2")),
+            (["biff"], "bar", "1", Option(key="bar", parser=int, default="1")),
+        ]

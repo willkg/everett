@@ -40,62 +40,62 @@ nsbaz:
 
 class TestConfigYamlEnv:
     def test_missing_file(self):
-        cie = ConfigYamlEnv(['/a/b/c/bogus/filename'])
-        assert cie.get('foo') == NO_VALUE
+        cie = ConfigYamlEnv(["/a/b/c/bogus/filename"])
+        assert cie.get("foo") == NO_VALUE
 
     def test_flat(self, tmpdir):
         """Test flat specification works"""
-        yaml_filename = tmpdir / 'config.yaml'
+        yaml_filename = tmpdir / "config.yaml"
         yaml_filename.write(YAML_FLAT)
 
         cie = ConfigYamlEnv([str(yaml_filename)])
-        assert cie.get('foo') == 'bar'
-        assert cie.get('foo', namespace='nsbaz') == 'bat'
-        assert cie.get('foo', namespace=['nsbaz']) == 'bat'
-        assert cie.get('foo', namespace=['nsbaz', 'nsbaz2']) == 'bat2'
+        assert cie.get("foo") == "bar"
+        assert cie.get("foo", namespace="nsbaz") == "bat"
+        assert cie.get("foo", namespace=["nsbaz"]) == "bat"
+        assert cie.get("foo", namespace=["nsbaz", "nsbaz2"]) == "bat2"
 
     def test_flat_caps(self, tmpdir):
         """Test case-insensitive"""
-        yaml_filename = tmpdir / 'config.yaml'
+        yaml_filename = tmpdir / "config.yaml"
         yaml_filename.write(YAML_FLAT)
 
         cie = ConfigYamlEnv([str(yaml_filename)])
-        assert cie.get('foo') == 'bar'
-        assert cie.get('FOO') == 'bar'
-        assert cie.get('Foo') == 'bar'
-        assert cie.get('foo', namespace='nsbaz') == 'bat'
-        assert cie.get('foo', namespace='NsBaz') == 'bat'
-        assert cie.get('FOO', namespace='NSBAZ') == 'bat'
+        assert cie.get("foo") == "bar"
+        assert cie.get("FOO") == "bar"
+        assert cie.get("Foo") == "bar"
+        assert cie.get("foo", namespace="nsbaz") == "bat"
+        assert cie.get("foo", namespace="NsBaz") == "bat"
+        assert cie.get("FOO", namespace="NSBAZ") == "bat"
 
     def test_hierarchical(self, tmpdir):
         """Test hierarchical specification works"""
-        yaml_filename = tmpdir / 'config.yaml'
+        yaml_filename = tmpdir / "config.yaml"
         yaml_filename.write(YAML_HIERARCHY)
 
         cie = ConfigYamlEnv([str(yaml_filename)])
-        assert cie.get('foo') == 'bar'
-        assert cie.get('foo', namespace='nsbaz') == 'bat'
-        assert cie.get('foo', namespace=['nsbaz']) == 'bat'
-        assert cie.get('foo', namespace=['nsbaz', 'nsbaz2']) == 'bat2'
+        assert cie.get("foo") == "bar"
+        assert cie.get("foo", namespace="nsbaz") == "bat"
+        assert cie.get("foo", namespace=["nsbaz"]) == "bat"
+        assert cie.get("foo", namespace=["nsbaz", "nsbaz2"]) == "bat2"
 
     def test_multiple_files(self, tmpdir):
         """Test multiple files--uses first found"""
-        yaml_filename = tmpdir / 'config.yaml'
+        yaml_filename = tmpdir / "config.yaml"
         yaml_filename.write(YAML_FLAT)
 
-        yaml_filename_2 = tmpdir / 'config2.yaml'
+        yaml_filename_2 = tmpdir / "config2.yaml"
         yaml_filename_2.write(YAML_FLAT_2)
 
         cie = ConfigYamlEnv([str(yaml_filename), str(yaml_filename_2)])
         # Only the first found file is loaded, so foo_original does not exist
-        assert cie.get('foo_original') == NO_VALUE
+        assert cie.get("foo_original") == NO_VALUE
 
         cie = ConfigYamlEnv([str(yaml_filename_2)])
         # ... but it is there if only the original is loaded (safety check)
-        assert cie.get('foo_original') == 'original'
+        assert cie.get("foo_original") == "original"
 
     def test_non_string_values(self, tmpdir):
-        yaml_filename = tmpdir / 'config.yaml'
+        yaml_filename = tmpdir / "config.yaml"
         yaml_filename.write(YAML_NON_STRING_VALUES)
 
         with pytest.raises(ConfigurationError):

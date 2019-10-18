@@ -19,7 +19,7 @@ from everett import ConfigurationError, NO_VALUE
 from everett.manager import generate_uppercase_key, get_key_from_envs, listify
 
 
-logger = logging.getLogger('everett')
+logger = logging.getLogger("everett")
 
 
 class ConfigYamlEnv(object):
@@ -124,11 +124,11 @@ class ConfigYamlEnv(object):
                 break
 
         if not self.path:
-            logger.debug('No YAML file found: %s', possible_paths)
+            logger.debug("No YAML file found: %s", possible_paths)
 
     def parse_yaml_file(self, path):
         """Parse yaml file at ``path`` and return a dict."""
-        with open(path, 'r') as fp:
+        with open(path, "r") as fp:
             data = yaml.safe_load(fp)
 
         if not data:
@@ -140,15 +140,14 @@ class ConfigYamlEnv(object):
                 if isinstance(val, dict):
                     cfg.update(traverse(namespace + [key], val))
                 elif isinstance(val, str):
-                    cfg['_'.join(namespace + [key]).upper()] = val
+                    cfg["_".join(namespace + [key]).upper()] = val
                 else:
                     # All values should be double-quoted strings so they
                     # parse as strings; anything else is a configuration
                     # error at parse-time
                     raise ConfigurationError(
-                        'Invalid value %r in file %s: values must be double-quoted strings' % (
-                            val, path
-                        )
+                        "Invalid value %r in file %s: values must be double-quoted strings"
+                        % (val, path)
                     )
 
             return cfg
@@ -160,9 +159,9 @@ class ConfigYamlEnv(object):
         if not self.path:
             return NO_VALUE
 
-        logger.debug('Searching %r for key: %s, namepsace: %s', self, key, namespace)
+        logger.debug("Searching %r for key: %s, namepsace: %s", self, key, namespace)
         full_key = generate_uppercase_key(key, namespace)
         return get_key_from_envs(self.cfg, full_key)
 
     def __repr__(self):
-        return '<ConfigYamlEnv: %s>' % self.path
+        return "<ConfigYamlEnv: %s>" % self.path
