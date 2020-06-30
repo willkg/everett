@@ -5,7 +5,7 @@ Hacking
 Release process
 ===============
 
-1. Checkout master tip.
+1. Checkout main tip.
 
 2. Check to make sure ``setup.py`` and requirements files
    have correct versions of requirements.
@@ -41,6 +41,6 @@ Release process
 
 8. Push everything::
 
-       $ git push --tags official master
+       $ git push --tags origin main
 
 9. Announce the release.
