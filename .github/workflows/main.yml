@@ -13,6 +13,7 @@ jobs:
 
     - name: Set up Python 3.5
       # actions/setup-python@v1.1.1
+      # Note: Support for 3.5 ends in September 2020.
       uses: actions/setup-python@28a6c1b915d5808acb3da49af7063544ebfbe085
       with:
         python-version: 3.5

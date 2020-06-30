@@ -347,6 +347,7 @@ parsers:
 * ``str``
 * ``int``
 * ``float``
+* ``decimal``
 * ``pathlib.Path``
 
 
@@ -366,8 +367,8 @@ for "true" and "false":
 classes
 -------
 
-Everett provides a ``everett.manager.parse_class`` that takes a
-string specifying a module and class and returns the class.
+Everett provides a ``everett.manager.parse_class`` that takes a string
+specifying a module and class and returns the class.
 
 .. autofunction:: everett.manager.parse_class
    :noindex:
