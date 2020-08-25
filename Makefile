@@ -17,3 +17,7 @@ clean:  ## Clean build artifacts
 lint:  ## Lint and black reformat files
 	black --target-version=py35 ${PROJECT} tests
 	flake8 ${PROJECT} tests
+
+.PHONY: docs
+docs:  ## Build docs
+	make -C docs/ html

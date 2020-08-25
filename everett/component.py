@@ -109,6 +109,11 @@ class RequiredConfigMixin(object):
             def __init__(self, config):
                 self.config = config.with_options(self)
 
+    .. Note::
+
+       The class member must be named ``required_config``. If you want to use a
+       different name, you need to implement your own ``get_required_config``.
+
     """
 
     @classmethod
