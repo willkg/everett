@@ -174,11 +174,11 @@ class RequiredConfigMixin(object):
         :returns: list of ``(namespace, key, option)``
 
         """
-        namespace = namespace or []
-
         cfg = getattr(self, "config", None)
         if cfg is None or not isinstance(cfg, BoundConfig):
             return
+
+        namespace = namespace or cfg.get_namespace()
 
         for opt in self.get_required_config():
             yield (

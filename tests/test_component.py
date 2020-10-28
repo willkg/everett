@@ -268,7 +268,7 @@ class TestRuntimeConfig:
             ([], "bar", "1", Option(key="bar", parser=int, default="1")),
         ]
 
-    def test_tree(self):
+    def test_tree_with_specified_namespace(self):
         config = ConfigManager.from_dict({})
 
         class ComponentB(RequiredConfigMixin):
@@ -291,6 +291,7 @@ class TestRuntimeConfig:
                 for item in super(ComponentA, self).get_runtime_config(namespace):
                     yield item
 
+                # We specify the namespace here
                 for item in self.comp.get_runtime_config(["biff"]):
                     yield item
 
@@ -300,4 +301,41 @@ class TestRuntimeConfig:
             ([], "baz", "abc", Option(key="baz", default="abc")),
             (["biff"], "foo", "2", Option(key="foo", parser=int, default="2")),
             (["biff"], "bar", "1", Option(key="bar", parser=int, default="1")),
+        ]
+
+    def test_tree_inferred_namespace(self):
+        """Test get_runtime_config can pull namespace from config."""
+        config = ConfigManager.from_dict({})
+
+        class ComponentB(RequiredConfigMixin):
+            required_config = ConfigOptions()
+            required_config.add_option("foo", parser=int, default="2")
+            required_config.add_option("bar", parser=int, default="1")
+
+            def __init__(self, config):
+                self.config = config.with_options(self)
+
+        class ComponentA(RequiredConfigMixin):
+            required_config = ConfigOptions()
+            required_config.add_option("baz", default="abc")
+
+            def __init__(self, config):
+                self.config = config.with_options(self)
+                self.comp = ComponentB(config.with_namespace("boff"))
+
+            def get_runtime_config(self, namespace=None):
+                for item in super(ComponentA, self).get_runtime_config(namespace):
+                    yield item
+
+                # Namespace here is inferred from self.comp.config which is a
+                # NamespacedConfig.
+                for item in self.comp.get_runtime_config():
+                    yield item
+
+        comp = ComponentA(config)
+
+        assert list(comp.get_runtime_config()) == [
+            ([], "baz", "abc", Option(key="baz", default="abc")),
+            (["boff"], "foo", "2", Option(key="foo", parser=int, default="2")),
+            (["boff"], "bar", "1", Option(key="bar", parser=int, default="1")),
         ]
