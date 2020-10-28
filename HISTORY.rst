@@ -1,13 +1,30 @@
 History
 =======
 
-1.0.3 (in development)
-----------------------
+1.0.3 (October 28th, 2020)
+--------------------------
 
 Backwards incompatible changes:
 
 * Dropped support for Python 3.4. (#96)
-  pjz! (#68)
+
+* Dropped support for Python 3.5. (#116)
+
+Fixes:
+
+* Add support for Python 3.7. (#68)
+
+* Add support for Python 3.8. (#102)
+
+* Add support for Python 3.9. (#117)
+
+* Reformatted code with Black, added Makefile, switched to GitHub Actions.
+
+* Fix ``get_runtime_config()`` to infer namespaces. (#118)
+
+* Fix ``RemovedInSphinx50Warning``. (#115)
+
+* Documentation fixes and clarifications.
 
 
 1.0.2 (February 22nd, 2019)

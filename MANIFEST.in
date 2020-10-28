@@ -1,6 +1,7 @@
 include *.rst
 include tox.ini
 include requirements-dev.txt
+include Makefile
 include LICENSE
 
 recursive-include docs *.rst
