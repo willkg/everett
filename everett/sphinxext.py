@@ -381,7 +381,7 @@ class AutoComponentDirective(Directive):
             docstring_attr = self.options["show-docstring"] or "__doc__"
             docstring = getattr(obj, docstring_attr, None)
             if docstring:
-                docstringlines = prepare_docstring(docstring, ignore=1)
+                docstringlines = prepare_docstring(docstring)
                 for i, line in enumerate(docstringlines):
                     self.add_line(indent + line, sourcename, i)
                 self.add_line("", "")
