@@ -47,42 +47,49 @@ Quick start
 Fast start example
 ------------------
 
-You have an app and want it to look for configuration first in an ``.env``
-file in the current working directory, then then in the process environment.
-You can do this::
+You're writing an app and want it to look for configuration:
+
+1. in an ``.env`` file in the current working directory
+2. then in the process environment
+
+You set up a configuration manager like this::
 
     from everett.manager import ConfigManager
 
     config = ConfigManager.basic_config()
 
 
-Then you can use it like this::
+and use it to get configuration values like this::
 
-    debug_mode = config('debug', default='False', parser=bool)
+    api_host = config("api_host")
+
+    max_bytes = config("max_bytes", default=1000, parser=int)
+
+    debug_mode = config("debug", default="False", parser=bool)
 
 
-When you outgrow that or need different variations of it, you can change
-that to creating a ``ConfigManager`` from scratch.
+When you outgrow that or need different variations of it, you can switch to
+creating a ``ConfigManager`` instance that meets your needs.
 
 
 More complex example
 --------------------
 
-We have an app and want to pull configuration from an INI file stored in
-a place specified by ``MYAPP_INI`` in the environment, ``~/.myapp.ini``,
-or ``/etc/myapp.ini`` in that order.
+You're writing an app and want to pull configuration (in order of prcedence):
 
-We want to pull infrastructure values from the environment.
+1. from the process environment
+2. from an INI file stored in a place specified by (in order of precedence):
+   1. ``MYAPP_INI`` in the environment
+   2. ``~/.myapp.ini``
+   3. ``/etc/myapp.ini``
 
-Values from the environment should override values from the INI file.
-
-First, we need to install the additional requirements for INI file
+First, you need need to install the additional requirements for INI file
 environments::
 
     pip install everett[ini]
 
 
-Then we set up our ``ConfigManager``::
+Then set up the ``ConfigManager``::
 
     import os
     import sys
@@ -91,7 +98,7 @@ Then we set up our ``ConfigManager``::
     from everett.manager import ConfigManager, ConfigOSEnv
 
 
-    def get_config():
+    def build_config_manager():
         return ConfigManager(
             # Specify one or more configuration environments in
             # the order they should be checked
@@ -101,26 +108,27 @@ Then we set up our ``ConfigManager``::
 
                 # Look in INI files in order specified
                 ConfigIniEnv([
-                    os.environ.get('MYAPP_INI'),
-                    '~/.myapp.ini',
-                    '/etc/myapp.ini'
+                    os.environ.get("MYAPP_INI"),
+                    "~/.myapp.ini",
+                    "/etc/myapp.ini"
                 ]),
             ],
 
             # Provide users a link to documentation for when they hit
             # configuration errors
-            doc='Check https://example.com/configuration for docs.'
+            doc="Check https://example.com/configuration for docs."
         )
 
 
-Then we use it::
+Then use it::
 
     def is_debug(config):
-        return config('debug', default='False', parser=bool,
-            doc='Switch debug mode on and off.')
+        return config(
+            "debug", default="False", parser=bool,
+            doc="Set to True for debugmode; False for regular mode."
+        )
 
-
-    config = get_config()
+    config = build_config_manager()
 
     if is_debug(config):
         print('DEBUG MODE ON!')
@@ -134,14 +142,14 @@ configuration value::
     from everett.manager import config_override
 
 
-    @config_override(DEBUG='true')
+    @config_override(DEBUG="true")
     def test_debug_true():
         assert is_debug(get_config()) is True
 
 
-    @config_override(DEBUG='false')
     def test_debug_false():
-        assert is_debug(get_config()) is False
+        with config_override(DEBUG="false"):
+            assert is_debug(get_config()) is False
 
 
 If the user sets ``DEBUG`` with a bad value, they get a helpful error message
@@ -150,7 +158,7 @@ with the documentation for the configuration option and the ``ConfigManager``::
     $ DEBUG=foo python myprogram.py
     <traceback>
     namespace=None key=debug requires a value parseable by bool
-    Switch debug mode on and off.
+    Set to True for debugmode; False for regular mode.
     Check https://example.com/configuration for docs.
 
 
@@ -174,10 +182,10 @@ First, create a configuration class::
     class AppConfig(RequiredConfigMixin):
         required_config = ConfigOptions()
         required_config.add_option(
-            'debug',
+            "debug",
             parser=bool,
-            default='false',
-            doc='Switch debug mode on and off.')
+            default="false",
+            doc="Switch debug mode on and off.")
         )
     
 
@@ -193,15 +201,15 @@ Then we set up our ``ConfigManager``::
 
                 # Look in INI files in order specified
                 ConfigIniEnv([
-                    os.environ.get('MYAPP_INI'),
-                    '~/.myapp.ini',
-                    '/etc/myapp.ini'
+                    os.environ.get("MYAPP_INI"),
+                    "~/.myapp.ini",
+                    "/etc/myapp.ini"
                 ]),
             ],
 
             # Provide users a link to documentation for when they hit
             # configuration errors
-            doc='Check https://example.com/configuration for docs.'
+            doc="Check https://example.com/configuration for docs."
         )
 
         # Apply the configuration class to the configuration manager
@@ -214,8 +222,8 @@ Then use it::
 
     config = get_config()
 
-    if config('debug'):
-        print('DEBUG MODE ON!')
+    if config("debug"):
+        print("DEBUG MODE ON!")
 
 
 Further, you can auto-generate configuration documentation by including the
@@ -247,18 +255,18 @@ needs in the component class::
     class RabbitMQComponent(RequiredConfigMixin):
         required_config = ConfigOptions()
         required_config.add_option(
-            'host',
-            doc='RabbitMQ host to connect to'
+            "host",
+            doc="RabbitMQ host to connect to"
         )
         required_config.add_option(
-            'port',
-            default='5672',
-            doc='Port to use',
+            "port",
+            default="5672",
+            doc="Port to use",
             parser=int
         )
         required_config.add_option(
-            'queue_name',
-            doc='Queue to insert things into'
+            "queue_name",
+            doc="Queue to insert things into"
         )
 
         def __init__(self, config):
@@ -267,15 +275,15 @@ needs in the component class::
             # self-contained
             self.config = config.with_options(self)
 
-            self.host = self.config('host')
-            self.port = self.config('port')
-            self.queue_name = self.config('queue_name')
+            self.host = self.config("host")
+            self.port = self.config("port")
+            self.queue_name = self.config("queue_name")
 
 
 Then instantiate a ``RabbitMQComponent`` that looks for configuration keys
 in the ``rmq`` namespace::
 
-    queue = RabbitMQComponent(config.with_namespace('rmq'))
+    queue = RabbitMQComponent(config.with_namespace("rmq"))
 
 
 The ``RabbitMQComponent`` has a ``HOST`` key, so your configuration would
@@ -298,13 +306,13 @@ processing and one for priority processing::
 
     # Apply the "rmq" namespace to the configuration so all keys are
     # prepended with RMQ_
-    rmq_config = config.with_namespace('rmq')
+    rmq_config = config.with_namespace("rmq")
 
     # Create a RabbitMQComponent with RMQ_REGULAR_ prepended to keys
-    regular_queue = RabbitMQComponent(rmq_config.with_namespace('regular'))
+    regular_queue = RabbitMQComponent(rmq_config.with_namespace("regular"))
 
     # Create a RabbitMQComponent with RMQ_PRIORITY_ prepended to keys
-    priority_queue = RabbitMQComponent(rmq_config.with_namespace('priority'))
+    priority_queue = RabbitMQComponent(rmq_config.with_namespace("priority"))
 
 
 In your environment, you provide the regular queue configuration with
