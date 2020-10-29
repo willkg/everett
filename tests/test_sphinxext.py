@@ -363,6 +363,37 @@ def test_option_doc(tmpdir):
     )
 
 
+class ComponentOptionDocMultiline(RequiredConfigMixin):
+    required_config = ConfigOptions()
+    required_config.add_option("user", doc="ou812")
+    required_config.add_option(
+        "password", doc="First ``paragraph``.\n\nSecond paragraph."
+    )
+
+
+def test_option_doc_multiline(tmpdir):
+    rst = dedent(
+        """\
+    .. autocomponent:: test_sphinxext.ComponentOptionDocMultiline
+    """
+    )
+
+    assert parse(tmpdir, rst) == dedent(
+        """\
+        component test_sphinxext.ComponentOptionDocMultiline
+
+           Options:
+              * **user** (*str*) -- ou812
+
+              * **password** (*str*) --
+
+                First "paragraph".
+
+                Second paragraph.
+        """
+    )
+
+
 class ComponentOptionDocDefault(RequiredConfigMixin):
     required_config = ConfigOptions()
     required_config.add_option("user", doc="This is some docs.", default="ou812")
