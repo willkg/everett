@@ -401,7 +401,8 @@ class AutoComponentDirective(Directive):
                     "%s:option %s %s:" % (indent, option["parser"], option["key"]),
                     sourcename,
                 )
-                self.add_line("%s    %s" % (indent, option["doc"]), sourcename)
+                for doc_line in option["doc"].splitlines():
+                    self.add_line("%s    %s" % (indent, doc_line), sourcename)
                 if option["default"] is not NO_VALUE:
                     self.add_line("", "")
                     self.add_line(
