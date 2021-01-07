@@ -165,13 +165,14 @@ class RequiredConfigMixin(object):
 
            If this instance has a ``.config`` attribute and it is a
            :py:class:`everett.component.BoundConfig`, then this will try to
-           compute the runtime config.
+           compute the runtime config including the current value for that
+           configuration option.
 
            Otherwise, it'll yield nothing.
 
         :arg list namespace: list of namespace parts or None
 
-        :returns: list of ``(namespace, key, option)``
+        :returns: list of ``(namespace, key, value, option)``
 
         """
         cfg = getattr(self, "config", None)
