@@ -6,34 +6,34 @@ from everett.manager import ConfigManager
 
 def parse_loglevel(value):
     text_to_level = {
-        'CRITICAL': 50,
-        'ERROR': 40,
-        'WARNING': 30,
-        'INFO': 20,
-        'DEBUG': 10
+        "CRITICAL": 50,
+        "ERROR": 40,
+        "WARNING": 30,
+        "INFO": 20,
+        "DEBUG": 10,
     }
     try:
         return text_to_level[value.upper()]
     except KeyError:
         raise ValueError(
             '"%s" is not a valid logging level. Try CRITICAL, ERROR, '
-            'WARNING, INFO, DEBUG' % value
+            "WARNING, INFO, DEBUG" % value
         )
 
 
 class AppConfig(RequiredConfigMixin):
     required_config = ConfigOptions()
     required_config.add_option(
-        'debug',
+        "debug",
         parser=bool,
-        default='false',
-        doc='Turns on debug mode for the applciation'
+        default="false",
+        doc="Turns on debug mode for the applciation",
     )
     required_config.add_option(
-        'loglevel',
+        "loglevel",
         parser=parse_loglevel,
-        default='INFO',
-        doc='Log level for the application'
+        default="INFO",
+        doc="Log level for the application",
     )
 
     def __init__(self, config):
@@ -48,11 +48,11 @@ def init_app():
     config = ConfigManager.from_dict({})
     app_config = AppConfig(config)
 
-    logging.basicConfig(level=app_config('loglevel'))
+    logging.basicConfig(level=app_config("loglevel"))
 
-    if app_config('debug'):
-        logging.info('debug mode!')
+    if app_config("debug"):
+        logging.info("debug mode!")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     init_app()

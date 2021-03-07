@@ -10,7 +10,7 @@ from everett import NO_VALUE
 from everett.manager import BoundConfig
 
 
-class Option(object):
+class Option:
     """A single option comprised of a key and settings."""
 
     def __init__(
@@ -41,7 +41,7 @@ class Option(object):
         )
 
 
-class ConfigOptions(object):
+class ConfigOptions:
     """A collection of config options."""
 
     def __init__(self):
@@ -93,7 +93,7 @@ class ConfigOptions(object):
         return self.options.__getitem__(key)
 
 
-class RequiredConfigMixin(object):
+class RequiredConfigMixin:
     """Mixin for component classes that have required configuration.
 
     As with all mixins, make sure this is earlier in the class list.

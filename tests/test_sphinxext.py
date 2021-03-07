@@ -19,7 +19,7 @@ class FakeSphinx(Sphinx):
             fp.write('master_doc = "index"\n')
             fp.write('extensions = ["everett.sphinxext"]\n')
 
-        super(FakeSphinx, self).__init__(
+        super().__init__(
             srcdir=str(srcdir),
             confdir=str(confdir),
             outdir=str(outdir),
@@ -39,7 +39,7 @@ def parse(tmpdir, text):
 
     fakesphinx.builder.build_all()
 
-    with open(str(tmpdir / "_build/text/index.txt"), "r") as fp:
+    with open(str(tmpdir / "_build/text/index.txt")) as fp:
         data = fp.read()
 
     # index.text has a bunch of stuff in it. BEGINBEGIN and ENDEND are markers,
@@ -420,7 +420,7 @@ def test_option_doc_default(tmpdir):
     )
 
 
-class Foo(object):
+class Foo:
     @classmethod
     def parse_foo_class(cls, value):
         pass

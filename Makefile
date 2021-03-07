@@ -15,7 +15,7 @@ clean:  ## Clean build artifacts
 
 .PHONY: lint
 lint:  ## Lint and black reformat files
-	black --target-version=py35 ${PROJECT} tests
+	black --target-version=py36 --line-length=88 ${PROJECT} tests docs
 	flake8 ${PROJECT} tests
 
 .PHONY: docs
