@@ -136,7 +136,9 @@ def parse_env_file(envfile):
         k = k.strip()
         if not ENV_KEY_RE.match(k):
             raise ConfigurationError(
-                'Invalid variable name "%s" in env file (line %s)' % (k, (line_no + 1))
+                'Invalid variable name "{}" in env file (line {})'.format(
+                    k, (line_no + 1)
+                )
             )
         v = v.strip().strip("'\"")
         data[k] = v
@@ -157,7 +159,7 @@ def parse_class(val):
         return getattr(module, class_name)
     except AttributeError:
         raise ValueError(
-            '"%s" is not a valid member of %s' % (class_name, qualname(module))
+            '"{}" is not a valid member of {}'.format(class_name, qualname(module))
         )
 
 
@@ -216,7 +218,7 @@ def get_key_from_envs(envs, key):
     return NO_VALUE
 
 
-class ListOf(object):
+class ListOf:
     """Parse a comma-separated list of things.
 
     >>> ListOf(str)('')
@@ -251,7 +253,7 @@ class ListOf(object):
         return "<ListOf(%s)>" % qualname(self.sub_parser)
 
 
-class ConfigOverrideEnv(object):
+class ConfigOverrideEnv:
     """Override configuration layer for testing."""
 
     def get(self, key, namespace=None):
@@ -267,7 +269,7 @@ class ConfigOverrideEnv(object):
         return "<ConfigOverrideEnv>"
 
 
-class ConfigObjEnv(object):
+class ConfigObjEnv:
     """Source for pulling configuration values out of a Python object.
 
     This is handy for a few weird situations. For example, you can use this to
@@ -340,7 +342,7 @@ class ConfigObjEnv(object):
         return "<ConfigObjEnv>"
 
 
-class ConfigDictEnv(object):
+class ConfigDictEnv:
     """Source for pulling configuration out of a dict.
 
     This is handy for testing. You might also use it if you wanted to move all
@@ -394,7 +396,7 @@ class ConfigDictEnv(object):
     """
 
     def __init__(self, cfg):
-        self.cfg = dict((key.upper(), val) for key, val in cfg.items())
+        self.cfg = {key.upper(): val for key, val in cfg.items()}
 
     def get(self, key, namespace=None):
         """Retrieve value for key."""
@@ -406,7 +408,7 @@ class ConfigDictEnv(object):
         return "<ConfigDictEnv: %r>" % self.cfg
 
 
-class ConfigEnvFileEnv(object):
+class ConfigEnvFileEnv:
     """Source for pulling configuration out of ``.env`` files.
 
     This source lets you specify configuration in an .env file. This
@@ -482,7 +484,7 @@ class ConfigEnvFileEnv(object):
         return "<ConfigEnvFileEnv: %s>" % self.path
 
 
-class ConfigOSEnv(object):
+class ConfigOSEnv:
     """Source for pulling configuration out of the environment.
 
     This source lets you specify configuration in the environment. This is
@@ -543,7 +545,7 @@ def _get_component_name(component):
     return cls.__module__ + "." + cls.__name__
 
 
-class ConfigManagerBase(object):
+class ConfigManagerBase:
     """Base configuration manager class."""
 
     def _get_base_config(self):
@@ -636,9 +638,7 @@ class BoundConfig(ConfigManagerBase):
             option = self.options[key]
         except KeyError:
             if raise_error:
-                raise InvalidKeyError(
-                    "%s is not a valid key for this component" % (key,)
-                )
+                raise InvalidKeyError(f"{key} is not a valid key for this component")
             return None
 
         return self.config(
@@ -653,7 +653,7 @@ class BoundConfig(ConfigManagerBase):
         )
 
     def __repr__(self):
-        return "<BoundConfig(%s): namespace:%s>" % (
+        return "<BoundConfig({}): namespace:{}>".format(
             self.component_name,
             self.get_namespace(),
         )
@@ -904,7 +904,7 @@ class ConfigManager(ConfigManagerBase):
 
         """
         if not (default is NO_VALUE or isinstance(default, str)):
-            raise ConfigurationError("default value %r is not a string" % (default,))
+            raise ConfigurationError(f"default value {default!r} is not a string")
 
         if raw_value:
             # If we're returning raw values, then we can just use str which is
@@ -1013,7 +1013,7 @@ class ConfigManager(ConfigManagerBase):
         return "<ConfigManager>"
 
 
-class ConfigOverride(object):
+class ConfigOverride:
     """Handle contexts and decoration for overriding config in testing."""
 
     def __init__(self, **cfg):

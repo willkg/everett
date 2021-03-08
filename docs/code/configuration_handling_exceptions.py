@@ -7,13 +7,11 @@ from everett.manager import ConfigManager
 
 logging.basicConfig()
 
-config = ConfigManager.from_dict({
-    'debug_mode': 'monkey'
-})
+config = ConfigManager.from_dict({"debug_mode": "monkey"})
 
 try:
-    some_val = config('debug_mode', parser=bool)
+    some_val = config("debug_mode", parser=bool)
 except InvalidValueError:
     # The "debug_mode" configuration value is incorrect--alert
     # user in the logs.
-    logging.exception('gah!')
+    logging.exception("gah!")

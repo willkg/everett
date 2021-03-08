@@ -15,7 +15,7 @@ __version__ = "1.0.4.dev0"
 
 
 # _NoValue instances are always false
-class _NoValue(object):
+class _NoValue:
     def __nonzero__(self):
         return False
 
@@ -49,7 +49,7 @@ class DetailedConfigurationError(ConfigurationError):
         self.namespace = args[1]
         self.key = args[2]
         self.parser = args[3]
-        super(DetailedConfigurationError, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
     def __str__(self):
         return self.args[0]

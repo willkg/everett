@@ -165,7 +165,7 @@ def test_ListOf_error():
 
 class TestConfigObjEnv:
     def test_basic(self):
-        class Namespace(object):
+        class Namespace:
             pass
 
         obj = Namespace()

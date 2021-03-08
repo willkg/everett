@@ -5,4 +5,4 @@ from everett.manager import ConfigManager
 # file and the process environment
 config = ConfigManager.basic_config()
 
-assert config('foo_var', default='bar') == 'bar'
+assert config("foo_var", default="bar") == "bar"

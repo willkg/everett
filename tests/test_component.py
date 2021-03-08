@@ -288,12 +288,10 @@ class TestRuntimeConfig:
                 self.comp = ComponentB(config.with_namespace("biff"))
 
             def get_runtime_config(self, namespace=None):
-                for item in super(ComponentA, self).get_runtime_config(namespace):
-                    yield item
+                yield from super().get_runtime_config(namespace)
 
                 # We specify the namespace here
-                for item in self.comp.get_runtime_config(["biff"]):
-                    yield item
+                yield from self.comp.get_runtime_config(["biff"])
 
         comp = ComponentA(config)
 
@@ -324,13 +322,11 @@ class TestRuntimeConfig:
                 self.comp = ComponentB(config.with_namespace("boff"))
 
             def get_runtime_config(self, namespace=None):
-                for item in super(ComponentA, self).get_runtime_config(namespace):
-                    yield item
+                yield from super().get_runtime_config(namespace)
 
                 # Namespace here is inferred from self.comp.config which is a
                 # NamespacedConfig.
-                for item in self.comp.get_runtime_config():
-                    yield item
+                yield from self.comp.get_runtime_config()
 
         comp = ComponentA(config)
 

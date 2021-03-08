@@ -219,7 +219,7 @@ class EverettComponent(ObjectDescription):
 
     def add_target_and_index(self, name, sig, signode):
         """Add a target and index for this thing."""
-        targetname = "%s-%s" % (self.objtype, name)
+        targetname = f"{self.objtype}-{name}"
 
         if targetname not in self.state.document.ids:
             signode["names"].append(targetname)
@@ -231,7 +231,7 @@ class EverettComponent(ObjectDescription):
             key = (self.objtype, name)
             if key in objects:
                 self.state_machine.reporter.warning(
-                    "duplicate description of %s %s, " % (self.objtype, name)
+                    f"duplicate description of {self.objtype} {name}, "
                     + "other instance in "
                     + self.env.doc2path(objects[key]),
                     line=self.lineno,
@@ -368,7 +368,8 @@ class AutoComponentDirective(Directive):
             self.add_line(".. index::", sourcename)
             for option in all_options:
                 self.add_line(
-                    "   single: %s; (%s)" % (option["key"], component_index), sourcename
+                    "   single: {}; ({})".format(option["key"], component_index),
+                    sourcename,
                 )
             self.add_line("", "")
 
@@ -398,15 +399,15 @@ class AutoComponentDirective(Directive):
 
             for option in all_options:
                 self.add_line(
-                    "%s:option %s %s:" % (indent, option["parser"], option["key"]),
+                    "{}:option {} {}:".format(indent, option["parser"], option["key"]),
                     sourcename,
                 )
                 for doc_line in option["doc"].splitlines():
-                    self.add_line("%s    %s" % (indent, doc_line), sourcename)
+                    self.add_line(f"{indent}    {doc_line}", sourcename)
                 if option["default"] is not NO_VALUE:
                     self.add_line("", "")
                     self.add_line(
-                        "%s    Defaults to ``%r``." % (indent, option["default"]),
+                        "{}    Defaults to ``{!r}``.".format(indent, option["default"]),
                         sourcename,
                     )
                 self.add_line("", "")
