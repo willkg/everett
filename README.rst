@@ -1,3 +1,5 @@
+.. highlight:: python
+
 =======
 Everett
 =======
@@ -153,7 +155,9 @@ configuration value::
 
 
 If the user sets ``DEBUG`` with a bad value, they get a helpful error message
-with the documentation for the configuration option and the ``ConfigManager``::
+with the documentation for the configuration option and the ``ConfigManager``:
+
+.. highlight:: none
 
     $ DEBUG=foo python myprogram.py
     <traceback>
@@ -228,7 +232,9 @@ Then use it::
 
 Further, you can auto-generate configuration documentation by including the
 ``everett.sphinxext`` Sphinx extension and using the ``autocomponent``
-directive::
+directive:
+
+.. code:: rst
 
     .. autocomponent:: path.to.AppConfig
 
@@ -291,7 +297,9 @@ need to define ``RMQ_HOST``.
 
 You can auto-generate configuration documentation for this component in your
 Sphinx docs by including the ``everett.sphinxext`` Sphinx extension and
-using the ``autocomponent`` directive::
+using the ``autocomponent`` directive:
+
+.. code:: rst
 
     .. autocomponent:: path.to.RabbitMQComponent
        :namespace: rmq
@@ -331,7 +339,9 @@ Install
 Install from PyPI
 -----------------
 
-Run::
+Run:
+
+.. code:: shell
 
     $ pip install everett
 
@@ -349,7 +359,9 @@ as well::
 Install for hacking
 -------------------
 
-Run::
+Run:
+
+.. code:: shell
 
     # Clone the repository
     $ git clone https://github.com/willkg/everett
