@@ -4,20 +4,32 @@ PROJECT=everett
 .PHONY: help
 help:
 	@echo "Available rules:"
-	@fgrep -h "##" Makefile | fgrep -v fgrep | sed 's/\(.*\):.*##/\1:/'
+	@fgrep -h "##" Makefile | fgrep -v fgrep | sed 's/\(.*\):.*##/\1:  /'
 
-.PHONY: clean
-clean:  ## Clean build artifacts
-	rm -rf build dist ${PROJECT}.egg-info .tox
-	rm -rf docs/_build/*
-	find ${PROJECT}/ tests/ -name __pycache__ | xargs rm -rf
-	find ${PROJECT}/ tests/ -name '*.pyc' | xargs rm -rf
+.PHONY: test
+test:  ## Run tests
+	tox
 
 .PHONY: lint
 lint:  ## Lint and black reformat files
-	black --target-version=py36 --line-length=88 ${PROJECT} tests docs
-	flake8 ${PROJECT} tests
+	black --target-version=py36 --line-length=88 src setup.py tests docs
+	flake8 src tests
+
+.PHONY: clean
+clean:  ## Clean build artifacts
+	rm -rf build dist src/${PROJECT}.egg-info .tox
+	rm -rf docs/_build/*
+	find src/ tests/ -name __pycache__ | xargs rm -rf
+	find src/ tests/ -name '*.pyc' | xargs rm -rf
 
 .PHONY: docs
 docs:  ## Build docs
 	make -C docs/ html
+
+.PHONY: checkrot
+checkrot:  ## Check package rot for dev dependencies
+	python -m venv ./tmpvenv/
+	./tmpvenv/bin/pip install -U pip
+	./tmpvenv/bin/pip install '.[dev,ini,yaml]'
+	./tmpvenv/bin/pip list -o
+	rm -rf ./tmpvenv/
