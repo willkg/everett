@@ -1,6 +1,16 @@
 History
 =======
 
+1.0.4 (In development)
+----------------------
+
+Backwards incompatible changes:
+
+fixes:
+
+* Switch to src/ repository layout.
+
+
 1.0.3 (October 28th, 2020)
 --------------------------
 

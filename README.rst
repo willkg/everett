@@ -359,7 +359,7 @@ Run::
     ...
 
     # Install Everett and dev requirements
-    $ pip install -r requirements-dev.txt
+    $ pip install -e '.[dev,ini,yaml]'
 
 
 Why not other libs?

@@ -10,7 +10,9 @@ Release process
 2. Check to make sure ``setup.py`` and requirements files
    have correct versions of requirements.
 
-3. Update version numbers in ``everett/__init__.py``.
+   Check dev dependencies using ``make checkrot``.
+
+3. Update version numbers in ``src/everett/__init__.py``.
 
    1. Set ``__version__`` to something like ``1.0.0`` (use semver).
    2. Set ``__releasedate__`` to something like ``20190107``.

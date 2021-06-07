@@ -11,7 +11,7 @@ from setuptools import find_packages, setup
 
 
 def get_version():
-    fn = os.path.join("everett", "__init__.py")
+    fn = os.path.join("src", "everett", "__init__.py")
     vsre = r"""^__version__ = ['"]([^'"]*)['"]"""
     version_file = open(fn).read()
     return re.search(vsre, version_file, re.M).group(1)
@@ -22,6 +22,22 @@ def get_file(fn):
         return fp.read()
 
 
+INSTALL_REQUIRES = []
+EXTRAS_REQUIRE = {
+    "ini": ["configobj"],
+    "yaml": ["PyYAML"],
+    "dev": [
+        "black==20.8b1",
+        "check-manifest==0.46",
+        "flake8==3.9.2",
+        "pytest==6.2.4",
+        "Sphinx==4.0.2",
+        "tox==3.23.1",
+        "twine==3.4.1",
+    ],
+}
+
+
 setup(
     name="everett",
     version=get_version(),
@@ -30,10 +46,10 @@ setup(
     author="Will Kahn-Greene",
     author_email="willkg@mozilla.com",
     url="https://github.com/willkg/everett",
-    install_requires=[],
-    extras_require={"ini": ["configobj"], "yaml": ["PyYAML"]},
-    packages=find_packages(exclude=["tests*"]),
-    package_dir={"everett": "everett"},
+    install_requires=INSTALL_REQUIRES,
+    extras_require=EXTRAS_REQUIRE,
+    packages=find_packages(where="src"),
+    package_dir={"": "src"},
     include_package_data=True,
     license="MPLv2",
     zip_safe=False,

@@ -1,9 +1,0 @@
--e .[ini,yaml]
-
-black==20.8b1
-check-manifest==0.44
-flake8==3.8.4
-pytest==6.1.1
-Sphinx==3.2.1
-tox==3.20.1
-twine==3.2.0
