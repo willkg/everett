@@ -13,6 +13,7 @@ from everett import (
     ConfigurationMissingError,
     NO_VALUE,
 )
+import everett.manager
 from everett.manager import (
     ConfigDictEnv,
     ConfigEnvFileEnv,
@@ -28,7 +29,31 @@ from everett.manager import (
     parse_bool,
     parse_class,
     parse_env_file,
+    qualname,
 )
+
+
+@pytest.mark.parametrize(
+    "thing, expected",
+    [
+        # built-in
+        (str, "str"),
+        # function in a module
+        (qualname, "everett.manager.qualname"),
+        # module
+        (everett.manager, "everett.manager"),
+        # class
+        (ConfigManager, "everett.manager.ConfigManager"),
+        # class method
+        (ConfigManager.basic_config, "everett.manager.ConfigManager.basic_config"),
+        # instance
+        (ListOf(bool), "<ListOf(bool)>"),
+        # instance method
+        (ConfigOSEnv().get, "everett.manager.ConfigOSEnv.get"),
+    ],
+)
+def test_qualname(thing, expected):
+    assert qualname(thing) == expected
 
 
 def test_no_value():

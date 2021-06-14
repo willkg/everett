@@ -126,6 +126,7 @@ You can do that like this::
 """
 
 import sys
+from typing import Dict
 
 from docutils import nodes
 from docutils.parsers.rst import Directive, directives
@@ -251,7 +252,7 @@ class EverettDomain(Domain):
     object_types = {"component": ObjType(_("component"), "comp")}
     directives = {"component": EverettComponent}
     roles = {"component": XRefRole(), "comp": XRefRole()}
-    initial_data = {
+    initial_data: Dict[str, dict] = {
         # (typ, clspath) -> sphinx document name
         "objects": {}
     }
