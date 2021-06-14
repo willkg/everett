@@ -36,5 +36,5 @@ jobs:
           pip install --upgrade pip
           pip install '.[dev]'
 
-      - name: Run tests and linting with tox
+      - name: Run tests, linting, and type checking with tox
         run: tox

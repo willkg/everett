@@ -16,7 +16,7 @@ import logging
 import os
 import re
 import sys
-import types
+from typing import Any
 
 from everett import (
     ConfigurationError,
@@ -27,16 +27,13 @@ from everett import (
 )
 
 
-# This is a stack of overrides to be examined in reverse order
-_CONFIG_OVERRIDE = []
-
 # Regex for valid keys in an env file
 ENV_KEY_RE = re.compile(r"^[a-z][a-z0-9_]*$", flags=re.IGNORECASE)
 
 logger = logging.getLogger("everett")
 
 
-def qualname(thing):
+def qualname(thing: Any) -> str:
     """Return the dot name for a given thing.
 
     >>> import everett.manager
@@ -55,35 +52,12 @@ def qualname(thing):
     if mod and mod.__name__ not in ("__main__", "__builtin__", "builtins"):
         parts.append(mod.__name__)
 
-    # If there's a __qualname__, use that
     if hasattr(thing, "__qualname__"):
         parts.append(thing.__qualname__)
         return ".".join(parts)
 
     # If it's a module
     if inspect.ismodule(thing):
-        return ".".join(parts)
-
-    # If it's a class
-    if inspect.isclass(thing):
-        parts.append(thing.__name__)
-        return ".".join(parts)
-
-    # If it's a function
-    if isinstance(thing, (types.FunctionType, types.MethodType)):
-        # If it's a method or function
-        if inspect.ismethod(thing):
-            if thing.im_class is type:
-                # This is a class method
-                parts.append(thing.im_self.__name__)
-            else:
-                # This is an bound/instance method
-                parts.append(thing.im_class.__name__)
-            parts.append(thing.__name__)
-
-        elif inspect.isfunction(thing):
-            parts.append(thing.__name__)
-
         return ".".join(parts)
 
     # It's an instance, so ... let's call repr on it
@@ -258,6 +232,8 @@ class ConfigOverrideEnv:
 
     def get(self, key, namespace=None):
         """Retrieve value for key."""
+        global _CONFIG_OVERRIDE
+
         # Short-circuit to reduce overhead.
         if not _CONFIG_OVERRIDE:
             return NO_VALUE
@@ -1011,6 +987,10 @@ class ConfigManager(ConfigManagerBase):
 
     def __repr__(self):
         return "<ConfigManager>"
+
+
+# This is a stack of overrides to be examined in reverse order
+_CONFIG_OVERRIDE = []
 
 
 class ConfigOverride:

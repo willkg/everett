@@ -7,8 +7,12 @@ help:
 	@fgrep -h "##" Makefile | fgrep -v fgrep | sed 's/\(.*\):.*##/\1:  /'
 
 .PHONY: test
-test:  ## Run tests
+test:  ## Run tests and static typechecking
 	tox
+
+.PHONY: typecheck
+typecheck:  ## Run typechecking (requires Python 3.8)
+	mypy src/everett/
 
 .PHONY: lint
 lint:  ## Lint and black reformat files
@@ -17,7 +21,7 @@ lint:  ## Lint and black reformat files
 
 .PHONY: clean
 clean:  ## Clean build artifacts
-	rm -rf build dist src/${PROJECT}.egg-info .tox
+	rm -rf build dist src/${PROJECT}.egg-info .tox .pytest_cache .mypy_cache
 	rm -rf docs/_build/*
 	find src/ tests/ -name __pycache__ | xargs rm -rf
 	find src/ tests/ -name '*.pyc' | xargs rm -rf
