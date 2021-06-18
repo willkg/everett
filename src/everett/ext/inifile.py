@@ -12,17 +12,18 @@ To use this, you must install the optional requirements::
 
 import logging
 import os
+from typing import Dict, List, Optional, Union
 
 from configobj import ConfigObj
 
-from everett import NO_VALUE
+from everett import NO_VALUE, NoValue
 from everett.manager import generate_uppercase_key, get_key_from_envs, listify
 
 
 logger = logging.getLogger("everett")
 
 
-class ConfigIniEnv(object):
+class ConfigIniEnv:
     """Source for pulling configuration from INI files.
 
     This requires optional dependencies. You can install them with::
@@ -121,7 +122,7 @@ class ConfigIniEnv(object):
 
     """
 
-    def __init__(self, possible_paths):
+    def __init__(self, possible_paths: Union[str, List[str]]) -> None:
         self.cfg = {}
         self.path = None
         possible_paths = listify(possible_paths)
@@ -139,11 +140,11 @@ class ConfigIniEnv(object):
         if not self.path:
             logger.debug("No INI file found: %s", possible_paths)
 
-    def parse_ini_file(self, path):
+    def parse_ini_file(self, path: str) -> Dict:
         """Parse ini file at ``path`` and return dict."""
         cfgobj = ConfigObj(path, list_values=False)
 
-        def extract_section(namespace, d):
+        def extract_section(namespace: List[str], d: Dict) -> Dict:
             cfg = {}
             for key, val in d.items():
                 if isinstance(d[key], dict):
@@ -155,7 +156,9 @@ class ConfigIniEnv(object):
 
         return extract_section([], cfgobj.dict())
 
-    def get(self, key, namespace=None):
+    def get(
+        self, key: str, namespace: Optional[List[str]] = None
+    ) -> Union[str, NoValue]:
         """Retrieve value for key."""
         if not self.path:
             return NO_VALUE
@@ -166,5 +169,5 @@ class ConfigIniEnv(object):
         full_key = generate_uppercase_key(key, namespace)
         return get_key_from_envs(self.cfg, full_key)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return "<ConfigIniEnv: %s>" % self.path

@@ -5,8 +5,20 @@
 """Module holding infrastructure for building components."""
 
 from collections import OrderedDict
+from collections.abc import Mapping
+from typing import (
+    Any,
+    Callable,
+    Dict,
+    Generator,
+    Iterator,
+    List,
+    Optional,
+    Tuple,
+    Union,
+)
 
-from everett import NO_VALUE
+from everett import EverettComponent, NO_VALUE, NoValue
 from everett.manager import BoundConfig
 
 
@@ -15,12 +27,12 @@ class Option:
 
     def __init__(
         self,
-        key,
-        default=NO_VALUE,
-        alternate_keys=NO_VALUE,
-        doc="",
-        parser=str,
-        meta=None,
+        key: str,
+        default: Union[str, NoValue] = NO_VALUE,
+        alternate_keys: Optional[List[str]] = None,
+        doc: str = "",
+        parser: Callable = str,
+        meta: Any = None,
     ):
         self.key = key
         self.default = default
@@ -29,7 +41,7 @@ class Option:
         self.parser = parser
         self.meta = meta or {}
 
-    def __eq__(self, obj):
+    def __eq__(self, obj: Any) -> bool:
         return (
             isinstance(obj, Option)
             and obj.key == self.key
@@ -41,15 +53,21 @@ class Option:
         )
 
 
-class ConfigOptions:
-    """A collection of config options."""
+class ConfigOptions(Mapping):
+    """A mapping of config options."""
 
-    def __init__(self):
-        self.options = OrderedDict()
+    def __init__(self) -> None:
+        self.options: Dict = OrderedDict()
 
     def add_option(
-        self, key, default=NO_VALUE, alternate_keys=NO_VALUE, doc="", parser=str, **meta
-    ):
+        self,
+        key: str,
+        default: Union[str, NoValue] = NO_VALUE,
+        alternate_keys: Optional[List[str]] = None,
+        doc: str = "",
+        parser: Callable = str,
+        **meta: Any,
+    ) -> None:
         """Add an option to the group.
 
         :arg key: the key to look up
@@ -79,21 +97,24 @@ class ConfigOptions:
         )
         self.options[key] = option
 
-    def update(self, new_options):
+    def update(self, new_options: List[Option]) -> None:
         """Update this ConfigOptions using data from another."""
         for option in new_options:
             if option.key in self.options:
                 del self.options[option.key]
             self.options[option.key] = option
 
-    def __iter__(self):
+    def __iter__(self) -> Iterator[Option]:
         return iter(self.options.values())
 
-    def __getitem__(self, key):
+    def __getitem__(self, key: str) -> Option:
         return self.options.__getitem__(key)
 
+    def __len__(self) -> int:
+        return len(self.options)
 
-class RequiredConfigMixin:
+
+class RequiredConfigMixin(EverettComponent):
     """Mixin for component classes that have required configuration.
 
     As with all mixins, make sure this is earlier in the class list.
@@ -117,7 +138,7 @@ class RequiredConfigMixin:
     """
 
     @classmethod
-    def get_required_config(cls):
+    def get_required_config(cls) -> ConfigOptions:
         """Roll up configuration options for this class and parent classes.
 
         This handles subclasses overriding options in parent classes.
@@ -128,13 +149,13 @@ class RequiredConfigMixin:
         """
         options = ConfigOptions()
         for cls in reversed(cls.__mro__):
-            try:
-                options.update(cls.required_config)
-            except AttributeError:
-                pass
+            if hasattr(cls, "required_config"):
+                options.update(getattr(cls, "required_config"))
         return options
 
-    def get_runtime_config(self, namespace=None):
+    def get_runtime_config(
+        self, namespace: Union[List[str], None] = None
+    ) -> Generator[Tuple[Union[List[str], None], str, Any, Option], None, None]:
         """Roll up the runtime config for this class and all children.
 
         Implement this to call ``.get_runtime_config()`` on child components or
@@ -185,6 +206,6 @@ class RequiredConfigMixin:
             yield (
                 namespace,
                 opt.key,
-                self.config(opt.key, raise_error=False, raw_value=True),
+                cfg(opt.key, raise_error=False, raw_value=True),
                 opt,
             )

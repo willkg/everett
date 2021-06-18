@@ -5,6 +5,9 @@
 
 """Everett is a Python library for configuration."""
 
+from typing import Callable, List, Union
+
+
 __author__ = "Will Kahn-Greene"
 __email__ = "willkg@mozilla.com"
 
@@ -15,19 +18,19 @@ __version__ = "1.0.4.dev0"
 
 
 # _NoValue instances are always false
-class _NoValue:
-    def __nonzero__(self):
+class NoValue:
+    def __nonzero__(self) -> bool:
         return False
 
-    def __bool__(self):
+    def __bool__(self) -> bool:
         return False
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return "NO_VALUE"
 
 
 # Singleton indicating a non-value
-NO_VALUE = _NoValue()
+NO_VALUE = NoValue()
 
 
 class ConfigurationError(Exception):
@@ -45,14 +48,17 @@ class InvalidKeyError(ConfigurationError):
 class DetailedConfigurationError(ConfigurationError):
     """Base class for configuration errors that have a msg, namespace, key, and parser."""
 
-    def __init__(self, *args, **kwargs):
-        self.namespace = args[1]
-        self.key = args[2]
-        self.parser = args[3]
-        super().__init__(*args, **kwargs)
+    def __init__(
+        self, msg: str, namespace: Union[List[str], None], key: str, parser: Callable
+    ):
+        self.msg = msg
+        self.namespace = namespace
+        self.key = key
+        self.parser = parser
+        super().__init__(msg, namespace, key, parser)
 
-    def __str__(self):
-        return self.args[0]
+    def __str__(self) -> str:
+        return self.msg
 
 
 class ConfigurationMissingError(DetailedConfigurationError):
@@ -63,5 +69,11 @@ class ConfigurationMissingError(DetailedConfigurationError):
 
 class InvalidValueError(DetailedConfigurationError):
     """Error that indicates that the value is not valid."""
+
+    pass
+
+
+class EverettComponent:
+    """Type for Everett components that use RequiredConfigMixin."""
 
     pass

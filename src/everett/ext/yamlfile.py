@@ -12,17 +12,18 @@ To use this, you must install the optional requirements::
 
 import logging
 import os
+from typing import Dict, List, Optional, Union
 
 import yaml
 
-from everett import ConfigurationError, NO_VALUE
+from everett import ConfigurationError, NO_VALUE, NoValue
 from everett.manager import generate_uppercase_key, get_key_from_envs, listify
 
 
 logger = logging.getLogger("everett")
 
 
-class ConfigYamlEnv(object):
+class ConfigYamlEnv:
     """Source for pulling configuration from YAML files.
 
     This requires optional dependencies. You can install them with::
@@ -108,7 +109,7 @@ class ConfigYamlEnv(object):
 
     """
 
-    def __init__(self, possible_paths):
+    def __init__(self, possible_paths: Union[str, List[str]]) -> None:
         self.cfg = {}
         self.path = None
         possible_paths = listify(possible_paths)
@@ -126,7 +127,7 @@ class ConfigYamlEnv(object):
         if not self.path:
             logger.debug("No YAML file found: %s", possible_paths)
 
-    def parse_yaml_file(self, path):
+    def parse_yaml_file(self, path: str) -> Dict:
         """Parse yaml file at ``path`` and return a dict."""
         with open(path, "r") as fp:
             data = yaml.safe_load(fp)
@@ -134,7 +135,7 @@ class ConfigYamlEnv(object):
         if not data:
             return {}
 
-        def traverse(namespace, d):
+        def traverse(namespace: List[str], d: Dict) -> Dict:
             cfg = {}
             for key, val in d.items():
                 if isinstance(val, dict):
@@ -154,7 +155,9 @@ class ConfigYamlEnv(object):
 
         return traverse([], data)
 
-    def get(self, key, namespace=None):
+    def get(
+        self, key: str, namespace: Optional[List[str]] = None
+    ) -> Union[str, NoValue]:
         """Retrieve value for key."""
         if not self.path:
             return NO_VALUE
@@ -163,5 +166,5 @@ class ConfigYamlEnv(object):
         full_key = generate_uppercase_key(key, namespace)
         return get_key_from_envs(self.cfg, full_key)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return "<ConfigYamlEnv: %s>" % self.path

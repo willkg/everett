@@ -16,14 +16,17 @@ import logging
 import os
 import re
 import sys
-from typing import Any
+from types import TracebackType
+from typing import Any, Callable, Dict, Iterable, List, Mapping, Optional, Type, Union
 
 from everett import (
     ConfigurationError,
     ConfigurationMissingError,
+    EverettComponent,
     InvalidValueError,
     InvalidKeyError,
     NO_VALUE,
+    NoValue,
 )
 
 
@@ -64,7 +67,7 @@ def qualname(thing: Any) -> str:
     return repr(thing)
 
 
-def parse_bool(val):
+def parse_bool(val: str) -> bool:
     """Parse a bool value.
 
     Handles a series of values, but you should probably standardize on
@@ -88,12 +91,12 @@ def parse_bool(val):
     raise ValueError('"%s" is not a valid bool value' % val)
 
 
-def parse_env_file(envfile):
+def parse_env_file(envfile: Iterable[str]) -> Dict:
     """Parse the content of an iterable of lines as ``.env``.
 
     Return a dict of config variables.
 
-    >>> parse_env_file(['DUDE=Abides'])
+    >>> parse_env_file(["DUDE=Abides"])
     {'DUDE': 'Abides'}
 
     """
@@ -120,15 +123,15 @@ def parse_env_file(envfile):
     return data
 
 
-def parse_class(val):
+def parse_class(val: str) -> Any:
     """Parse a string, imports the module and returns the class.
 
-    >>> parse_class('hashlib.md5')
-    <built-in function openssl_md5>
+    >>> parse_class("everett.component.Option")
+    <class 'everett.component.Option'>
 
     """
-    module, class_name = val.rsplit(".", 1)
-    module = importlib.import_module(module)
+    module_name, class_name = val.rsplit(".", 1)
+    module = importlib.import_module(module_name)
     try:
         return getattr(module, class_name)
     except AttributeError:
@@ -137,7 +140,7 @@ def parse_class(val):
         )
 
 
-def get_parser(parser):
+def get_parser(parser: Callable) -> Callable:
     """Return a parsing function for a given parser."""
     # Special case bool so that we can explicitly give bool values otherwise
     # all values would be True since they're non-empty strings.
@@ -146,7 +149,7 @@ def get_parser(parser):
     return parser
 
 
-def listify(thing):
+def listify(thing: Any) -> List[Any]:
     """Convert thing to a list.
 
     If thing is a string, then returns a list of thing. Otherwise
@@ -164,7 +167,7 @@ def listify(thing):
     return thing
 
 
-def generate_uppercase_key(key, namespace=None):
+def generate_uppercase_key(key: str, namespace: Optional[List[str]] = None) -> str:
     """Given a key and a namespace, generates a final uppercase key."""
     if namespace:
         namespace = [part for part in listify(namespace) if part]
@@ -174,7 +177,7 @@ def generate_uppercase_key(key, namespace=None):
     return key
 
 
-def get_key_from_envs(envs, key):
+def get_key_from_envs(envs: Iterable[Any], key: str) -> Union[str, NoValue]:
     """Return the value of a key from the given dict respecting namespaces.
 
     Data can also be a list of data dicts.
@@ -212,25 +215,27 @@ class ListOf:
 
     """
 
-    def __init__(self, parser, delimiter=","):
+    def __init__(self, parser: Callable, delimiter: str = ","):
         self.sub_parser = parser
         self.delimiter = delimiter
 
-    def __call__(self, value):
+    def __call__(self, value: str) -> List[Any]:
         parser = get_parser(self.sub_parser)
         if value:
             return [parser(token) for token in value.split(self.delimiter)]
         else:
             return []
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return "<ListOf(%s)>" % qualname(self.sub_parser)
 
 
 class ConfigOverrideEnv:
     """Override configuration layer for testing."""
 
-    def get(self, key, namespace=None):
+    def get(
+        self, key: str, namespace: Optional[List[str]] = None
+    ) -> Union[str, NoValue]:
         """Retrieve value for key."""
         global _CONFIG_OVERRIDE
 
@@ -241,7 +246,7 @@ class ConfigOverrideEnv:
         logger.debug("Searching %s for %s", self, full_key)
         return get_key_from_envs(reversed(_CONFIG_OVERRIDE), full_key)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return "<ConfigOverrideEnv>"
 
 
@@ -286,10 +291,12 @@ class ConfigObjEnv:
 
     """
 
-    def __init__(self, obj, force_lower=True):
+    def __init__(self, obj: Any, force_lower: bool = True):
         self.obj = obj
 
-    def get(self, key, namespace=None):
+    def get(
+        self, key: str, namespace: Optional[List[str]] = None
+    ) -> Union[str, NoValue]:
         """Retrieve value for key."""
         full_key = generate_uppercase_key(key, namespace)
         full_key = full_key.lower()
@@ -314,7 +321,7 @@ class ConfigObjEnv:
 
         return NO_VALUE
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return "<ConfigObjEnv>"
 
 
@@ -371,16 +378,18 @@ class ConfigDictEnv:
 
     """
 
-    def __init__(self, cfg):
+    def __init__(self, cfg: Dict):
         self.cfg = {key.upper(): val for key, val in cfg.items()}
 
-    def get(self, key, namespace=None):
+    def get(
+        self, key: str, namespace: Optional[List[str]] = None
+    ) -> Union[str, NoValue]:
         """Retrieve value for key."""
         full_key = generate_uppercase_key(key, namespace)
         logger.debug("Searching %s for %s", self, full_key)
         return get_key_from_envs(self.cfg, full_key)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return "<ConfigDictEnv: %r>" % self.cfg
 
 
@@ -434,7 +443,7 @@ class ConfigEnvFileEnv:
 
     """
 
-    def __init__(self, possible_paths):
+    def __init__(self, possible_paths: Union[str, List[str]]):
         self.data = {}
         self.path = None
 
@@ -450,13 +459,15 @@ class ConfigEnvFileEnv:
                     self.data = parse_env_file(envfile)
                     break
 
-    def get(self, key, namespace=None):
+    def get(
+        self, key: str, namespace: Optional[List[str]] = None
+    ) -> Union[str, NoValue]:
         """Retrieve value for key."""
         full_key = generate_uppercase_key(key, namespace)
         logger.debug("Searching %s for %s", self, full_key)
         return get_key_from_envs(self.data, full_key)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return "<ConfigEnvFileEnv: %s>" % self.path
 
 
@@ -503,17 +514,19 @@ class ConfigOSEnv:
 
     """
 
-    def get(self, key, namespace=None):
+    def get(
+        self, key: str, namespace: Optional[List[str]] = None
+    ) -> Union[str, NoValue]:
         """Retrieve value for key."""
         full_key = generate_uppercase_key(key, namespace)
         logger.debug("Searching %s for %s", self, full_key)
         return get_key_from_envs(os.environ, full_key)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return "<ConfigOSEnv>"
 
 
-def _get_component_name(component):
+def _get_component_name(component: Any) -> str:
     if not inspect.isclass(component):
         cls = component.__class__
     else:
@@ -524,10 +537,10 @@ def _get_component_name(component):
 class ConfigManagerBase:
     """Base configuration manager class."""
 
-    def _get_base_config(self):
+    def _get_base_config(self) -> "ConfigManagerBase":
         return self
 
-    def get_namespace(self):
+    def get_namespace(self) -> List[str]:
         """Retrieve the complete namespace for this config object.
 
         :returns: namespace as a list of strings
@@ -535,17 +548,34 @@ class ConfigManagerBase:
         """
         return []
 
-    def with_options(self, component):
+    def with_options(self, component: EverettComponent) -> "ConfigManagerBase":
         """Apply options component options to this configuration."""
-        options = component.get_required_config()
+        required_config = getattr(component, "get_required_config", None)
+        if not required_config:
+            return self
+
+        options = required_config()
         component_name = _get_component_name(component)
         return BoundConfig(self._get_base_config(), component_name, options)
 
-    def with_namespace(self, namespace):
+    def with_namespace(self, namespace: str) -> "ConfigManagerBase":
         """Apply namespace to this configuration."""
         return NamespacedConfig(self._get_base_config(), namespace)
 
-    def __repr__(self):
+    def __call__(
+        self,
+        key: str,
+        namespace: Optional[List[str]] = None,
+        default: Union[str, NoValue] = NO_VALUE,
+        alternate_keys: Optional[List[str]] = None,
+        doc: str = "",
+        parser: Callable = str,
+        raise_error: bool = True,
+        raw_value: bool = False,
+    ) -> Any:
+        return None
+
+    def __repr__(self) -> str:
         return "<ConfigManagerBase>"
 
 
@@ -561,15 +591,17 @@ class BoundConfig(ConfigManagerBase):
 
     """
 
-    def __init__(self, config, component_name, options):
+    def __init__(
+        self, config: ConfigManagerBase, component_name: str, options: Mapping[str, Any]
+    ):
         self.config = config
         self.component_name = component_name
         self.options = options
 
-    def _get_base_config(self):
+    def _get_base_config(self) -> ConfigManagerBase:
         return self.config
 
-    def get_namespace(self):
+    def get_namespace(self) -> List[str]:
         """Retrieve the complete namespace for this config object.
 
         :returns: namespace as a list of strings
@@ -579,15 +611,15 @@ class BoundConfig(ConfigManagerBase):
 
     def __call__(
         self,
-        key,
-        namespace=None,
-        default=NO_VALUE,
-        alternate_keys=NO_VALUE,
-        doc="",
-        parser=str,
-        raise_error=True,
-        raw_value=False,
-    ):
+        key: str,
+        namespace: Optional[List[str]] = None,
+        default: Union[str, NoValue] = NO_VALUE,
+        alternate_keys: Optional[List[str]] = None,
+        doc: str = "",
+        parser: Callable = str,
+        raise_error: bool = True,
+        raw_value: bool = False,
+    ) -> Any:
         """Return a config value bound to a component's options.
 
         :arg key: the key to look up
@@ -628,7 +660,7 @@ class BoundConfig(ConfigManagerBase):
             raw_value=raw_value,
         )
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return "<BoundConfig({}): namespace:{}>".format(
             self.component_name,
             self.get_namespace(),
@@ -643,11 +675,11 @@ class NamespacedConfig(ConfigManagerBase):
 
     """
 
-    def __init__(self, config, namespace):
+    def __init__(self, config: ConfigManagerBase, namespace: str):
         self.config = config
         self.namespace = namespace
 
-    def get_namespace(self):
+    def get_namespace(self) -> List[str]:
         """Retrieve the complete namespace for this config object.
 
         :returns: namespace as a list of strings
@@ -657,15 +689,15 @@ class NamespacedConfig(ConfigManagerBase):
 
     def __call__(
         self,
-        key,
-        namespace=None,
-        default=NO_VALUE,
-        alternate_keys=NO_VALUE,
-        doc="",
-        parser=str,
-        raise_error=True,
-        raw_value=False,
-    ):
+        key: str,
+        namespace: Optional[List[str]] = None,
+        default: Union[str, NoValue] = NO_VALUE,
+        alternate_keys: Optional[List[str]] = None,
+        doc: str = "",
+        parser: Callable = str,
+        raise_error: bool = True,
+        raw_value: bool = False,
+    ) -> Any:
         """Return a config value bound to a component's options.
 
         :arg key: the key to look up
@@ -709,14 +741,16 @@ class NamespacedConfig(ConfigManagerBase):
             raw_value=raw_value,
         )
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return "<NamespacedConfig: namespace:%s>" % self.get_namespace()
 
 
 class ConfigManager(ConfigManagerBase):
     """Manage multiple configuration environment layers."""
 
-    def __init__(self, environments, doc="", with_override=True):
+    def __init__(
+        self, environments: List[Any], doc: str = "", with_override: bool = True
+    ):
         """Instantiate a ConfigManager.
 
         :arg environents: list of configuration sources to look through in
@@ -738,7 +772,7 @@ class ConfigManager(ConfigManagerBase):
         self.doc = doc
 
     @classmethod
-    def basic_config(cls, env_file=".env"):
+    def basic_config(cls, env_file: str = ".env") -> "ConfigManager":
         """Return a basic ConfigManager.
 
         This sets up a ConfigManager that will look for configuration in
@@ -774,7 +808,7 @@ class ConfigManager(ConfigManagerBase):
         return cls(environments=[ConfigOSEnv(), ConfigEnvFileEnv([env_file])])
 
     @classmethod
-    def from_dict(cls, dict_config):
+    def from_dict(cls, dict_config: Dict) -> "ConfigManager":
         """Create a ConfigManager with specified configuration as a Python dict.
 
         This is shorthand for::
@@ -796,15 +830,15 @@ class ConfigManager(ConfigManagerBase):
 
     def __call__(
         self,
-        key,
-        namespace=None,
-        default=NO_VALUE,
-        alternate_keys=NO_VALUE,
-        doc="",
-        parser=str,
-        raise_error=True,
-        raw_value=False,
-    ):
+        key: str,
+        namespace: Optional[List[str]] = None,
+        default: Union[str, NoValue] = NO_VALUE,
+        alternate_keys: Optional[List[str]] = None,
+        doc: str = "",
+        parser: Callable = str,
+        raise_error: bool = True,
+        raw_value: bool = False,
+    ) -> Any:
         """Return a parsed value from the environment.
 
         :arg key: the key to look up
@@ -889,12 +923,12 @@ class ConfigManager(ConfigManagerBase):
         else:
             parser = get_parser(parser)
 
-        def build_msg(*pargs):
+        def build_msg(*pargs: str) -> str:
             return "\n".join([item for item in pargs if item])
 
         # Go through all possible keys
         all_keys = [key]
-        if alternate_keys is not NO_VALUE:
+        if alternate_keys:
             all_keys = all_keys + alternate_keys
 
         for possible_key in all_keys:
@@ -923,10 +957,12 @@ class ConfigManager(ConfigManagerBase):
                         # what we want to be raising.
                         raise
                     except Exception:
-                        exc_info = sys.exc_info()
+                        exc_type, exc_value, exc_traceback = sys.exc_info()
+                        exc_type_name = exc_type.__name__ if exc_type else "None"
+
                         msg = build_msg(
                             "%(class)s: %(msg)s"
-                            % {"class": exc_info[0].__name__, "msg": str(exc_info[1])},
+                            % {"class": exc_type_name, "msg": str(exc_value)},
                             "namespace=%(namespace)s key=%(key)s requires a value parseable by %(parser)s"
                             % {  # noqa
                                 "namespace": use_namespace,
@@ -954,10 +990,12 @@ class ConfigManager(ConfigManagerBase):
             except Exception:
                 # FIXME(willkg): This is a programmer error--not a user
                 # configuration error. We might want to denote that better.
-                exc_info = sys.exc_info()
+                exc_type, exc_value, exc_traceback = sys.exc_info()
+                exc_type_name = exc_type.__name__ if exc_type else "None"
+
                 msg = build_msg(
                     "%(class)s: %(msg)s"
-                    % {"class": exc_info[0].__name__, "msg": str(exc_info[1])},
+                    % {"class": exc_type_name, "msg": str(exc_value)},
                     "namespace=%(namespace)s key=%(key)s requires a default value parseable by %(parser)s"
                     % {  # noqa
                         "namespace": namespace,
@@ -985,7 +1023,7 @@ class ConfigManager(ConfigManagerBase):
         # Otherwise return NO_VALUE
         return NO_VALUE
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return "<ConfigManager>"
 
 
@@ -996,14 +1034,14 @@ _CONFIG_OVERRIDE = []
 class ConfigOverride:
     """Handle contexts and decoration for overriding config in testing."""
 
-    def __init__(self, **cfg):
+    def __init__(self, **cfg: str):
         self._cfg = cfg
 
-    def push_config(self):
+    def push_config(self) -> None:
         """Push ``self._cfg`` as a config layer onto the stack."""
         _CONFIG_OVERRIDE.append(self._cfg)
 
-    def pop_config(self):
+    def pop_config(self) -> None:
         """Pop a config layer off.
 
         :raises IndexError: If there are no layers to pop off
@@ -1011,17 +1049,22 @@ class ConfigOverride:
         """
         _CONFIG_OVERRIDE.pop()
 
-    def __enter__(self):
+    def __enter__(self) -> None:
         self.push_config()
 
-    def __exit__(self, exc_type, exc_value, traceback):
+    def __exit__(
+        self,
+        exc_type: Optional[Type[BaseException]],
+        exc_value: Optional[BaseException],
+        traceback: Optional[TracebackType],
+    ) -> None:
         self.pop_config()
 
-    def decorate(self, fun):
+    def decorate(self, fun: Callable) -> Callable:
         """Decorate a function for overriding configuration."""
 
         @wraps(fun)
-        def _decorated(*args, **kwargs):
+        def _decorated(*args: Any, **kwargs: Any) -> Any:
             # Push the config, run the function and pop it afterwards.
             self.push_config()
             try:
@@ -1031,7 +1074,7 @@ class ConfigOverride:
 
         return _decorated
 
-    def __call__(self, class_or_fun):
+    def __call__(self, class_or_fun: Callable) -> Callable:
         if inspect.isclass(class_or_fun):
             # If class_or_fun is a class, decorate all of its methods
             # that start with 'test'.
@@ -1045,7 +1088,7 @@ class ConfigOverride:
             return self.decorate(class_or_fun)
 
 
-def config_override(**cfg):
+def config_override(**cfg: str) -> ConfigOverride:
     """Allow you to override config for writing tests.
 
     This can be used as a class decorator::
