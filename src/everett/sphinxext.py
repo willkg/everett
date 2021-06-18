@@ -126,7 +126,7 @@ You can do that like this::
 """
 
 import sys
-from typing import Dict
+from typing import Any, Dict, List, Optional, Union
 
 from docutils import nodes
 from docutils.parsers.rst import Directive, directives
@@ -144,7 +144,7 @@ from everett import NO_VALUE, __version__
 from everett.manager import qualname
 
 
-def split_clspath(clspath):
+def split_clspath(clspath: str) -> List[str]:
     """Split clspath into module and class names.
 
     Note: This is a really simplistic implementation.
@@ -153,7 +153,7 @@ def split_clspath(clspath):
     return clspath.rsplit(".", 1)
 
 
-def import_class(clspath):
+def import_class(clspath: str) -> Any:
     """Given a clspath, returns the class.
 
     Note: This is a really simplistic implementation.
@@ -165,7 +165,7 @@ def import_class(clspath):
     return getattr(module, clsname)
 
 
-def upper_lower_none(arg):
+def upper_lower_none(arg: Optional[str]) -> Union[str, None]:
     """Validate arg value as "upper", "lower", or None."""
     if not arg:
         return arg
@@ -193,7 +193,8 @@ class EverettComponent(ObjectDescription):
 
     allow_nesting = False
 
-    def handle_signature(self, sig, signode):
+    # FIXME(willkg): What's the signode here?
+    def handle_signature(self, sig: str, signode: Any) -> str:
         """Create a signature for this thing."""
         if sig != "Configuration":
             signode.clear()
@@ -218,7 +219,8 @@ class EverettComponent(ObjectDescription):
 
         return sig
 
-    def add_target_and_index(self, name, sig, signode):
+    # FIXME(willkg): What's the signode here?
+    def add_target_and_index(self, name: str, sig: str, signode: Any) -> None:
         """Add a target and index for this thing."""
         targetname = f"{self.objtype}-{name}"
 
@@ -257,17 +259,19 @@ class EverettDomain(Domain):
         "objects": {}
     }
 
-    def clear_doc(self, docname):
+    def clear_doc(self, docname: str) -> None:
         for (typ, name), doc in list(self.data["objects"].items()):
             if doc == docname:
                 del self.data["objects"][typ, name]
 
-    def merge_domaindata(self, docnames, otherdata):
+    # FIXME(willkg): What's the value in otherdata dict?
+    def merge_domaindata(self, docnames: List[str], otherdata: Dict[str, Any]) -> None:
         for (typ, name), doc in otherdata["objects"].items():
             if doc in docnames:
                 self.data["objects"][typ, name] = doc
 
-    def resolve_xref(self, env, fromdocname, builder, typ, target, node, contnode):
+    # FIXME(willkg): what're args and return type here?
+    def resolve_xref(self, env, fromdocname, builder, typ, target, node, contnode):  # type: ignore
         objects = self.data["objects"]
         objtypes = self.objtypes_for_role(typ) or []
 
@@ -318,11 +322,12 @@ class AutoComponentDirective(Directive):
         "case": upper_lower_none,
     }
 
-    def add_line(self, line, source, *lineno):
+    def add_line(self, line: str, source: str, *lineno: int) -> None:
         """Add a line to the result"""
         self.result.append(line, source, *lineno)
 
-    def generate_docs(self, clspath, more_content):
+    # FIXME(willkg): what is more_content?
+    def generate_docs(self, clspath: str, more_content: Any) -> None:
         """Generate documentation for this configman class"""
         obj = import_class(clspath)
         sourcename = "docstring of %s" % clspath
@@ -413,7 +418,8 @@ class AutoComponentDirective(Directive):
                     )
                 self.add_line("", "")
 
-    def run(self):
+    # FIXME(willkg): this returns a list of nodes
+    def run(self) -> List[Any]:
         self.reporter = self.state.document.reporter
         self.result = ViewList()
 
@@ -428,7 +434,8 @@ class AutoComponentDirective(Directive):
         return node.children
 
 
-def setup(app):
+# FIXME(willkg): this takes a Sphinx app
+def setup(app: Any) -> Dict[str, Any]:
     """Register domain and directive in Sphinx."""
     app.add_domain(EverettDomain)
     app.add_directive("autocomponent", AutoComponentDirective)
