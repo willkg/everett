@@ -6,7 +6,17 @@
 
 from collections import OrderedDict
 from collections.abc import Mapping
-from typing import Any, Callable, Dict, Generator, Iterator, List, Tuple, Union
+from typing import (
+    Any,
+    Callable,
+    Dict,
+    Generator,
+    Iterator,
+    List,
+    Optional,
+    Tuple,
+    Union,
+)
 
 from everett import EverettComponent, NO_VALUE, NoValue
 from everett.manager import BoundConfig
@@ -18,8 +28,8 @@ class Option:
     def __init__(
         self,
         key: str,
-        default: Any = NO_VALUE,
-        alternate_keys: Union[List[str], NoValue] = NO_VALUE,
+        default: Union[str, NoValue] = NO_VALUE,
+        alternate_keys: Optional[List[str]] = None,
         doc: str = "",
         parser: Callable = str,
         meta: Any = None,
@@ -52,8 +62,8 @@ class ConfigOptions(Mapping):
     def add_option(
         self,
         key: str,
-        default: Any = NO_VALUE,
-        alternate_keys: Union[List[str], NoValue] = NO_VALUE,
+        default: Union[str, NoValue] = NO_VALUE,
+        alternate_keys: Optional[List[str]] = None,
         doc: str = "",
         parser: Callable = str,
         **meta: Any,
