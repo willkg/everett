@@ -8,7 +8,7 @@ from collections import OrderedDict
 from collections.abc import Mapping
 from typing import Any, Callable, Dict, Generator, Iterator, List, Tuple, Union
 
-from everett import NO_VALUE, NoValue
+from everett import EverettComponent, NO_VALUE, NoValue
 from everett.manager import BoundConfig
 
 
@@ -104,7 +104,7 @@ class ConfigOptions(Mapping):
         return len(self.options)
 
 
-class RequiredConfigMixin:
+class RequiredConfigMixin(EverettComponent):
     """Mixin for component classes that have required configuration.
 
     As with all mixins, make sure this is earlier in the class list.
