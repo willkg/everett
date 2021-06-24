@@ -19,5 +19,23 @@ in your Sphinx-generated docs without having to manually update it.
 Further, Everett components will show up in the index making it easier for users
 to find what they're looking for.
 
+For example, with this code:
+
+.. literalinclude:: code/recipes_appconfig.py
+
+
+You can add this to your docs::
+
+    .. autocomponent:: recipes_appconfig.AppConfig
+       :hide-classname:
+       :case: upper
+
+And get this:
+
+.. autocomponent:: recipes_appconfig.AppConfig
+   :hide-classname:
+   :case: upper
+
+Module docs:
 
 .. automodule:: everett.sphinxext

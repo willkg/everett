@@ -16,8 +16,8 @@ def parse_loglevel(value):
         return text_to_level[value.upper()]
     except KeyError:
         raise ValueError(
-            '"%s" is not a valid logging level. Try CRITICAL, ERROR, '
-            "WARNING, INFO, DEBUG" % value
+            f'"{value}" is not a valid logging level. Try CRITICAL, ERROR, '
+            "WARNING, INFO, DEBUG"
         )
 
 
@@ -27,13 +27,16 @@ class AppConfig(RequiredConfigMixin):
         "debug",
         parser=bool,
         default="false",
-        doc="Turns on debug mode for the applciation",
+        doc="Turns on debug mode for the application",
     )
     required_config.add_option(
         "loglevel",
         parser=parse_loglevel,
         default="INFO",
-        doc="Log level for the application",
+        doc=(
+            "Log level for the application; CRITICAL, ERROR, WARNING, INFO, "
+            "DEBUG"
+        ),
     )
 
     def __init__(self, config):
