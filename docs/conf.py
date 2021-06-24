@@ -19,9 +19,14 @@ import os
 import sys
 
 cwd = os.getcwd()
+
+# Add ../src/ directory so we can pull in Everett things using autodoc
 project_root = os.path.dirname(cwd)
 src_root = os.path.join(project_root, "src")
 sys.path.insert(0, src_root)
+
+# Add code/ directory so we can use autocomponent with a recipe
+sys.path.insert(0, os.path.join(cwd, "code/"))
 
 import everett  # noqa
 
@@ -36,6 +41,7 @@ import everett  # noqa
 # ones.
 extensions = [
     "sphinx.ext.autodoc",
+    "everett.sphinxext",
 ]
 
 # Add any paths that contain templates here, relative to this directory.
