@@ -14,4 +14,4 @@ try:
 except InvalidValueError:
     # The "debug_mode" configuration value is incorrect--alert
     # user in the logs.
-    logging.exception("gah!")
+    logging.exception("logged exception gah!")

@@ -30,11 +30,12 @@ For example:
    :language: python
 
 
-Specify pointer to configuration errors docs
---------------------------------------------
+Specify pointer to configuration documentation
+----------------------------------------------
 
-In addition to a list of sources, you can provide a ``doc``. You can use this to
-guide users hitting configuration errors to configuration documentation.
+In addition to a list of sources, you can provide a ``doc`` argument. You can
+use this to guide users hitting configuration errors to configuration
+documentation.
 
 For example:
 
@@ -78,16 +79,19 @@ Here, we see the documentation for the configuration item, the documentation
 from the ``ConfigManager``, and the specific Python exception information.
 
 
-Where to put ConfigManager
-==========================
+Where to put ConfigManager instance
+===================================
 
-You can create the ``ConfigManager`` when instantiating the app--that works
-fine. You could also create it as a global singleton.
+You can create the ``ConfigManager`` when instantiating an app class as a
+property on that instance--that works fine.
+
+You could create the ``ConfigManager`` as a module-level singleton. That's
+fine, too.
 
 ``ConfigManager`` should be thread-safe and re-entrant with the provided
 sources. If you implement your own configuration environments, then
-thread-safety and re-entrantcy depend on whether your configuration environments
-are safe in these ways.
+thread-safety and re-entrantcy depend on whether your configuration
+environments are safe in these ways.
 
 
 Configuration sources
@@ -173,7 +177,7 @@ specified.
 
 Some more examples:
 
-``config('password')``
+``config("password")``
     The key is "password".
 
     The value is parsed as a string.
@@ -184,7 +188,7 @@ Some more examples:
 
     This is what you want to do to require that a configuration value exist.
 
-``config('name', raise_error=False)``
+``config("name", raise_error=False)``
     The key is "name".
 
     The value is parsed as a string.
@@ -198,11 +202,11 @@ Some more examples:
        ``everett.NO_VALUE`` is a falsy value so you can use it in comparative
        contexts::
 
-           debug = config('DEBUG', parser=bool, raise_error=False)
+           debug = config("DEBUG", parser=bool, raise_error=False)
            if not debug:
                pass
 
-``config('debug', default='false', parser=bool)``
+``config("debug", default="false", parser=bool)``
     The key is "debug".
 
     The value is parsed using the special Everett bool parser.
@@ -213,7 +217,7 @@ Some more examples:
     Note that the default value is always a string that's parseable by the
     parser.
 
-``config('username', namespace='db')``
+``config("username", namespace="db")``
     The key is "username".
 
     The namespace is "db".
@@ -225,7 +229,7 @@ Some more examples:
     If you're looking up values in the process environment, then the full
     key would be ``DB_USERNAME``.
 
-``config('password', namespace='postgres', alternate_keys=['db_password', 'root:postgres_password'])``
+``config("password", namespace="postgres", alternate_keys=["db_password", "root:postgres_password"])``
     The key is "password".
 
     The namespace is "postgres".
@@ -239,7 +243,7 @@ Some more examples:
     have multiple components that share configuration like credentials and
     hostnames.
 
-``config('port', parser=int, doc='The port you want this to listen on.')``
+``config("port", parser=int, doc="The port you want this to listen on.")``
     You can provide a ``doc`` argument which will give users users who are trying to
     configure your software a more helpful error message when they hit a configuration
     error.
@@ -338,6 +342,35 @@ Then you end up with ``SOURCE_DB_USERNAME`` and friends and
 Parsers
 =======
 
+All parsers are functions that take a string value and return a parsed
+instance.
+
+For example:
+
+* ``int`` takes a string value and returns an int.
+* ``parse_class`` takes a dotted Python path string value and returns the class
+  object
+* ``ListOf(str)`` takes a string value and returns a list of strings
+
+
+.. Note::
+
+   When specifying configuration options, the default value must always be a
+   string. When Everett can't find a value for a requested key, it will take
+   the default value and pass it through the parser. Because parsers always
+   take a string as input, the default value must always be a string.
+
+   This is valid::
+
+       debug = config("debug", parser=bool, default="false")
+                                                    ^^^^^^^
+
+   This is **not** valid::
+
+       debug = config("debug", parser=bool, default=False)
+                                                    ^^^^^
+
+
 Python types like str, int, float, pathlib.Path
 -----------------------------------------------
 
@@ -354,8 +387,8 @@ parsers:
 bools
 -----
 
-Everett provides a special bool parser that handles more explicit values
-for "true" and "false":
+Everett provides a special bool parser that handles more descriptive values for
+"true" and "false":
 
 * true: t, true, yes, y, on, 1 (and uppercase versions)
 * false: f, false, no, n, off, 0 (and uppercase versions)
@@ -390,8 +423,9 @@ parses a list of some other type. For example::
 dj_database_url
 ---------------
 
-Everett works great with `dj-database-url
-<https://github.com/kennethreitz/dj-database-url>`_.
+Everett works with `dj-database-url
+<https://pypi.org/project/dj-database-url/>`_. The ``dj_database_url.parse``
+function takes a string and returns a Django database connection value.
 
 For example::
 
@@ -400,13 +434,13 @@ For example::
 
     config = ConfigManager([ConfigOSEnv()])
     DATABASE = {
-        'default': config('DATABASE_URL', parser=dj_database_url.parse)
+        "default": config("DATABASE_URL", parser=dj_database_url.parse)
     }
 
 
-That'll pull the ``DATABASE_URL`` value from the environment (it throws an error
-if it's not there) and runs it through ``dj_database_url`` which parses it and
-returns what Django needs.
+That'll pull the ``DATABASE_URL`` value from the environment (it throws an
+error if it's not there) and runs it through ``dj_database_url`` which parses
+it and returns what Django needs.
 
 With a default::
 
@@ -415,7 +449,7 @@ With a default::
 
     config = ConfigManager([ConfigOSEnv()])
     DATABASE = {
-        'default': config('DATABASE_URL', default='sqlite:///my.db',
+        "default": config("DATABASE_URL", default="sqlite:///my.db",
                           parser=dj_database_url.parse)
     }
 
@@ -423,13 +457,13 @@ With a default::
 .. Note::
 
    To use dj-database-url, you'll need to install it separately. Everett doesn't
-   require it to be installed.
+   depend on it or require it to be installed.
 
 
 django-cache-url
 ----------------
 
-Everett works great with `django-cache-url <https://github.com/ghickman/django-cache-url>`_.
+Everett works with `django-cache-url <https://pypi.org/project/django-cache-url/>`_.
 
 For example::
 
@@ -467,10 +501,10 @@ With a default::
 Implementing your own parsers
 -----------------------------
 
-It's easy to implement your own parser. You just need to build a callable that
-takes a string and returns the Python value you want.
+Implementing your own parser should be straight-forward. Parsing functions
+always take a string and return the Python value you need.
 
-If the value is not parseable, then it should raise a ``ValueError``.
+If the value is not parseable, the parsing function should raise a ``ValueError``.
 
 For example, say we wanted to implement a parser that returned yes/no/no-answer:
 

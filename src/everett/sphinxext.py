@@ -21,7 +21,7 @@ To configure Sphinx, add ``'everett.sphinxext'`` to the ``extensions`` in
    You need to make sure that Everett is installed in the environment
    that Sphinx is being run in.
 
-Use it like this in an ``.rst`` file to document a component::
+Use it like this in an reStructuredText file to document a component::
 
     .. autocomponent:: collector.ext.s3.S3CrashStorage
 
@@ -141,7 +141,7 @@ from sphinx.util.docstrings import prepare_docstring
 from sphinx.util.nodes import make_refnode
 
 from everett import NO_VALUE, __version__
-from everett.manager import qualname
+from everett.manager import qualname, get_config_for_class
 
 
 def split_clspath(clspath: str) -> List[str]:
@@ -333,15 +333,15 @@ class AutoComponentDirective(Directive):
         sourcename = "docstring of %s" % clspath
         all_options = []
         indent = "    "
-        config = obj.get_required_config()
+        config = get_config_for_class(obj)
 
-        if config.options:
+        if config:
             # Go through options and figure out relevant information
-            for option in config:
+            for key, (option, cls) in config.items():
                 if "namespace" in self.options:
-                    namespaced_key = self.options["namespace"] + "_" + option.key
+                    namespaced_key = self.options["namespace"] + "_" + key
                 else:
-                    namespaced_key = option.key
+                    namespaced_key = key
 
                 if "case" in self.options:
                     if self.options["case"] == "upper":
@@ -372,9 +372,9 @@ class AutoComponentDirective(Directive):
             # real object type and then we don't get to use TypedField
             # formatting
             self.add_line(".. index::", sourcename)
-            for option in all_options:
+            for option_item in all_options:
                 self.add_line(
-                    "   single: {}; ({})".format(option["key"], component_index),
+                    "   single: {}; ({})".format(option_item["key"], component_index),
                     sourcename,
                 )
             self.add_line("", "")
@@ -403,17 +403,21 @@ class AutoComponentDirective(Directive):
             # Now list the options
             sourcename = "class definition"
 
-            for option in all_options:
+            for option_item in all_options:
                 self.add_line(
-                    "{}:option {} {}:".format(indent, option["parser"], option["key"]),
+                    "{}:option {} {}:".format(
+                        indent, option_item["parser"], option_item["key"]
+                    ),
                     sourcename,
                 )
-                for doc_line in option["doc"].splitlines():
+                for doc_line in option_item["doc"].splitlines():
                     self.add_line(f"{indent}    {doc_line}", sourcename)
-                if option["default"] is not NO_VALUE:
+                if option_item["default"] is not NO_VALUE:
                     self.add_line("", "")
                     self.add_line(
-                        "{}    Defaults to ``{!r}``.".format(indent, option["default"]),
+                        "{}    Defaults to ``{!r}``.".format(
+                            indent, option_item["default"]
+                        ),
                         sourcename,
                     )
                 self.add_line("", "")

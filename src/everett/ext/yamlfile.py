@@ -6,7 +6,7 @@
 
 To use this, you must install the optional requirements::
 
-    $ pip install everett[yaml]
+    $ pip install 'everett[yaml]'
 
 """
 
@@ -28,7 +28,7 @@ class ConfigYamlEnv:
 
     This requires optional dependencies. You can install them with::
 
-        $ pip install everett[yaml]
+        $ pip install 'everett[yaml]'
 
 
     Takes a path or list of possible paths to look for a YAML file. It uses

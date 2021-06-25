@@ -71,9 +71,3 @@ class InvalidValueError(DetailedConfigurationError):
     """Error that indicates that the value is not valid."""
 
     pass
-
-
-class EverettComponent:
-    """Type for Everett components that use RequiredConfigMixin."""
-
-    pass

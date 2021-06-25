@@ -2,8 +2,7 @@ from textwrap import dedent
 
 from sphinx.application import Sphinx
 
-from everett.component import RequiredConfigMixin, ConfigOptions
-from everett.manager import ListOf, parse_class
+from everett.manager import ListOf, Option, parse_class
 
 
 class FakeSphinx(Sphinx):
@@ -82,12 +81,9 @@ def test_everett_component(tmpdir):
     )
 
 
-class ComponentDefaults(RequiredConfigMixin):
-    required_config = ConfigOptions()
-    required_config.add_option("user")
-
-    def __init__(self, config):
-        self.config = config.with_options(self)
+class ComponentDefaults:
+    class Config:
+        user = Option()
 
 
 def test_autocomponent_defaults(tmpdir):
@@ -222,18 +218,15 @@ def test_show_docstring_class_has_no_docstring(tmpdir):
     )
 
 
-class ComponentWithDocstring(RequiredConfigMixin):
+class ComponentWithDocstring:
     """This component is the best.
 
     The best!
 
     """
 
-    required_config = ConfigOptions()
-    required_config.add_option("user")
-
-    def __init__(self, config):
-        self.config = config.with_options(self)
+    class Config:
+        user = Option()
 
 
 def test_show_docstring(tmpdir):
@@ -259,18 +252,15 @@ def test_show_docstring(tmpdir):
     )
 
 
-class ComponentDocstringOtherAttribute(RequiredConfigMixin):
+class ComponentDocstringOtherAttribute:
     """Programming-focused help"""
 
     __everett_help__ = """
         User-focused help
     """
 
-    required_config = ConfigOptions()
-    required_config.add_option("user")
-
-    def __init__(self, config):
-        self.config = config.with_options(self)
+    class Config:
+        user = Option()
 
 
 def test_show_docstring_other_attribute(tmpdir):
@@ -319,9 +309,9 @@ def test_show_docstring_subclass(tmpdir):
     )
 
 
-class ComponentOptionDefault(RequiredConfigMixin):
-    required_config = ConfigOptions()
-    required_config.add_option("user", default="ou812")
+class ComponentOptionDefault:
+    class Config:
+        user = Option(default="ou812")
 
 
 def test_option_default(tmpdir):
@@ -341,9 +331,9 @@ def test_option_default(tmpdir):
     )
 
 
-class ComponentOptionDoc(RequiredConfigMixin):
-    required_config = ConfigOptions()
-    required_config.add_option("user", doc="ou812")
+class ComponentOptionDoc:
+    class Config:
+        user = Option(doc="ou812")
 
 
 def test_option_doc(tmpdir):
@@ -363,12 +353,10 @@ def test_option_doc(tmpdir):
     )
 
 
-class ComponentOptionDocMultiline(RequiredConfigMixin):
-    required_config = ConfigOptions()
-    required_config.add_option("user", doc="ou812")
-    required_config.add_option(
-        "password", doc="First ``paragraph``.\n\nSecond paragraph."
-    )
+class ComponentOptionDocMultiline:
+    class Config:
+        user = Option(doc="ou812")
+        password = Option(doc="First ``paragraph``.\n\nSecond paragraph.")
 
 
 def test_option_doc_multiline(tmpdir):
@@ -394,9 +382,9 @@ def test_option_doc_multiline(tmpdir):
     )
 
 
-class ComponentOptionDocDefault(RequiredConfigMixin):
-    required_config = ConfigOptions()
-    required_config.add_option("user", doc="This is some docs.", default="ou812")
+class ComponentOptionDocDefault:
+    class Config:
+        user = Option(doc="This is some docs.", default="ou812")
 
 
 def test_option_doc_default(tmpdir):
@@ -429,13 +417,13 @@ class Foo:
         pass
 
 
-class ComponentOptionParser(RequiredConfigMixin):
-    required_config = ConfigOptions()
-    required_config.add_option("user_builtin", parser=int)
-    required_config.add_option("user_parse_class", parser=parse_class)
-    required_config.add_option("user_listof", parser=ListOf(str))
-    required_config.add_option("user_class_method", parser=Foo.parse_foo_class)
-    required_config.add_option("user_instance_method", parser=Foo().parse_foo_instance)
+class ComponentOptionParser:
+    class Config:
+        user_builtin = Option(parser=int)
+        user_parse_class = Option(parser=parse_class)
+        user_listof = Option(parser=ListOf(str))
+        user_class_method = Option(parser=Foo.parse_foo_class)
+        user_instance_method = Option(parser=Foo().parse_foo_instance)
 
 
 def test_option_parser(tmpdir):

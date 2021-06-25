@@ -6,7 +6,7 @@
 
 To use this, you must install the optional requirements::
 
-    $ pip install everett[ini]
+    $ pip install 'everett[ini]'
 
 """
 
@@ -28,7 +28,7 @@ class ConfigIniEnv:
 
     This requires optional dependencies. You can install them with::
 
-        $ pip install everett[ini]
+        $ pip install 'everett[ini]'
 
     Takes a path or list of possible paths to look for a INI file. It uses
     the first INI file it can find.
@@ -45,7 +45,7 @@ class ConfigIniEnv:
         from everett.ext.inifile import ConfigIniEnv
 
         config = ConfigManager([
-            ConfigIniEnv(os.environ.get('FOO_INI'))
+            ConfigIniEnv(possible_paths=os.environ.get("FOO_INI"))
         ])
 
 
@@ -60,10 +60,12 @@ class ConfigIniEnv:
         from everett.ext.inifile import ConfigIniEnv
 
         config = ConfigManager([
-            ConfigIniEnv([
-                os.environ.get('FOO_INI'),
-                '~/.antenna.ini'
-            ])
+            ConfigIniEnv(
+                possible_paths=[
+                    os.environ.get("FOO_INI"),
+                    "~/.antenna.ini"
+                ]
+            )
         ])
 
 
@@ -75,8 +77,8 @@ class ConfigIniEnv:
         from everett.ext.inifile import ConfigIniEnv
 
         config = ConfigManager([
-            ConfigIniEnv('config/local.ini'),
-            ConfigIniEnv('config/base.ini')
+            ConfigIniEnv(possible_paths="config/local.ini"),
+            ConfigIniEnv(possible_paths="config/base.ini")
         ])
 
 

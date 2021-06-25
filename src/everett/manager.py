@@ -17,12 +17,22 @@ import os
 import re
 import sys
 from types import TracebackType
-from typing import Any, Callable, Dict, Iterable, List, Mapping, Optional, Type, Union
+from typing import (
+    Any,
+    Callable,
+    Dict,
+    Iterable,
+    List,
+    Mapping,
+    Optional,
+    Tuple,
+    Type,
+    Union,
+)
 
 from everett import (
     ConfigurationError,
     ConfigurationMissingError,
-    EverettComponent,
     InvalidValueError,
     InvalidKeyError,
     NO_VALUE,
@@ -65,6 +75,100 @@ def qualname(thing: Any) -> str:
 
     # It's an instance, so ... let's call repr on it
     return repr(thing)
+
+
+class Option:
+    """Settings for a single configuration."""
+
+    def __init__(
+        self,
+        default: Union[str, NoValue] = NO_VALUE,
+        alternate_keys: Optional[List[str]] = None,
+        doc: str = "",
+        parser: Callable = str,
+        meta: Any = None,
+    ):
+        self.default = default
+        self.alternate_keys = alternate_keys
+        self.doc = doc
+        self.parser = parser
+        self.meta = meta or {}
+
+    def __eq__(self, obj: Any) -> bool:
+        return (
+            isinstance(obj, Option)
+            and obj.default == self.default
+            and obj.alternate_keys == self.alternate_keys
+            and obj.doc == self.doc
+            and obj.parser == self.parser
+            and obj.meta == self.meta
+        )
+
+
+def get_config_for_class(cls: Type) -> Dict[str, Tuple[Option, Type]]:
+    """Roll up configuration options for this class and parent classes.
+
+    This handles subclasses overriding configuration options in parent classes.
+
+    :arg cls: the component class to return configuration options for
+
+    :returns: final dict of configuration options for this class in
+        ``key -> (option, cls)`` form
+
+    """
+    options = {}
+    for cls in reversed(cls.__mro__):
+        if not hasattr(cls, "Config"):
+            continue
+
+        cls_config = cls.Config
+        for attr in cls_config.__dict__.keys():
+            if attr.startswith("__"):
+                continue
+
+            val = getattr(cls_config, attr)
+            if isinstance(val, Option):
+                options[attr] = (val, cls)
+    return options
+
+
+def traverse_tree(
+    instance: Any, namespace: Optional[List[str]] = None
+) -> Iterable[Tuple[List[str], str, Option, Any]]:
+    """Traverses a tree of objects and computes the configuration for it
+
+    Note: This expects the tree not to have any loops or repeated nodes.
+
+    :arg instance: the component to traverse
+    :arg namespace: the list of strings forming the namespace or None
+
+    :returns: list of ``(namespace, key, value, option, component)``
+
+    """
+    namespace = namespace or []
+
+    # Check to see if this class has options; if it does, capture those and
+    # traverse the tree
+    this_options = get_config_for_class(instance.__class__)
+    if not this_options:
+        return []
+
+    options = [
+        (namespace, key, option, instance)
+        for key, (option, cls) in this_options.items()
+    ]
+
+    # Now go through attributes for other options classes
+    for attr in dir(instance):
+        if attr.startswith("__"):
+            continue
+        val = getattr(instance, attr)
+        if isinstance(val, Option):
+            continue
+
+        options.extend(traverse_tree(val, namespace + [attr]))
+
+    return options
 
 
 def parse_bool(val: str) -> bool:
@@ -126,8 +230,8 @@ def parse_env_file(envfile: Iterable[str]) -> Dict:
 def parse_class(val: str) -> Any:
     """Parse a string, imports the module and returns the class.
 
-    >>> parse_class("everett.component.Option")
-    <class 'everett.component.Option'>
+    >>> parse_class("everett.manager.Option")
+    <class 'everett.manager.Option'>
 
     """
     module_name, class_name = val.rsplit(".", 1)
@@ -548,13 +652,18 @@ class ConfigManagerBase:
         """
         return []
 
-    def with_options(self, component: EverettComponent) -> "ConfigManagerBase":
+    def with_options(self, component: Any) -> "ConfigManagerBase":
         """Apply options component options to this configuration."""
-        required_config = getattr(component, "get_required_config", None)
-        if not required_config:
+        # If this is an instance, get the class
+        if not inspect.isclass(component):
+            component = component.__class__
+
+        options = get_config_for_class(component)
+        # FIXME(willkg): if the component has no options, then this is likely a
+        # programming bug and we should raise an error here
+        if not options:
             return self
 
-        options = required_config()
         component_name = _get_component_name(component)
         return BoundConfig(self._get_base_config(), component_name, options)
 
@@ -577,6 +686,102 @@ class ConfigManagerBase:
 
     def __repr__(self) -> str:
         return "<ConfigManagerBase>"
+
+
+def get_runtime_config(
+    config: ConfigManagerBase, component: Any, traverse=traverse_tree,
+) -> List[Tuple[List[str], str, Any, Option]]:
+    """Returns configuration specification and values for a component tree
+
+    For example, if you had a tree of components instantiated, you could
+    traverse the tree and log the configuration::
+
+        from everett.manager import (
+            ConfigManager,
+            generate_uppercase_key,
+            get_runtime_config,
+            Option,
+            parse_class,
+        )
+
+        class App:
+            class Config:
+                debug = Option(default="False", parser=bool)
+                reader = Option(parser=parse_class)
+                writer = Option(parser=parse_class)
+
+            def __init__(self, config):
+                self.config = config.with_options(self)
+
+                # App has a reader and a writer each of which has configuration
+                # options
+                self.reader = self.config("reader")(config.with_namespace("reader"))
+                self.writer = self.config("writer")(config.with_namespace("writer"))
+
+        class Reader:
+            class Config:
+                input_file = Option()
+
+            def __init__(self, config):
+                self.config = config.with_options(self)
+
+        class Writer:
+            class Config:
+                output_file = Option()
+
+            def __init__(self, config):
+                self.config = config.with_options(self)
+
+        cm = ConfigManager.from_dict(
+            {
+                # This specifies which reader component to use. Because we
+                # specified this one, we need to define a READER_INPUT_FILE
+                # value.
+                "READER": "__main__.Reader",
+                "READER_INPUT_FILE": "input.txt",
+
+                # Same thing for the writer component.
+                "WRITER": "__main__.Writer",
+                "WRITER_OUTPUT_FILE": "output.txt",
+            }
+        )
+
+        my_app = App(cm)
+
+        # This traverses the component tree starting with my_app and then
+        # traversing .reader and .writer attributes.
+        for namespace, key, value, option in get_runtime_config(cm, my_app):
+            full_key = generate_uppercase_key(key, namespace)
+            print(f"{full_key.upper()}={value or ''}")
+
+        # This should print out:
+        # DEBUG=False
+        # READER=__main__.Reader
+        # READER_INPUT_FILE=input.txt
+        # WRITER=__main__.Writer
+        # WRITER_OUTPUT_FILE=output.txt
+
+    :arg config: a configuration manager instance
+    :arg component: a component or tree of components
+    :arg traverse: the function for traversing the component tree; see
+        :py:func:`everett.manager.traverse_tree` for signature
+
+    :returns: a list of (namespace, key, value, option) tuples
+
+    """
+    runtime_config = []
+    for namespace, key, option, obj in traverse(component):
+        runtime_config.append(
+            (
+                namespace,
+                key,
+                config.with_options(obj)(
+                    key, namespace=namespace, raise_error=False, raw_value=True
+                ),
+                option,
+            )
+        )
+    return runtime_config
 
 
 class BoundConfig(ConfigManagerBase):
@@ -643,7 +848,7 @@ class BoundConfig(ConfigManagerBase):
 
         """
         try:
-            option = self.options[key]
+            option, cls = self.options[key]
         except KeyError:
             if raise_error:
                 raise InvalidKeyError(f"{key} is not a valid key for this component")
@@ -874,33 +1079,28 @@ class ConfigManager(ConfigManagerBase):
         :raises everett.InvalidKeyError: if the configuration key doesn't exist for
             that component
 
-        :raises everet.InvalidValueError: (Python 3-only) if the configuration value
-            is invalid in some way (not an integer, not a bool, etc)
-
-        :raises Exception subclass: (Python 2-only) parser code can raise
-            anything and since this is Python 2, we can't do much about it
-            without stomping on the traceback so we change the message and
-            raise the same exception
+        :raises everett.InvalidValueError: if the configuration value is
+            invalid in some way (not an integer, not a bool, etc)
 
         Examples::
 
             config = ConfigManager([])
 
             # Use the special bool parser
-            DEBUG = config('DEBUG', default='false', parser=bool)
-            DEBUG = config('DEBUG', default='True', parser=bool)
-            DEBUG = config('DEBUG', default='true', parser=bool)
-            DEBUG = config('DEBUG', default='yes', parser=bool)
-            DEBUG = config('DEBUG', default='y', parser=bool)
+            DEBUG = config("debug", default="false", parser=bool)
+            DEBUG = config("debug", default="True", parser=bool)
+            DEBUG = config("debug", default="true", parser=bool)
+            DEBUG = config("debug", default="yes", parser=bool)
+            DEBUG = config("debug", default="y", parser=bool)
 
-            # Use the list of parser
+            # Use the ListOf parser
             from everett.manager import ListOf
-            ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost',
+            ALLOWED_HOSTS = config("allowed_hosts", default="localhost",
                                    parser=ListOf(str))
 
             # Use alternate_keys for backwards compatibility with an
-            # older version of this software
-            PASSWORD = config('PASSWORD', alternate_keys=['SECRET'])
+            # older version of your software
+            PASSWORD = config("password", alternate_keys=["SECRET"])
 
 
         The default value should **always** be a string that is parseable by the
@@ -1093,14 +1293,14 @@ def config_override(**cfg: str) -> ConfigOverride:
 
     This can be used as a class decorator::
 
-        @config_override(FOO='bar', BAZ='bat')
+        @config_override(FOO="bar", BAZ="bat")
         class FooTestClass(object):
             ...
 
 
     This can be used as a function decorator::
 
-        @config_override(FOO='bar')
+        @config_override(FOO="bar")
         def test_foo():
             ...
 
@@ -1108,7 +1308,7 @@ def config_override(**cfg: str) -> ConfigOverride:
     This can also be used as a context manager::
 
         def test_foo():
-            with config_override(FOO='bar'):
+            with config_override(FOO="bar"):
                 ...
 
     """

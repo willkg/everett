@@ -79,6 +79,7 @@ You're writing an app and want to pull configuration (in order of prcedence):
 
 1. from the process environment
 2. from an INI file stored in a place specified by (in order of precedence):
+
    1. ``MYAPP_INI`` in the environment
    2. ``~/.myapp.ini``
    3. ``/etc/myapp.ini``
@@ -86,7 +87,7 @@ You're writing an app and want to pull configuration (in order of prcedence):
 First, you need need to install the additional requirements for INI file
 environments::
 
-    pip install everett[ini]
+    pip install 'everett[ini]'
 
 
 Then set up the ``ConfigManager``::
@@ -107,11 +108,13 @@ Then set up the ``ConfigManager``::
                 ConfigOSEnv(),
 
                 # Look in INI files in order specified
-                ConfigIniEnv([
-                    os.environ.get("MYAPP_INI"),
-                    "~/.myapp.ini",
-                    "/etc/myapp.ini"
-                ]),
+                ConfigIniEnv(
+                    possible_paths=[
+                        os.environ.get("MYAPP_INI"),
+                        "~/.myapp.ini",
+                        "/etc/myapp.ini"
+                    ]
+                ),
             ],
 
             # Provide users a link to documentation for when they hit
@@ -174,37 +177,27 @@ First, create a configuration class::
     import os
     import sys
 
-    from everett.component import RequiredConfigMixin, ConfigOptions
     from everett.ext.inifile import ConfigIniEnv
-    from everett.manager import ConfigManager, ConfigOSEnv
+    from everett.manager import ConfigManager, ConfigOSEnv, Option
 
 
-    class AppConfig(RequiredConfigMixin):
-        required_config = ConfigOptions()
-        required_config.add_option(
-            "debug",
-            parser=bool,
-            default="false",
-            doc="Switch debug mode on and off.")
-        )
+    class AppConfig:
+        class Config:
+            debug = Option(
+                parser=bool,
+                default="false",
+                doc="Switch debug mode on and off.")
+            )
     
 
-Then we set up our ``ConfigManager``::
+Then we set up a ``ConfigManager`` to look at the process environment
+for configuration::
 
     def get_config():
         manager = ConfigManager(
-            # Specify one or more configuration environments in
-            # the order they should be checked
+            # Specify environments to check for configuration
             environments=[
-                # Look in OS process environment first
                 ConfigOSEnv(),
-
-                # Look in INI files in order specified
-                ConfigIniEnv([
-                    os.environ.get("MYAPP_INI"),
-                    "~/.myapp.ini",
-                    "/etc/myapp.ini"
-                ]),
             ],
 
             # Provide users a link to documentation for when they hit
@@ -249,25 +242,14 @@ Everett supports components that require configuration. Say your app needs to
 connect to RabbitMQ. With Everett, you can define the component's configuration
 needs in the component class::
 
-    from everett.component import RequiredConfigMixin, ConfigOptions
+    from everett.manager import Option
 
 
-    class RabbitMQComponent(RequiredConfigMixin):
-        required_config = ConfigOptions()
-        required_config.add_option(
-            "host",
-            doc="RabbitMQ host to connect to"
-        )
-        required_config.add_option(
-            "port",
-            default="5672",
-            doc="Port to use",
-            parser=int
-        )
-        required_config.add_option(
-            "queue_name",
-            doc="Queue to insert things into"
-        )
+    class RabbitMQComponent:
+        class Config:
+            host = Option(doc="RabbitMQ host to connect to")
+            port = Option(default="5672", doc="Port to use", parser=int)
+            queue_name = Option(doc="Queue to insert things into")
 
         def __init__(self, config):
             # Bind the configuration to just the configuration this
@@ -280,8 +262,8 @@ needs in the component class::
             self.queue_name = self.config("queue_name")
 
 
-Then instantiate a ``RabbitMQComponent`` that looks for configuration keys
-in the ``rmq`` namespace::
+Then you could instantiate a ``RabbitMQComponent`` that looks for configuration
+keys in the ``rmq`` namespace::
 
     queue = RabbitMQComponent(config.with_namespace("rmq"))
 
@@ -338,12 +320,12 @@ Run::
 If you want to use the ``ConfigIniEnv``, you need to install its requirements
 as well::
 
-    $ pip install everett[ini]
+    $ pip install 'everett[ini]'
 
 If you want to use the ``ConfigYamlEnv``, you need to install its requirements
 as well::
 
-    $ pip install everett[yaml]
+    $ pip install 'everett[yaml]'
 
 
 Install for hacking
@@ -356,7 +338,6 @@ Run::
 
     # Create a virtualenvironment
     $ mkvirtualenv --python /usr/bin/python3 everett
-    ...
 
     # Install Everett and dev requirements
     $ pip install -e '.[dev,ini,yaml]'

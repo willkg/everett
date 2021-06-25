@@ -1,14 +1,13 @@
 import os
 
-from everett.component import RequiredConfigMixin, ConfigOptions
-from everett.manager import ConfigManager, parse_class
+from everett.manager import ConfigManager, Option, parse_class
 
 
-class App(RequiredConfigMixin):
-    required_config = ConfigOptions()
-    required_config.add_option("basedir")
-    required_config.add_option("reader", parser=parse_class)
-    required_config.add_option("writer", parser=parse_class)
+class App:
+    class Config:
+        basedir = Option()
+        reader = Option(parser=parse_class)
+        writer = Option(parser=parse_class)
 
     def __init__(self, config):
         self.config = config.with_options(self)
@@ -18,18 +17,18 @@ class App(RequiredConfigMixin):
         self.writer = self.config("writer")(config, self.basedir)
 
 
-class FSReader(RequiredConfigMixin):
-    required_config = ConfigOptions()
-    required_config.add_option("file_type", default="json")
+class FilesystemReader:
+    class Config:
+        file_type = Option(default="json")
 
     def __init__(self, config, basedir):
         self.config = config.with_options(self)
         self.read_dir = os.path.join(basedir, "read")
 
 
-class FSWriter(RequiredConfigMixin):
-    required_config = ConfigOptions()
-    required_config.add_option("file_type", default="json")
+class FilesystemWriter:
+    class Config:
+        file_type = Option(default="json")
 
     def __init__(self, config, basedir):
         self.config = config.with_options(self)
@@ -39,8 +38,8 @@ class FSWriter(RequiredConfigMixin):
 config = ConfigManager.from_dict(
     {
         "BASEDIR": "/tmp",
-        "READER": "__main__.FSReader",
-        "WRITER": "__main__.FSWriter",
+        "READER": "__main__.FilesystemReader",
+        "WRITER": "__main__.FilesystemWriter",
         "READER_FILE_TYPE": "json",
         "WRITER_FILE_TYPE": "yaml",
     }

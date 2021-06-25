@@ -21,10 +21,13 @@ from everett.manager import (
     ConfigOSEnv,
     ConfigObjEnv,
     ListOf,
+    Option,
     config_override,
     generate_uppercase_key,
+    get_config_for_class,
     get_key_from_envs,
     get_parser,
+    get_runtime_config,
     listify,
     parse_bool,
     parse_class,
@@ -54,6 +57,54 @@ from everett.manager import (
 )
 def test_qualname(thing, expected):
     assert qualname(thing) == expected
+
+
+def test_get_config_for_class():
+    """Verify that get_config_for_class works for a trivial class"""
+
+    class Component:
+        class Config:
+            user = Option(doc="no help")
+
+    options = get_config_for_class(Component)
+    assert list(options.keys()) == ["user"]
+
+
+def test_get_config_for_class_complex_mro():
+    """Verify get_config_for_class with an MRO that has a diamond shape to it.
+
+    The goal here is to make sure the C class has the right options from the
+    right components and in the right order.
+
+    """
+
+    class ComponentBase:
+        pass
+
+    class A(ComponentBase):
+        class Config:
+            a = Option(default="a")
+
+    class B(ComponentBase):
+        class Config:
+            b = Option(default="b")
+            bd = Option(default="b")
+
+    class C(B, A):
+        class Config:
+            # Note: This overrides B's b.
+            b = Option(default="c")
+            c = Option(default="c")
+
+    options = get_config_for_class(C)
+    assert list(
+        sorted([(key, opt.default) for key, (opt, cls) in options.items()])
+    ) == [
+        ("a", "a"),  # from A
+        ("b", "c"),  # from C (overrides B's)
+        ("bd", "b"),  # from B
+        ("c", "c"),  # from C
+    ]
 
 
 def test_no_value():
@@ -554,3 +605,246 @@ def test_raw_value():
     config = config.with_namespace("FOO")
     assert config("BAR", parser=int) == 1
     assert config("BAR", parser=int, raw_value=True) == "1"
+
+
+def test_with_options():
+    """Verify .with_options() restricts configuration"""
+    config = ConfigManager(
+        [ConfigDictEnv({"FOO_BAR": "a", "FOO_BAZ": "b", "BAR": "c", "BAZ": "d"})]
+    )
+
+    class SomeComponent:
+        class Config:
+            baz = Option(default="", doc="some help here", parser=str)
+
+        def __init__(self, config):
+            self.config = config.with_options(self)
+
+    # Create the component with regular config
+    comp = SomeComponent(config)
+    assert comp.config("baz") == "d"
+    with pytest.raises(ConfigurationError):
+        # This is not a valid option for this component
+        comp.config("bar")
+
+    # Create the component with config in the "foo" namespace
+    comp2 = SomeComponent(config.with_namespace("foo"))
+    assert comp2.config("baz") == "b"
+    with pytest.raises(ConfigurationError):
+        # This is not a valid option for this component
+        comp2.config("bar")
+
+
+def test_nested_options():
+    """Verify nested BoundOptions works."""
+    config = ConfigManager.from_dict({})
+
+    class Foo:
+        class Config:
+            option1 = Option(default="opt1default", parser=str)
+
+    class Bar:
+        class Config:
+            option2 = Option(default="opt2default", parser=str)
+
+    config = ConfigManager.basic_config()
+    config = config.with_options(Foo)
+    config = config.with_options(Bar)
+
+    assert config("option2") == "opt2default"
+    with pytest.raises(ConfigurationError):
+        config("option1")
+
+
+def test_default_comes_from_options():
+    """Verify that the default is picked up from options"""
+    config = ConfigManager([])
+
+    class SomeComponent:
+        class Config:
+            foo = Option(default="abc")
+
+        def __init__(self, config):
+            self.config = config.with_options(self)
+
+    comp = SomeComponent(config)
+    assert comp.config("foo") == "abc"
+
+
+def test_parser_comes_from_options():
+    """Verify the parser is picked up from options"""
+    config = ConfigManager([ConfigDictEnv({"FOO": "1"})])
+
+    class SomeComponent:
+        class Config:
+            foo = Option(parser=int)
+
+        def __init__(self, config):
+            self.config = config.with_options(self)
+
+    comp = SomeComponent(config)
+    assert comp.config("foo") == 1
+
+
+def test_component_get_namespace():
+    config = ConfigManager.from_dict(
+        {"FOO": "abc", "FOO_BAR": "abc", "FOO_BAR_BAZ": "abc"}
+    )
+    assert config.get_namespace() == []
+
+    class SomeComponent:
+        class Config:
+            foo = Option(parser=int)
+
+        def __init__(self, config):
+            self.config = config.with_options(self)
+
+        def my_namespace_is(self):
+            return self.config.get_namespace()
+
+    comp = SomeComponent(config)
+    assert comp.my_namespace_is() == []
+
+    comp = SomeComponent(config.with_namespace("foo"))
+    assert comp.my_namespace_is() == ["foo"]
+
+
+def test_component_alternate_keys():
+    config = ConfigManager.from_dict(
+        {"COMMON": "common_abc", "FOO": "abc", "FOO_BAR": "abc", "FOO_BAR_BAZ": "abc"}
+    )
+
+    class SomeComponent:
+        class Config:
+            bad_key = Option(alternate_keys=["root:common"])
+
+        def __init__(self, config):
+            self.config = config.with_options(self)
+
+    comp = SomeComponent(config)
+
+    # The key is invalid, so it tries the alternate keys
+    assert comp.config("bad_key") == "common_abc"
+
+
+def test_component_doc():
+    config = ConfigManager.from_dict({"FOO_BAR": "bat"})
+
+    class SomeComponent:
+        class Config:
+            foo_bar = Option(parser=int, doc="omg!")
+
+        def __init__(self, config):
+            self.config = config.with_options(self)
+
+    comp = SomeComponent(config)
+
+    try:
+        # This throws an exception becase "bat" is not an int
+        comp.config("foo_bar")
+    except Exception as exc:
+        # We're going to lazily assert that omg! is in exc msg because if it
+        # is, it came from the option and that's what we want to know.
+        assert "omg!" in str(exc)
+
+
+def test_component_raw_value():
+    config = ConfigManager.from_dict({"FOO_BAR": "1"})
+
+    class SomeComponent:
+        class Config:
+            foo_bar = Option(parser=int)
+
+        def __init__(self, config):
+            self.config = config.with_options(self)
+
+    comp = SomeComponent(config)
+
+    assert comp.config("foo_bar") == 1
+    assert comp.config("foo_bar", raw_value=True) == "1"
+
+    class SomeComponent:
+        class Config:
+            bar = Option(parser=int)
+
+        def __init__(self, config):
+            self.config = config.with_options(self)
+
+    comp = SomeComponent(config.with_namespace("foo"))
+
+    assert comp.config("bar") == 1
+    assert comp.config("bar", raw_value=True) == "1"
+
+
+class TestRuntimeConfig:
+    def test_bound_config(self):
+        config = ConfigManager.from_dict({"foo": 12345})
+
+        class ComponentA:
+            class Config:
+                foo = Option(parser=int)
+                bar = Option(parser=int, default="1")
+
+            def __init__(self, config):
+                self.config = config.with_options(self)
+
+        comp = ComponentA(config)
+        assert list(get_runtime_config(config, comp)) == [
+            ([], "foo", "12345", Option(parser=int)),
+            ([], "bar", "1", Option(parser=int, default="1")),
+        ]
+
+    def test_tree_with_specified_namespace(self):
+        config = ConfigManager.from_dict({})
+
+        class ComponentB:
+            class Config:
+                foo = Option(parser=int, default="2")
+                bar = Option(parser=int, default="1")
+
+            def __init__(self, config):
+                self.config = config.with_options(self)
+
+        class ComponentA:
+            class Config:
+                baz = Option(default="abc")
+
+            def __init__(self, config):
+                self.config = config.with_options(self)
+                self.biff = ComponentB(config.with_namespace("biff"))
+
+        comp = ComponentA(config)
+
+        assert list(get_runtime_config(config, comp)) == [
+            ([], "baz", "abc", Option(default="abc")),
+            (["biff"], "foo", "2", Option(parser=int, default="2")),
+            (["biff"], "bar", "1", Option(parser=int, default="1")),
+        ]
+
+    def test_tree_inferred_namespace(self):
+        """Test get_runtime_config can pull namespace from config."""
+        config = ConfigManager.from_dict({})
+
+        class ComponentB:
+            class Config:
+                foo = Option(parser=int, default="2")
+                bar = Option(parser=int, default="1")
+
+            def __init__(self, config):
+                self.config = config.with_options(self)
+
+        class ComponentA:
+            class Config:
+                baz = Option(default="abc")
+
+            def __init__(self, config):
+                self.config = config.with_options(self)
+                self.boff = ComponentB(config.with_namespace("boff"))
+
+        comp = ComponentA(config)
+
+        assert list(get_runtime_config(config, comp)) == [
+            ([], "baz", "abc", Option(default="abc")),
+            (["boff"], "foo", "2", Option(parser=int, default="2")),
+            (["boff"], "bar", "1", Option(parser=int, default="1")),
+        ]

@@ -1,19 +1,20 @@
 import logging
 
-from everett.component import ConfigOptions, RequiredConfigMixin
-from everett.manager import ConfigManager
+from everett.manager import ConfigManager, Option
+
+
+TEXT_TO_LOGGING_LEVEL = {
+    "CRITICAL": 50,
+    "ERROR": 40,
+    "WARNING": 30,
+    "INFO": 20,
+    "DEBUG": 10,
+}
 
 
 def parse_loglevel(value):
-    text_to_level = {
-        "CRITICAL": 50,
-        "ERROR": 40,
-        "WARNING": 30,
-        "INFO": 20,
-        "DEBUG": 10,
-    }
     try:
-        return text_to_level[value.upper()]
+        return TEXT_TO_LOGGING_LEVEL[value.upper()]
     except KeyError:
         raise ValueError(
             f'"{value}" is not a valid logging level. Try CRITICAL, ERROR, '
@@ -21,39 +22,27 @@ def parse_loglevel(value):
         )
 
 
-class AppConfig(RequiredConfigMixin):
-    required_config = ConfigOptions()
-    required_config.add_option(
-        "debug",
-        parser=bool,
-        default="false",
-        doc="Turns on debug mode for the application",
-    )
-    required_config.add_option(
-        "loglevel",
-        parser=parse_loglevel,
-        default="INFO",
-        doc=(
-            "Log level for the application; CRITICAL, ERROR, WARNING, INFO, "
-            "DEBUG"
-        ),
-    )
-
-    def __init__(self, config):
-        self.raw_config = config
-        self.config = config.with_options(self)
-
-    def __call__(self, *args, **kwargs):
-        return self.config(*args, **kwargs)
+class AppConfig:
+    class Config:
+        debug = Option(
+            parser=bool,
+            default="false",
+            doc="Turns on debug mode for the application",
+        )
+        loglevel = Option(
+            parser=parse_loglevel,
+            default="INFO",
+            doc=("Log level for the application; CRITICAL, ERROR, WARNING, INFO, " "DEBUG"),
+        )
 
 
 def init_app():
-    config = ConfigManager.from_dict({})
-    app_config = AppConfig(config)
+    manager = ConfigManager.from_dict({})
+    config = manager.with_options(AppConfig())
 
-    logging.basicConfig(level=app_config("loglevel"))
+    logging.basicConfig(level=config("loglevel"))
 
-    if app_config("debug"):
+    if config("debug"):
         logging.info("debug mode!")
 
 
