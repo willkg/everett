@@ -14,7 +14,7 @@ __email__ = "willkg@mozilla.com"
 # yyyymmdd
 __releasedate__ = ""
 # x.y.z or x.y.z.dev0
-__version__ = "1.0.4.dev0"
+__version__ = "2.0.0.dev0"
 
 
 # _NoValue instances are always false

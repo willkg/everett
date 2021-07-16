@@ -1,7 +1,7 @@
 History
 =======
 
-1.0.4 (In development)
+2.0.0 (In development)
 ----------------------
 
 Backwards incompatible changes:
