@@ -283,23 +283,58 @@ For example:
 
 That logs this::
 
-   ERROR:root:gah!
+   ERROR:root:logged exception gah!
    Traceback (most recent call last):
-     File "/home/willkg/mozilla/everett/everett/manager.py", line 908, in __call__
-       return parser(val)
-     File "/home/willkg/mozilla/everett/everett/manager.py", line 109, in parse_bool
-       raise ValueError('"%s" is not a valid bool value' % val)
-   ValueError: "monkey" is not a valid bool value
+     File "/home/willkg/mozilla/everett/src/everett/manager.py", line 1197, in __call__
+       parsed_val = parser(val)
+     File "/home/willkg/mozilla/everett/src/everett/manager.py", line 226, in parse_bool
+       raise ValueError(f"{val!r} is not a valid bool value")
+   ValueError: 'monkey' is not a valid bool value
 
    During handling of the above exception, another exception occurred:
 
    Traceback (most recent call last):
-     File "configuration_handling_exceptions.py", line 13, in <module>
-       some_val = config('debug_mode', parser=bool)
-     File "/home/willkg/mozilla/everett/everett/manager.py", line 936, in __call__
-       raise InvalidValueError(msg)
-   everett.InvalidValueError: ValueError: "monkey" is not a valid bool value
-   namespace=None key=debug_mode requires a value parseable by everett.manager.parse_bool
+     File "code/configuration_handling_exceptions.py", line 13, in <module>
+       some_val = config("debug_mode", parser=bool)
+     File "/home/willkg/mozilla/everett/src/everett/manager.py", line 1217, in __call__
+       raise InvalidValueError(msg, namespace, key, parser)
+   everett.InvalidValueError: ValueError: 'monkey' is not a valid bool value
+   DEBUG_MODE requires a value parseable by everett.manager.parse_bool
+   DEBUG_MODE docs: set debug mode
+
+
+
+If that output won't be helpful to your users, you can catch the
+:py:class:`everett.ConfigurationError` and log/print what will be helpful.
+
+Also, you can change the structure of the error message by passing in a ``msg_builder``
+argument to the :py:class:`everett.manager.ConfigManager`.
+
+For example, say your project is entirely done with INI configuration. Then you'd
+want to tailor the message accordingly.
+
+.. literalinclude:: code/configuration_msg_builder.py
+
+That logs this::
+
+   ERROR:root:logged exception gah!
+   Traceback (most recent call last):
+     File "/home/willkg/mozilla/everett/src/everett/manager.py", line 1197, in __call__
+       parsed_val = parser(val)
+     File "/home/willkg/mozilla/everett/src/everett/manager.py", line 226, in parse_bool
+       raise ValueError(f"{val!r} is not a valid bool value")
+   ValueError: 'lizard' is not a valid bool value
+
+   During handling of the above exception, another exception occurred:
+
+   Traceback (most recent call last):
+     File "code/configuration_msg_builder.py", line 24, in <module>
+       debug_mode = config(
+     File "/home/willkg/mozilla/everett/src/everett/manager.py", line 1217, in __call__
+       raise InvalidValueError(msg, namespace, key, parser)
+   everett.InvalidValueError: debug in section [main] requires a value parseable by everett.manager.parse_bool
+   debug in [main] docs: Set DEBUG=True to put the app in debug mode. Don't use this in production!
+   Project docs:
 
 
 Namespaces
