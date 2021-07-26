@@ -125,6 +125,11 @@ class ConfigIniEnv:
     """
 
     def __init__(self, possible_paths: Union[str, List[str]]) -> None:
+        """
+        :param possible_paths: either a single string with a file path (e.g.
+            ``"/etc/project.ini"`` or a list of strings with file paths
+
+        """
         self.cfg = {}
         self.path = None
         possible_paths = listify(possible_paths)

@@ -62,10 +62,43 @@ You set up a configuration manager like this::
 and use it to get configuration values like this::
 
     api_host = config("api_host")
-
-    max_bytes = config("max_bytes", default=1000, parser=int)
-
+    max_bytes = config("max_bytes", default="1000", parser=int)
     debug_mode = config("debug", default="False", parser=bool)
+
+
+You can create a basic configuration that points to your documentation
+like this::
+
+    config = ConfigManager.basic_config(
+        doc="Check https://example.com/configuration for docs."
+    )
+
+
+If the user sets ``DEBUG`` with a bad value, they get a helpful error message
+with the documentation for the configuration option and the ``ConfigManager``::
+
+    $ DEBUG=foo python myprogram.py
+    <traceback>
+    DEBUG requires a value parseable by bool
+    DEBUG docs: Set to True for debugmode; False for regular mode.
+    Project docs: Check https://example.com/configuration for docs.
+
+
+You can use ``config_override`` in your tests to test various configuration
+values::
+
+    from everett.manager import config_override
+
+    from myapp import debug_mode
+
+
+    def test_debug_on():
+        with config_override(DEBUG="on"):
+            assert debug_mode == True
+
+    def test_debug_off():
+        with config_override(DEBUG="off"):
+            assert debug_mode == False
 
 
 When you outgrow that or need different variations of it, you can switch to
@@ -92,6 +125,8 @@ environments::
 
 Then set up the ``ConfigManager``::
 
+    # myapp.py
+
     import os
     import sys
 
@@ -99,60 +134,61 @@ Then set up the ``ConfigManager``::
     from everett.manager import ConfigManager, ConfigOSEnv
 
 
-    def build_config_manager():
-        return ConfigManager(
-            # Specify one or more configuration environments in
-            # the order they should be checked
-            environments=[
-                # Look in OS process environment first
-                ConfigOSEnv(),
+    CONFIG = ConfigManager(
+        # Specify one or more configuration environments in
+        # the order they should be checked
+        environments=[
+            # Look in OS process environment first
+            ConfigOSEnv(),
 
-                # Look in INI files in order specified
-                ConfigIniEnv(
-                    possible_paths=[
-                        os.environ.get("MYAPP_INI"),
-                        "~/.myapp.ini",
-                        "/etc/myapp.ini"
-                    ]
-                ),
-            ],
+            # Look in INI files in order specified
+            ConfigIniEnv(
+                possible_paths=[
+                    os.environ.get("MYAPP_INI"),
+                    "~/.myapp.ini",
+                    "/etc/myapp.ini"
+                ]
+            ),
+        ],
 
-            # Provide users a link to documentation for when they hit
-            # configuration errors
-            doc="Check https://example.com/configuration for docs."
-        )
+        # Provide users a link to documentation for when they hit
+        # configuration errors
+        doc="Check https://example.com/configuration for docs."
+    )
 
 
 Then use it::
 
+    # myapp.py continued
+
     def is_debug(config):
         return config(
-            "debug", default="False", parser=bool,
+            "debug",
+            default="False",
+            parser=bool,
             doc="Set to True for debugmode; False for regular mode."
         )
 
-    config = build_config_manager()
-
-    if is_debug(config):
+    if is_debug(CONFIG):
         print('DEBUG MODE ON!')
 
 
 Let's write some tests that verify behavior based on the ``debug``
 configuration value::
 
-    from myapp import get_config, is_debug
+    from myapp import CONFIG, is_debug
 
     from everett.manager import config_override
 
 
     @config_override(DEBUG="true")
     def test_debug_true():
-        assert is_debug(get_config()) is True
+        assert is_debug(CONFIG) is True
 
 
     def test_debug_false():
         with config_override(DEBUG="false"):
-            assert is_debug(get_config()) is False
+            assert is_debug(CONFIG) is False
 
 
 If the user sets ``DEBUG`` with a bad value, they get a helpful error message
@@ -160,9 +196,9 @@ with the documentation for the configuration option and the ``ConfigManager``::
 
     $ DEBUG=foo python myprogram.py
     <traceback>
-    namespace=None key=debug requires a value parseable by bool
-    Set to True for debugmode; False for regular mode.
-    Check https://example.com/configuration for docs.
+    DEBUG requires a value parseable by bool
+    DEBUG docs: Set to True for debugmode; False for regular mode.
+    Project docs: Check https://example.com/configuration for docs.
 
 
 Configuration classes
@@ -173,6 +209,8 @@ configuration-related bits defined across your codebase, you can define it in
 a class. Let's rewrite the above example using a configuration class.
 
 First, create a configuration class::
+
+    # myapp.py
 
     import os
     import sys
@@ -191,7 +229,10 @@ First, create a configuration class::
     
 
 Then we set up a ``ConfigManager`` to look at the process environment
-for configuration::
+for configuration and bound to the configuration options specified in
+``AppConfig``::
+
+    # myapp.py continued
 
     def get_config():
         manager = ConfigManager(
@@ -212,6 +253,8 @@ for configuration::
 
 
 Then use it::
+
+    # myapp.py continued
 
     config = get_config()
 

@@ -32,7 +32,10 @@ class AppConfig:
         loglevel = Option(
             parser=parse_loglevel,
             default="INFO",
-            doc=("Log level for the application; CRITICAL, ERROR, WARNING, INFO, " "DEBUG"),
+            doc=(
+                "Log level for the application; CRITICAL, ERROR, WARNING, INFO, "
+                "DEBUG"
+            ),
         )
 
 

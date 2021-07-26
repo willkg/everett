@@ -20,12 +20,7 @@ class DatabaseWriter:
 
 
 # Define a shared configuration
-config = ConfigManager.from_dict(
-    {
-        "DB_USERNAME": "foo",
-        "DB_PASSWORD": "bar"
-    }
-)
+config = ConfigManager.from_dict({"DB_USERNAME": "foo", "DB_PASSWORD": "bar"})
 
 reader = DatabaseReader(config.with_namespace("reader"))
 assert reader.config("username") == "foo"

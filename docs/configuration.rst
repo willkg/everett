@@ -158,7 +158,7 @@ environment and should return ``NO_VALUE`` if and only if the key does not
 exist in that environment.
 
 For exceptions, it depends on what you want to have happen. It's ok to let
-exceptions go unhandled--Everett will wrap them in a ``ConfigurationError``.
+exceptions go unhandled--Everett will wrap them in a :py:class:`everett.ConfigurationError`.
 If your environment promises never to throw an exception, then you should
 handle them all and return ``NO_VALUE`` since with that promise all exceptions
 would indicate the key is not in the environment.
@@ -184,7 +184,7 @@ Some more examples:
 
     There is no default value provided so if "password" isn't provided in any of
     the configuration sources, then this will raise a
-    ``everett.ConfigurationError``.
+    :py:class:`everett.ConfigurationError`.
 
     This is what you want to do to require that a configuration value exist.
 
@@ -224,7 +224,7 @@ Some more examples:
 
     There's no default, so if there's no "username" in namespace "db"
     configuration variable set in the sources, this will raise a
-    ``everett.ConfigurationError``.
+    :py:class:`everett.ConfigurationError`.
 
     If you're looking up values in the process environment, then the full
     key would be ``DB_USERNAME``.
@@ -258,12 +258,16 @@ Some more examples:
 
 
 .. autoclass:: everett.ConfigurationError
+   :noindex:
 
 .. autoclass:: everett.InvalidValueError
+   :noindex:
 
 .. autoclass:: everett.ConfigurationMissingError
+   :noindex:
 
 .. autoclass:: everett.InvalidKeyError
+   :noindex:
 
 
 Handling exceptions when extracting values

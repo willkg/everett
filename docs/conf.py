@@ -126,6 +126,13 @@ pygments_style = "sphinx"
 # If true, `todo` and `todoList` produce output, else they produce nothing.
 todo_include_todos = False
 
+autodoc_typehints = "description"
+autoclass_content = "both"
+autodoc_default_options = {
+    "class-doc-from": "both",
+    "member-order": "bysource",
+    "inheireted-members": True,
+}
 
 # -- Options for HTML output ----------------------------------------------
 

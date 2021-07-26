@@ -30,12 +30,13 @@ EXTRAS_REQUIRE = {
         "black==20.8b1",
         "check-manifest==0.46",
         "flake8==3.9.2",
-        "mypy==0.902",
+        "mypy==0.910",
         "pytest==6.2.4",
-        "Sphinx==4.0.2",
-        "tox==3.23.1",
-        "twine==3.4.1",
-        "types-PyYAML==0.1.7",
+        "Sphinx==4.1.2",
+        "sphinx_rtd_theme==0.5.2",
+        "tox==3.24.0",
+        "twine==3.4.2",
+        "types-PyYAML==5.4.3",
     ],
 }
 

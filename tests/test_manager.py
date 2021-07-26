@@ -470,6 +470,12 @@ def test_basic_config(datadir):
     assert config("LOGLEVEL") == "walter"
 
 
+def test_basic_config_with_docs(datadir):
+    config = ConfigManager.basic_config(doc="foo")
+
+    assert config.doc == "foo"
+
+
 def test_config_manager_doc():
     config = ConfigManager(
         [ConfigDictEnv({"foo": "bar"})], doc="See http://example.com/configuration"
