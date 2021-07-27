@@ -3,6 +3,7 @@ include tox.ini
 include requirements-dev.txt
 include Makefile
 include LICENSE
+include docs/requirements.txt
 
 recursive-include docs *.rst
 recursive-include docs *.py

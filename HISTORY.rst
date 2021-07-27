@@ -1,8 +1,8 @@
 History
 =======
 
-2.0.0 (In development)
-----------------------
+2.0.0 (July 27th, 2021)
+-----------------------
 
 Backwards incompatible changes:
 

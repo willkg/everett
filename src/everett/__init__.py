@@ -12,12 +12,12 @@ __author__ = "Will Kahn-Greene"
 __email__ = "willkg@mozilla.com"
 
 # yyyymmdd
-__releasedate__ = ""
+__releasedate__ = "20210727"
 # x.y.z or x.y.z.dev0
-__version__ = "2.0.0.dev0"
+__version__ = "2.0.0"
 
 
-# _NoValue instances are always false
+# NoValue instances are always false
 class NoValue:
     def __nonzero__(self) -> bool:
         return False
