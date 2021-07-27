@@ -62,10 +62,43 @@ You set up a configuration manager like this::
 and use it to get configuration values like this::
 
     api_host = config("api_host")
-
-    max_bytes = config("max_bytes", default=1000, parser=int)
-
+    max_bytes = config("max_bytes", default="1000", parser=int)
     debug_mode = config("debug", default="False", parser=bool)
+
+
+You can create a basic configuration that points to your documentation
+like this::
+
+    config = ConfigManager.basic_config(
+        doc="Check https://example.com/configuration for docs."
+    )
+
+
+If the user sets ``DEBUG`` with a bad value, they get a helpful error message
+with the documentation for the configuration option and the ``ConfigManager``::
+
+    $ DEBUG=foo python myprogram.py
+    <traceback>
+    DEBUG requires a value parseable by bool
+    DEBUG docs: Set to True for debugmode; False for regular mode.
+    Project docs: Check https://example.com/configuration for docs.
+
+
+You can use ``config_override`` in your tests to test various configuration
+values::
+
+    from everett.manager import config_override
+
+    from myapp import debug_mode
+
+
+    def test_debug_on():
+        with config_override(DEBUG="on"):
+            assert debug_mode == True
+
+    def test_debug_off():
+        with config_override(DEBUG="off"):
+            assert debug_mode == False
 
 
 When you outgrow that or need different variations of it, you can switch to
@@ -79,6 +112,7 @@ You're writing an app and want to pull configuration (in order of prcedence):
 
 1. from the process environment
 2. from an INI file stored in a place specified by (in order of precedence):
+
    1. ``MYAPP_INI`` in the environment
    2. ``~/.myapp.ini``
    3. ``/etc/myapp.ini``
@@ -86,10 +120,12 @@ You're writing an app and want to pull configuration (in order of prcedence):
 First, you need need to install the additional requirements for INI file
 environments::
 
-    pip install everett[ini]
+    pip install 'everett[ini]'
 
 
 Then set up the ``ConfigManager``::
+
+    # myapp.py
 
     import os
     import sys
@@ -98,58 +134,61 @@ Then set up the ``ConfigManager``::
     from everett.manager import ConfigManager, ConfigOSEnv
 
 
-    def build_config_manager():
-        return ConfigManager(
-            # Specify one or more configuration environments in
-            # the order they should be checked
-            environments=[
-                # Look in OS process environment first
-                ConfigOSEnv(),
+    CONFIG = ConfigManager(
+        # Specify one or more configuration environments in
+        # the order they should be checked
+        environments=[
+            # Look in OS process environment first
+            ConfigOSEnv(),
 
-                # Look in INI files in order specified
-                ConfigIniEnv([
+            # Look in INI files in order specified
+            ConfigIniEnv(
+                possible_paths=[
                     os.environ.get("MYAPP_INI"),
                     "~/.myapp.ini",
                     "/etc/myapp.ini"
-                ]),
-            ],
+                ]
+            ),
+        ],
 
-            # Provide users a link to documentation for when they hit
-            # configuration errors
-            doc="Check https://example.com/configuration for docs."
-        )
+        # Provide users a link to documentation for when they hit
+        # configuration errors
+        doc="Check https://example.com/configuration for docs."
+    )
 
 
 Then use it::
 
+    # myapp.py continued
+
     def is_debug(config):
         return config(
-            "debug", default="False", parser=bool,
+            "debug",
+            default="False",
+            parser=bool,
             doc="Set to True for debugmode; False for regular mode."
         )
 
-    config = build_config_manager()
-
-    if is_debug(config):
+    if is_debug(CONFIG):
         print('DEBUG MODE ON!')
 
 
 Let's write some tests that verify behavior based on the ``debug``
 configuration value::
 
-    from myapp import get_config, is_debug
+    from myapp import CONFIG, is_debug
 
     from everett.manager import config_override
 
 
     @config_override(DEBUG="true")
     def test_debug_true():
-        assert is_debug(get_config()) is True
+        assert is_debug(CONFIG) is True
 
 
     def test_debug_false():
         with config_override(DEBUG="false"):
-            assert is_debug(get_config()) is False
+            assert is_debug(CONFIG) is False
 
 
 If the user sets ``DEBUG`` with a bad value, they get a helpful error message
@@ -157,9 +196,9 @@ with the documentation for the configuration option and the ``ConfigManager``::
 
     $ DEBUG=foo python myprogram.py
     <traceback>
-    namespace=None key=debug requires a value parseable by bool
-    Set to True for debugmode; False for regular mode.
-    Check https://example.com/configuration for docs.
+    DEBUG requires a value parseable by bool
+    DEBUG docs: Set to True for debugmode; False for regular mode.
+    Project docs: Check https://example.com/configuration for docs.
 
 
 Configuration classes
@@ -171,40 +210,35 @@ a class. Let's rewrite the above example using a configuration class.
 
 First, create a configuration class::
 
+    # myapp.py
+
     import os
     import sys
 
-    from everett.component import RequiredConfigMixin, ConfigOptions
     from everett.ext.inifile import ConfigIniEnv
-    from everett.manager import ConfigManager, ConfigOSEnv
+    from everett.manager import ConfigManager, ConfigOSEnv, Option
 
 
-    class AppConfig(RequiredConfigMixin):
-        required_config = ConfigOptions()
-        required_config.add_option(
-            "debug",
-            parser=bool,
-            default="false",
-            doc="Switch debug mode on and off.")
-        )
+    class AppConfig:
+        class Config:
+            debug = Option(
+                parser=bool,
+                default="false",
+                doc="Switch debug mode on and off.")
+            )
     
 
-Then we set up our ``ConfigManager``::
+Then we set up a ``ConfigManager`` to look at the process environment
+for configuration and bound to the configuration options specified in
+``AppConfig``::
+
+    # myapp.py continued
 
     def get_config():
         manager = ConfigManager(
-            # Specify one or more configuration environments in
-            # the order they should be checked
+            # Specify environments to check for configuration
             environments=[
-                # Look in OS process environment first
                 ConfigOSEnv(),
-
-                # Look in INI files in order specified
-                ConfigIniEnv([
-                    os.environ.get("MYAPP_INI"),
-                    "~/.myapp.ini",
-                    "/etc/myapp.ini"
-                ]),
             ],
 
             # Provide users a link to documentation for when they hit
@@ -219,6 +253,8 @@ Then we set up our ``ConfigManager``::
 
 
 Then use it::
+
+    # myapp.py continued
 
     config = get_config()
 
@@ -249,25 +285,14 @@ Everett supports components that require configuration. Say your app needs to
 connect to RabbitMQ. With Everett, you can define the component's configuration
 needs in the component class::
 
-    from everett.component import RequiredConfigMixin, ConfigOptions
+    from everett.manager import Option
 
 
-    class RabbitMQComponent(RequiredConfigMixin):
-        required_config = ConfigOptions()
-        required_config.add_option(
-            "host",
-            doc="RabbitMQ host to connect to"
-        )
-        required_config.add_option(
-            "port",
-            default="5672",
-            doc="Port to use",
-            parser=int
-        )
-        required_config.add_option(
-            "queue_name",
-            doc="Queue to insert things into"
-        )
+    class RabbitMQComponent:
+        class Config:
+            host = Option(doc="RabbitMQ host to connect to")
+            port = Option(default="5672", doc="Port to use", parser=int)
+            queue_name = Option(doc="Queue to insert things into")
 
         def __init__(self, config):
             # Bind the configuration to just the configuration this
@@ -280,8 +305,8 @@ needs in the component class::
             self.queue_name = self.config("queue_name")
 
 
-Then instantiate a ``RabbitMQComponent`` that looks for configuration keys
-in the ``rmq`` namespace::
+Then you could instantiate a ``RabbitMQComponent`` that looks for configuration
+keys in the ``rmq`` namespace::
 
     queue = RabbitMQComponent(config.with_namespace("rmq"))
 
@@ -338,12 +363,12 @@ Run::
 If you want to use the ``ConfigIniEnv``, you need to install its requirements
 as well::
 
-    $ pip install everett[ini]
+    $ pip install 'everett[ini]'
 
 If you want to use the ``ConfigYamlEnv``, you need to install its requirements
 as well::
 
-    $ pip install everett[yaml]
+    $ pip install 'everett[yaml]'
 
 
 Install for hacking
@@ -356,7 +381,6 @@ Run::
 
     # Create a virtualenvironment
     $ mkvirtualenv --python /usr/bin/python3 everett
-    ...
 
     # Install Everett and dev requirements
     $ pip install -e '.[dev,ini,yaml]'

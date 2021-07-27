@@ -17,12 +17,22 @@ import os
 import re
 import sys
 from types import TracebackType
-from typing import Any, Callable, Dict, Iterable, List, Mapping, Optional, Type, Union
+from typing import (
+    Any,
+    Callable,
+    Dict,
+    Iterable,
+    List,
+    Mapping,
+    Optional,
+    Tuple,
+    Type,
+    Union,
+)
 
 from everett import (
     ConfigurationError,
     ConfigurationMissingError,
-    EverettComponent,
     InvalidValueError,
     InvalidKeyError,
     NO_VALUE,
@@ -37,7 +47,7 @@ logger = logging.getLogger("everett")
 
 
 def qualname(thing: Any) -> str:
-    """Return the dot name for a given thing.
+    """Return the Python dotted name for a given thing.
 
     >>> import everett.manager
     >>> qualname(str)
@@ -46,6 +56,10 @@ def qualname(thing: Any) -> str:
     'everett.manager.parse_class'
     >>> qualname(everett.manager)
     'everett.manager'
+
+    :param thing: the thing to get the qualname from
+
+    :returns: the Python dotted name
 
     """
     parts = []
@@ -67,15 +81,167 @@ def qualname(thing: Any) -> str:
     return repr(thing)
 
 
+def build_msg(
+    namespace: Optional[List[str]],
+    key: str,
+    parser: Callable,
+    msg: str = "",
+    option_doc: str = "",
+    config_doc: str = "",
+) -> str:
+    """Builds a message for a configuration error exception
+
+    :param namespace: list of strings or None that represent the configuration variable namespace
+    :param key: the configuration variable key
+    :param parser: the parser that will be used to parse the value for this configuration variable
+    :param msg: the error message
+    :param option_doc: the configuration option documentation
+    :param config_doc: the ConfigManager documentation
+
+    :returns: the error message string
+
+    """
+    full_key = generate_uppercase_key(key, namespace)
+    text = [
+        msg,
+        f"{full_key} requires a value parseable by {qualname(parser)}",
+    ]
+    if option_doc:
+        text.append(f"{full_key} docs: {option_doc}")
+    if config_doc:
+        text.append(f"Project docs: {config_doc}")
+
+    return "\n".join([line for line in text if line])
+
+
+# FIXME(willkg): we can rewrite this as a dataclass as soon as we can drop
+# Python 3.6 support
+class Option:
+    """Settings for a single configuration option."""
+
+    def __init__(
+        self,
+        default: Union[str, NoValue] = NO_VALUE,
+        alternate_keys: Optional[List[str]] = None,
+        doc: str = "",
+        parser: Callable = str,
+        meta: Any = None,
+    ):
+        """
+        :param default: the default value (if any); this must be a string that is
+            parseable by the specified parser; if no default is provided, this
+            will raise an error or return ``everett.NO_VALUE`` depending on
+            the value of ``raise_error``
+
+        :param alternate_keys: the list of alternate keys to look up;
+            supports a ``root:`` key prefix which will cause this to look at
+            the configuration root rather than the current namespace
+
+            .. versionadded:: 0.3
+
+        :param doc: documentation for this config option
+
+            .. versionadded:: 0.6
+
+        :param parser: the parser for converting this value to a Python object
+
+        :param meta: any meta information that's tied to this option; useful
+            for noting which options are related in some way or which are secrets
+            that shouldn't be logged
+
+        """
+        self.default = default
+        self.alternate_keys = alternate_keys
+        self.doc = doc
+        self.parser = parser
+        self.meta = meta or {}
+
+    def __eq__(self, obj: Any) -> bool:
+        return (
+            isinstance(obj, Option)
+            and obj.default == self.default
+            and obj.alternate_keys == self.alternate_keys
+            and obj.doc == self.doc
+            and obj.parser == self.parser
+            and obj.meta == self.meta
+        )
+
+
+def get_config_for_class(cls: Type) -> Dict[str, Tuple[Option, Type]]:
+    """Roll up configuration options for this class and parent classes.
+
+    This handles subclasses overriding configuration options in parent classes.
+
+    :param cls: the component class to return configuration options for
+
+    :returns: final dict of configuration options for this class in
+        ``key -> (option, cls)`` form
+
+    """
+    options = {}
+    for cls in reversed(cls.__mro__):
+        if not hasattr(cls, "Config"):
+            continue
+
+        cls_config = cls.Config
+        for attr in cls_config.__dict__.keys():
+            if attr.startswith("__"):
+                continue
+
+            val = getattr(cls_config, attr)
+            if isinstance(val, Option):
+                options[attr] = (val, cls)
+    return options
+
+
+def traverse_tree(
+    instance: Any, namespace: Optional[List[str]] = None
+) -> Iterable[Tuple[List[str], str, Option, Any]]:
+    """Traverses a tree of objects and computes the configuration for it
+
+    Note: This expects the tree not to have any loops or repeated nodes.
+
+    :param instance: the component to traverse
+    :param namespace: the list of strings forming the namespace or None
+
+    :returns: list of ``(namespace, key, value, option, component)``
+
+    """
+    namespace = namespace or []
+
+    # Check to see if this class has options; if it does, capture those and
+    # traverse the tree
+    this_options = get_config_for_class(instance.__class__)
+    if not this_options:
+        return []
+
+    options = [
+        (namespace, key, option, instance)
+        for key, (option, cls) in this_options.items()
+    ]
+
+    # Now go through attributes for other options classes
+    for attr in dir(instance):
+        if attr.startswith("__"):
+            continue
+        val = getattr(instance, attr)
+        if isinstance(val, Option):
+            continue
+
+        options.extend(traverse_tree(val, namespace + [attr]))
+
+    return options
+
+
 def parse_bool(val: str) -> bool:
     """Parse a bool value.
 
     Handles a series of values, but you should probably standardize on
     "true" and "false".
 
-    >>> parse_bool('y')
+    >>> parse_bool("y")
     True
-    >>> parse_bool('FALSE')
+    >>> parse_bool("FALSE")
     False
 
     """
@@ -88,7 +254,7 @@ def parse_bool(val: str) -> bool:
     if val in false_vals:
         return False
 
-    raise ValueError('"%s" is not a valid bool value' % val)
+    raise ValueError(f"{val!r} is not a valid bool value")
 
 
 def parse_env_file(envfile: Iterable[str]) -> Dict:
@@ -107,15 +273,13 @@ def parse_env_file(envfile: Iterable[str]) -> Dict:
             continue
         if "=" not in line:
             raise ConfigurationError(
-                "Env file line missing = operator (line %s)" % (line_no + 1)
+                f"Env file line missing = operator (line {line_no + 1})"
             )
         k, v = line.split("=", 1)
         k = k.strip()
         if not ENV_KEY_RE.match(k):
             raise ConfigurationError(
-                'Invalid variable name "{}" in env file (line {})'.format(
-                    k, (line_no + 1)
-                )
+                f"Invalid variable name {k!r} in env file (line {line_no + 1})"
             )
         v = v.strip().strip("'\"")
         data[k] = v
@@ -126,18 +290,19 @@ def parse_env_file(envfile: Iterable[str]) -> Dict:
 def parse_class(val: str) -> Any:
     """Parse a string, imports the module and returns the class.
 
-    >>> parse_class("everett.component.Option")
-    <class 'everett.component.Option'>
+    >>> parse_class("everett.manager.Option")
+    <class 'everett.manager.Option'>
 
     """
+    if "." not in val:
+        raise ValueError(f"{val!r} is not a valid Python dotted-path")
+
     module_name, class_name = val.rsplit(".", 1)
     module = importlib.import_module(module_name)
     try:
         return getattr(module, class_name)
     except AttributeError:
-        raise ValueError(
-            '"{}" is not a valid member of {}'.format(class_name, qualname(module))
-        )
+        raise ValueError(f"{class_name!r} is not a valid member of {qualname(module)}")
 
 
 def get_parser(parser: Callable) -> Callable:
@@ -155,7 +320,7 @@ def listify(thing: Any) -> List[Any]:
     If thing is a string, then returns a list of thing. Otherwise
     returns thing.
 
-    :arg thing: string or list of things
+    :param thing: string or list of things
 
     :returns: list
 
@@ -168,7 +333,16 @@ def listify(thing: Any) -> List[Any]:
 
 
 def generate_uppercase_key(key: str, namespace: Optional[List[str]] = None) -> str:
-    """Given a key and a namespace, generates a final uppercase key."""
+    """Given a key and a namespace, generates a final uppercase key.
+
+    >>> generate_uppercase_key("foo")
+    'FOO'
+    >>> generate_uppercase_key("foo", ["namespace"])
+    'NAMESPACE_FOO'
+    >>> generate_uppercase_key("foo", ["namespace", "subnamespace"])
+    'NAMESPACE_SUBNAMESPACE_FOO'
+
+    """
     if namespace:
         namespace = [part for part in listify(namespace) if part]
         key = "_".join(namespace + [key])
@@ -227,7 +401,7 @@ class ListOf:
             return []
 
     def __repr__(self) -> str:
-        return "<ListOf(%s)>" % qualname(self.sub_parser)
+        return f"<ListOf({qualname(self.sub_parser)})>"
 
 
 class ConfigOverrideEnv:
@@ -243,7 +417,7 @@ class ConfigOverrideEnv:
         if not _CONFIG_OVERRIDE:
             return NO_VALUE
         full_key = generate_uppercase_key(key, namespace)
-        logger.debug("Searching %s for %s", self, full_key)
+        logger.debug(f"Searching {self!r} for {full_key}")
         return get_key_from_envs(reversed(_CONFIG_OVERRIDE), full_key)
 
     def __repr__(self) -> str:
@@ -268,7 +442,7 @@ class ConfigObjEnv:
 
         parser = argparse.ArgumentParser()
         parser.add_argument(
-            '--debug', help='to debug or not to debug'
+            "--debug", help="to debug or not to debug"
         )
         parsed_vals = parser.parse_known_args()[0]
 
@@ -276,7 +450,7 @@ class ConfigObjEnv:
             ConfigObjEnv(parsed_vals)
         ])
 
-        print config('debug', parser=bool)
+        print config("debug", parser=bool)
 
 
     Keys are not case-sensitive--everything is converted to lowercase before
@@ -301,7 +475,7 @@ class ConfigObjEnv:
         full_key = generate_uppercase_key(key, namespace)
         full_key = full_key.lower()
 
-        logger.debug("Searching %s for %s", self, full_key)
+        logger.debug(f"Searching {self!r} for {full_key}")
 
         # Build a map of lowercase -> actual key
         obj_keys = {
@@ -342,8 +516,8 @@ class ConfigDictEnv:
 
         config = ConfigManager([
             ConfigDictEnv({
-                'FOO_BAR': 'someval',
-                'BAT': '1',
+                "FOO_BAR": "someval",
+                "BAT": "1",
             })
         ])
 
@@ -353,14 +527,14 @@ class ConfigDictEnv:
 
         config = ConfigManager([
             ConfigDictEnv({
-                'foo_bar': 'someval',
-                'bat': '1',
+                "foo_bar": "someval",
+                "bat": "1",
             })
         ])
 
-        print config('foo_bar')
-        print config('FOO_BAR')
-        print config.with_namespace('foo')('bar')
+        print config("foo_bar")
+        print config("FOO_BAR")
+        print config.with_namespace("foo")("bar")
 
 
     Also, ``ConfigManager`` has a convenience classmethod for creating a
@@ -369,7 +543,7 @@ class ConfigDictEnv:
         from everett.manager import ConfigManager
 
         config = ConfigManager.from_dict({
-            'FOO_BAR': 'bat'
+            "FOO_BAR": "bat"
         })
 
 
@@ -386,11 +560,11 @@ class ConfigDictEnv:
     ) -> Union[str, NoValue]:
         """Retrieve value for key."""
         full_key = generate_uppercase_key(key, namespace)
-        logger.debug("Searching %s for %s", self, full_key)
+        logger.debug(f"Searching {self!r} for {full_key}")
         return get_key_from_envs(self.cfg, full_key)
 
     def __repr__(self) -> str:
-        return "<ConfigDictEnv: %r>" % self.cfg
+        return f"<ConfigDictEnv: {self.cfg!r}>"
 
 
 class ConfigEnvFileEnv:
@@ -464,11 +638,11 @@ class ConfigEnvFileEnv:
     ) -> Union[str, NoValue]:
         """Retrieve value for key."""
         full_key = generate_uppercase_key(key, namespace)
-        logger.debug("Searching %s for %s", self, full_key)
+        logger.debug(f"Searching {self!r} for {full_key}")
         return get_key_from_envs(self.data, full_key)
 
     def __repr__(self) -> str:
-        return "<ConfigEnvFileEnv: %s>" % self.path
+        return f"<ConfigEnvFileEnv: {self.path!r}>"
 
 
 class ConfigOSEnv:
@@ -519,7 +693,7 @@ class ConfigOSEnv:
     ) -> Union[str, NoValue]:
         """Retrieve value for key."""
         full_key = generate_uppercase_key(key, namespace)
-        logger.debug("Searching %s for %s", self, full_key)
+        logger.debug(f"Searching {self!r} for {full_key}")
         return get_key_from_envs(os.environ, full_key)
 
     def __repr__(self) -> str:
@@ -548,13 +722,18 @@ class ConfigManagerBase:
         """
         return []
 
-    def with_options(self, component: EverettComponent) -> "ConfigManagerBase":
+    def with_options(self, component: Any) -> "ConfigManagerBase":
         """Apply options component options to this configuration."""
-        required_config = getattr(component, "get_required_config", None)
-        if not required_config:
+        # If this is an instance, get the class
+        if not inspect.isclass(component):
+            component = component.__class__
+
+        options = get_config_for_class(component)
+        # FIXME(willkg): if the component has no options, then this is likely a
+        # programming bug and we should raise an error here
+        if not options:
             return self
 
-        options = required_config()
         component_name = _get_component_name(component)
         return BoundConfig(self._get_base_config(), component_name, options)
 
@@ -577,6 +756,104 @@ class ConfigManagerBase:
 
     def __repr__(self) -> str:
         return "<ConfigManagerBase>"
+
+
+def get_runtime_config(
+    config: ConfigManagerBase,
+    component: Any,
+    traverse: Callable = traverse_tree,
+) -> List[Tuple[List[str], str, Any, Option]]:
+    """Returns configuration specification and values for a component tree
+
+    For example, if you had a tree of components instantiated, you could
+    traverse the tree and log the configuration::
+
+        from everett.manager import (
+            ConfigManager,
+            generate_uppercase_key,
+            get_runtime_config,
+            Option,
+            parse_class,
+        )
+
+        class App:
+            class Config:
+                debug = Option(default="False", parser=bool)
+                reader = Option(parser=parse_class)
+                writer = Option(parser=parse_class)
+
+            def __init__(self, config):
+                self.config = config.with_options(self)
+
+                # App has a reader and a writer each of which has configuration
+                # options
+                self.reader = self.config("reader")(config.with_namespace("reader"))
+                self.writer = self.config("writer")(config.with_namespace("writer"))
+
+        class Reader:
+            class Config:
+                input_file = Option()
+
+            def __init__(self, config):
+                self.config = config.with_options(self)
+
+        class Writer:
+            class Config:
+                output_file = Option()
+
+            def __init__(self, config):
+                self.config = config.with_options(self)
+
+        cm = ConfigManager.from_dict(
+            {
+                # This specifies which reader component to use. Because we
+                # specified this one, we need to define a READER_INPUT_FILE
+                # value.
+                "READER": "__main__.Reader",
+                "READER_INPUT_FILE": "input.txt",
+
+                # Same thing for the writer component.
+                "WRITER": "__main__.Writer",
+                "WRITER_OUTPUT_FILE": "output.txt",
+            }
+        )
+
+        my_app = App(cm)
+
+        # This traverses the component tree starting with my_app and then
+        # traversing .reader and .writer attributes.
+        for namespace, key, value, option in get_runtime_config(cm, my_app):
+            full_key = generate_uppercase_key(key, namespace)
+            print(f"{full_key.upper()}={value or ''}")
+
+        # This should print out:
+        # DEBUG=False
+        # READER=__main__.Reader
+        # READER_INPUT_FILE=input.txt
+        # WRITER=__main__.Writer
+        # WRITER_OUTPUT_FILE=output.txt
+
+    :param config: a configuration manager instance
+    :param component: a component or tree of components
+    :param traverse: the function for traversing the component tree; see
+        :py:func:`everett.manager.traverse_tree` for signature
+
+    :returns: a list of (namespace, key, value, option) tuples
+
+    """
+    runtime_config = []
+    for namespace, key, option, obj in traverse(component):
+        runtime_config.append(
+            (
+                namespace,
+                key,
+                config.with_options(obj)(
+                    key, namespace=namespace, raise_error=False, raw_value=True
+                ),
+                option,
+            )
+        )
+    return runtime_config
 
 
 class BoundConfig(ConfigManagerBase):
@@ -622,31 +899,31 @@ class BoundConfig(ConfigManagerBase):
     ) -> Any:
         """Return a config value bound to a component's options.
 
-        :arg key: the key to look up
+        :param key: the key to look up
 
-        :arg namespace: the namespace for the key--different environments
+        :param namespace: the namespace for the key--different environments
             use this differently
 
-        :arg default: IGNORED
+        :param default: IGNORED
 
-        :arg alternate_keys: IGNORED
+        :param alternate_keys: IGNORED
 
-        :arg doc: IGNORED
+        :param doc: IGNORED
 
-        :arg parser: IGNORED
+        :param parser: IGNORED
 
-        :arg raise_error: True if you want a lack of value to raise a
+        :param raise_error: True if you want a lack of value to raise a
             ``ConfigurationError``
 
-        :arg raw_value: False if you wanted the parsed value, True if
+        :param raw_value: False if you wanted the parsed value, True if
             you want the raw value.
 
         """
         try:
-            option = self.options[key]
+            option, cls = self.options[key]
         except KeyError:
             if raise_error:
-                raise InvalidKeyError(f"{key} is not a valid key for this component")
+                raise InvalidKeyError(f"{key!r} is not a valid key for this component")
             return None
 
         return self.config(
@@ -661,10 +938,7 @@ class BoundConfig(ConfigManagerBase):
         )
 
     def __repr__(self) -> str:
-        return "<BoundConfig({}): namespace:{}>".format(
-            self.component_name,
-            self.get_namespace(),
-        )
+        return f"<BoundConfig({self.component_name}): namespace:{self.get_namespace()}>"
 
 
 class NamespacedConfig(ConfigManagerBase):
@@ -700,30 +974,30 @@ class NamespacedConfig(ConfigManagerBase):
     ) -> Any:
         """Return a config value bound to a component's options.
 
-        :arg key: the key to look up
+        :param key: the key to look up
 
-        :arg namespace: the namespace for the key--different environments
+        :param namespace: the namespace for the key--different environments
             use this differently
 
-        :arg default: the default value (if any); this must be a string that is
+        :param default: the default value (if any); this must be a string that is
             parseable by the specified parser
 
-        :arg alternate_keys: the list of alternate keys to look up;
+        :param alternate_keys: the list of alternate keys to look up;
             supports a ``root:`` key prefix which will cause this to look at
             the configuration root rather than the current namespace
 
             .. versionadded:: 0.3
 
-        :arg doc: documentation for this config option
+        :param doc: documentation for this config option
 
             .. versionadded:: 0.6
 
-        :arg parser: the parser for converting this value to a Python object
+        :param parser: the parser for converting this value to a Python object
 
-        :arg raise_error: True if you want a lack of value to raise a
+        :param raise_error: True if you want a lack of value to raise a
             ``ConfigurationError``
 
-        :arg raw_value: False if you wanted the parsed value, True if
+        :param raw_value: False if you wanted the parsed value, True if
             you want the raw value.
 
         """
@@ -742,25 +1016,59 @@ class NamespacedConfig(ConfigManagerBase):
         )
 
     def __repr__(self) -> str:
-        return "<NamespacedConfig: namespace:%s>" % self.get_namespace()
+        return f"<NamespacedConfig: namespace:{self.get_namespace()}>"
 
 
 class ConfigManager(ConfigManagerBase):
     """Manage multiple configuration environment layers."""
 
     def __init__(
-        self, environments: List[Any], doc: str = "", with_override: bool = True
+        self,
+        environments: List[Any],
+        doc: str = "",
+        msg_builder: Callable = build_msg,
+        with_override: bool = True,
     ):
         """Instantiate a ConfigManager.
 
-        :arg environents: list of configuration sources to look through in
+        :param environments: list of configuration sources to look through in
             the order they should be looked through
-        :arg str doc: help text printed to users when they encounter configuration
+
+        :param doc: help text printed to users when they encounter configuration
             errors
 
             .. versionadded:: 0.6
+        :arg msg_builder: function that takes arguments and builds an exception
+            message intended to be printed or conveyed to the user
 
-        :arg with_override: whether or not to insert the special override
+            For example::
+
+                def build_msg(namespace, key, parser, msg="", option_doc="", config_doc=""):
+                    full_key = namespace or []
+                    full_key = "_".join(full_key + [key]).upper()
+
+                    return (
+                        f"{full_key} requires a value parseable by {qualname(parser)}\n"
+                        + option_doc + "\n"
+                        + config_doc + "\n"
+                    )
+
+        :param msg_builder: function that takes arguments and builds an exception
+            message intended to be printed or conveyed to the user
+
+            For example::
+
+                def build_msg(namespace, key, parser, msg="", option_doc="", config_doc=""):
+                    full_key = namespace or []
+                    full_key = "_".join(full_key + [key]).upper()
+
+                    return (
+                        f"{full_key} requires a value parseable by {qualname(parser)}\\n"
+                        + option_doc + "\\n"
+                        + config_doc + "\\n"
+                    )
+
+        :param with_override: whether or not to insert the special override
             environment used for testing as the first environment in the list
             of sources
 
@@ -770,9 +1078,10 @@ class ConfigManager(ConfigManagerBase):
 
         self.envs = environments
         self.doc = doc
+        self.msg_builder = msg_builder
 
     @classmethod
-    def basic_config(cls, env_file: str = ".env") -> "ConfigManager":
+    def basic_config(cls, env_file: str = ".env", doc: str = "") -> "ConfigManager":
         """Return a basic ConfigManager.
 
         This sets up a ConfigManager that will look for configuration in
@@ -800,12 +1109,14 @@ class ConfigManager(ConfigManagerBase):
             )
 
 
-        :arg env_file: the name of the env file to use
+        :param env_file: the name of the env file to use
+        :param doc: help text printed to users when they encounter configuration
+            errors
 
         :returns: a :py:class:`everett.manager.ConfigManager`
 
         """
-        return cls(environments=[ConfigOSEnv(), ConfigEnvFileEnv([env_file])])
+        return cls(environments=[ConfigOSEnv(), ConfigEnvFileEnv([env_file])], doc=doc)
 
     @classmethod
     def from_dict(cls, dict_config: Dict) -> "ConfigManager":
@@ -818,7 +1129,7 @@ class ConfigManager(ConfigManagerBase):
 
         This is handy for writing tests for the app you're using Everett in.
 
-        :arg dict_config: Python dict holding the configuration for this
+        :param dict_config: Python dict holding the configuration for this
             manager
 
         :returns: ConfigManager with specified configuration
@@ -841,32 +1152,32 @@ class ConfigManager(ConfigManagerBase):
     ) -> Any:
         """Return a parsed value from the environment.
 
-        :arg key: the key to look up
+        :param key: the key to look up
 
-        :arg namespace: the namespace for the key--different environments
+        :param namespace: the namespace for the key--different environments
             use this differently
 
-        :arg default: the default value (if any); this must be a string that is
+        :param default: the default value (if any); this must be a string that is
             parseable by the specified parser; if no default is provided, this
             will raise an error or return ``everett.NO_VALUE`` depending on
             the value of ``raise_error``
 
-        :arg alternate_keys: the list of alternate keys to look up;
+        :param alternate_keys: the list of alternate keys to look up;
             supports a ``root:`` key prefix which will cause this to look at
             the configuration root rather than the current namespace
 
             .. versionadded:: 0.3
 
-        :arg doc: documentation for this config option
+        :param doc: documentation for this config option
 
             .. versionadded:: 0.6
 
-        :arg parser: the parser for converting this value to a Python object
+        :param parser: the parser for converting this value to a Python object
 
-        :arg raise_error: True if you want a lack of value to raise a
+        :param raise_error: True if you want a lack of value to raise a
             ``everett.ConfigurationError``
 
-        :arg raw_value: True if you want the raw unparsed value, False otherwise
+        :param raw_value: True if you want the raw unparsed value, False otherwise
 
         :raises everett.ConfigurationMissingError: if the required bit of configuration
             is missing from all the environments
@@ -874,33 +1185,28 @@ class ConfigManager(ConfigManagerBase):
         :raises everett.InvalidKeyError: if the configuration key doesn't exist for
             that component
 
-        :raises everet.InvalidValueError: (Python 3-only) if the configuration value
-            is invalid in some way (not an integer, not a bool, etc)
-
-        :raises Exception subclass: (Python 2-only) parser code can raise
-            anything and since this is Python 2, we can't do much about it
-            without stomping on the traceback so we change the message and
-            raise the same exception
+        :raises everett.InvalidValueError: if the configuration value is
+            invalid in some way (not an integer, not a bool, etc)
 
         Examples::
 
             config = ConfigManager([])
 
             # Use the special bool parser
-            DEBUG = config('DEBUG', default='false', parser=bool)
-            DEBUG = config('DEBUG', default='True', parser=bool)
-            DEBUG = config('DEBUG', default='true', parser=bool)
-            DEBUG = config('DEBUG', default='yes', parser=bool)
-            DEBUG = config('DEBUG', default='y', parser=bool)
+            DEBUG = config("debug", default="false", parser=bool)
+            DEBUG = config("debug", default="True", parser=bool)
+            DEBUG = config("debug", default="true", parser=bool)
+            DEBUG = config("debug", default="yes", parser=bool)
+            DEBUG = config("debug", default="y", parser=bool)
 
-            # Use the list of parser
+            # Use the ListOf parser
             from everett.manager import ListOf
-            ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost',
+            ALLOWED_HOSTS = config("allowed_hosts", default="localhost",
                                    parser=ListOf(str))
 
             # Use alternate_keys for backwards compatibility with an
-            # older version of this software
-            PASSWORD = config('PASSWORD', alternate_keys=['SECRET'])
+            # older version of your software
+            PASSWORD = config("password", alternate_keys=["SECRET"])
 
 
         The default value should **always** be a string that is parseable by the
@@ -923,9 +1229,6 @@ class ConfigManager(ConfigManagerBase):
         else:
             parser = get_parser(parser)
 
-        def build_msg(*pargs: str) -> str:
-            return "\n".join([item for item in pargs if item])
-
         # Go through all possible keys
         all_keys = [key]
         if alternate_keys:
@@ -939,9 +1242,7 @@ class ConfigManager(ConfigManagerBase):
             else:
                 use_namespace = namespace
 
-            logger.debug(
-                "Looking up key: %s, namespace: %s", possible_key, use_namespace
-            )
+            logger.debug(f"Looking up key: {possible_key}, namespace: {use_namespace}")
 
             # Go through environments in reverse order
             for env in self.envs:
@@ -950,7 +1251,7 @@ class ConfigManager(ConfigManagerBase):
                 if val is not NO_VALUE:
                     try:
                         parsed_val = parser(val)
-                        logger.debug("Returning raw: %r, parsed: %r", val, parsed_val)
+                        logger.debug(f"Returning raw: {val!r}, parsed: {parsed_val!r}")
                         return parsed_val
                     except ConfigurationError:
                         # Re-raise ConfigurationError and friends since that's
@@ -960,17 +1261,13 @@ class ConfigManager(ConfigManagerBase):
                         exc_type, exc_value, exc_traceback = sys.exc_info()
                         exc_type_name = exc_type.__name__ if exc_type else "None"
 
-                        msg = build_msg(
-                            "%(class)s: %(msg)s"
-                            % {"class": exc_type_name, "msg": str(exc_value)},
-                            "namespace=%(namespace)s key=%(key)s requires a value parseable by %(parser)s"
-                            % {  # noqa
-                                "namespace": use_namespace,
-                                "key": key,
-                                "parser": qualname(parser),
-                            },
-                            doc,
-                            self.doc,
+                        msg = self.msg_builder(
+                            namespace=use_namespace,
+                            key=key,
+                            parser=parser,
+                            msg=f"{exc_type_name}: {exc_value}",
+                            option_doc=doc,
+                            config_doc=self.doc,
                         )
 
                         raise InvalidValueError(msg, namespace, key, parser)
@@ -980,7 +1277,7 @@ class ConfigManager(ConfigManagerBase):
             try:
                 parsed_val = parser(default)
                 logger.debug(
-                    "Returning default raw: %r, parsed: %r", default, parsed_val
+                    f"Returning default raw: {default!r}, parsed: {parsed_val!r}"
                 )
                 return parsed_val
             except ConfigurationError:
@@ -993,28 +1290,25 @@ class ConfigManager(ConfigManagerBase):
                 exc_type, exc_value, exc_traceback = sys.exc_info()
                 exc_type_name = exc_type.__name__ if exc_type else "None"
 
-                msg = build_msg(
-                    "%(class)s: %(msg)s"
-                    % {"class": exc_type_name, "msg": str(exc_value)},
-                    "namespace=%(namespace)s key=%(key)s requires a default value parseable by %(parser)s"
-                    % {  # noqa
-                        "namespace": namespace,
-                        "key": key,
-                        "parser": qualname(parser),
-                    },
-                    doc,
-                    self.doc,
+                msg = self.msg_builder(
+                    namespace=use_namespace,
+                    key=key,
+                    parser=parser,
+                    msg=f"{exc_type_name}: {exc_value} (default value)",
+                    option_doc=doc,
+                    config_doc=self.doc,
                 )
 
                 raise InvalidValueError(msg, namespace, key, parser)
 
         # No value specified and no default, so raise an error to the user
         if raise_error:
-            msg = build_msg(
-                "namespace=%(namespace)s key=%(key)s requires a value parseable by %(parser)s"
-                % {"namespace": namespace, "key": key, "parser": qualname(parser)},
-                doc,
-                self.doc,
+            msg = self.msg_builder(
+                namespace=use_namespace,
+                key=key,
+                parser=parser,
+                option_doc=doc,
+                config_doc=self.doc,
             )
 
             raise ConfigurationMissingError(msg, namespace, key, parser)
@@ -1093,14 +1387,14 @@ def config_override(**cfg: str) -> ConfigOverride:
 
     This can be used as a class decorator::
 
-        @config_override(FOO='bar', BAZ='bat')
+        @config_override(FOO="bar", BAZ="bat")
         class FooTestClass(object):
             ...
 
 
     This can be used as a function decorator::
 
-        @config_override(FOO='bar')
+        @config_override(FOO="bar")
         def test_foo():
             ...
 
@@ -1108,7 +1402,7 @@ def config_override(**cfg: str) -> ConfigOverride:
     This can also be used as a context manager::
 
         def test_foo():
-            with config_override(FOO='bar'):
+            with config_override(FOO="bar"):
                 ...
 
     """

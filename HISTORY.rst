@@ -1,14 +1,74 @@
 History
 =======
 
-1.0.4 (In development)
+2.0.0 (In development)
 ----------------------
 
 Backwards incompatible changes:
 
-fixes:
+* This radically reduces the boilerplate required to define components. It also
+  improves the connections between things so it's easier to:
+
+  * determine the configuration required for a single component (taking into
+    account superclasses, overriding, etc)
+  * determine the runtime configuration for a component tree given a
+    configuration manager
+
+  Previously, components needed to subclass RequiredConfigMixin and provide a
+  "required_config" class attribute. Something like this::
+
+      from everett.component import RequiredConfigMixin, ConfigOptions
+
+      class SomeClass(RequiredConfigMixin):
+          required_config = ConfigOptions()
+          required_config.add_option(
+              "some_option",
+              default="42",
+          )
+
+  That's been slimmed down and now looks like this::
+
+      from everett.manager import Option
+
+      class SomeClass:
+          class Config:
+              some_option = Option(default="42")
+
+  That's much simpler and the underlying implementation code is less tangled
+  and complex, too.
+
+  If you used ``everett.component.RequiredConfigMixin`` or
+  ``everett.component.ConfigOptions``, you'll need to update your classes.
+
+  If you didn't use those things, then you don't have to make any changes.
+
+  See the documentation on components for how it all works now.
+
+* Changed the way configuration variables are referred to in configuration
+  error messages. Previously, I tried to use a general way "namespace=something
+  key=somethingelse" but that's confusing and won't match up with project
+  documentation.
+
+  I changed it to the convention used in the process environment and
+  env files. For example, ``FOO_BAR``.
+
+  If you use INI or YAML for configuration, you can specify a ``msg_builder``
+  argument when you build the ``ConfigManager`` and build error messages
+  tailored to your users.
+
+Fixes:
 
 * Switch to src/ repository layout.
+
+* Added type annotations and type checking during CI. (#155)
+
+* Standardized on f-strings across the codebase.
+
+* Switched Sphinx theme.
+
+* Update of documentation, fleshed out and simplified examples, cleaned up
+  language, reworked structure of API section (previously called Library or
+  some unhelpful thing like that), etc.
 
 
 1.0.3 (October 28th, 2020)

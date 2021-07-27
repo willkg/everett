@@ -6,7 +6,7 @@
 
 To use this, you must install the optional requirements::
 
-    $ pip install everett[yaml]
+    $ pip install 'everett[yaml]'
 
 """
 
@@ -28,7 +28,7 @@ class ConfigYamlEnv:
 
     This requires optional dependencies. You can install them with::
 
-        $ pip install everett[yaml]
+        $ pip install 'everett[yaml]'
 
 
     Takes a path or list of possible paths to look for a YAML file. It uses
@@ -110,6 +110,11 @@ class ConfigYamlEnv:
     """
 
     def __init__(self, possible_paths: Union[str, List[str]]) -> None:
+        """
+        :param possible_paths: either a single string with a file path (e.g.
+            ``"/etc/project.yaml"`` or a list of strings with file paths
+
+        """
         self.cfg = {}
         self.path = None
         possible_paths = listify(possible_paths)

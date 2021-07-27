@@ -12,8 +12,8 @@ Contents
    documenting
    testing
    recipes
+   api
    history
-   library
    dev
 
 
