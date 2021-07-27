@@ -1038,20 +1038,6 @@ class ConfigManager(ConfigManagerBase):
             errors
 
             .. versionadded:: 0.6
-        :arg msg_builder: function that takes arguments and builds an exception
-            message intended to be printed or conveyed to the user
-
-            For example::
-
-                def build_msg(namespace, key, parser, msg="", option_doc="", config_doc=""):
-                    full_key = namespace or []
-                    full_key = "_".join(full_key + [key]).upper()
-
-                    return (
-                        f"{full_key} requires a value parseable by {qualname(parser)}\n"
-                        + option_doc + "\n"
-                        + config_doc + "\n"
-                    )
 
         :param msg_builder: function that takes arguments and builds an exception
             message intended to be printed or conveyed to the user
