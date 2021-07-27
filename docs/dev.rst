@@ -31,7 +31,7 @@ Release process
 
 6. Tag the release::
 
-       $ git tag -a v1.0.0
+       $ git tag --sign v1.0.0
 
    Copy the details from ``HISTORY.rst`` into the tag comment.
 
