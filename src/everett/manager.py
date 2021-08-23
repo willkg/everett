@@ -224,8 +224,11 @@ def traverse_tree(
     for attr in dir(instance):
         if attr.startswith("__"):
             continue
-        val = getattr(instance, attr)
-        if isinstance(val, Option):
+        # NOTE(willkg): we skip slots; maybe they could be component classes,
+        # but that seems bizarre and I'd like to see a reasonable example
+        # before supporting it
+        val = getattr(instance, attr, None)
+        if not val or isinstance(val, Option):
             continue
 
         options.extend(traverse_tree(val, namespace + [attr]))
