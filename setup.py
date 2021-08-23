@@ -34,9 +34,9 @@ EXTRAS_REQUIRE = {
         "pytest==6.2.4",
         "Sphinx==4.1.2",
         "sphinx_rtd_theme==0.5.2",
-        "tox==3.24.0",
+        "tox==3.24.3",
         "twine==3.4.2",
-        "types-PyYAML==5.4.3",
+        "types-PyYAML==5.4.6",
     ],
 }
 

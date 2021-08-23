@@ -1,44 +1,30 @@
 from textwrap import dedent
 
-from sphinx.application import Sphinx
+from sphinx.cmd.build import main as sphinx_main
 
 from everett.manager import ListOf, Option, parse_class
 
 
-class FakeSphinx(Sphinx):
-    """Fake Sphinx app that has better defaults"""
+def run_sphinx(docsdir, text, builder="text"):
+    # set up conf.py
+    with open(str(docsdir / "conf.py"), "w") as fp:
+        fp.write('master_doc = "index"\n')
+        fp.write('extensions = ["everett.sphinxext"]\n')
 
-    def __init__(self, tmpdir):
-        srcdir = tmpdir
-        confdir = tmpdir
-        outdir = tmpdir / "_build" / "text"
-        doctreedir = tmpdir / "doctree"
-
-        with open(str(confdir / "conf.py"), "w") as fp:
-            fp.write('master_doc = "index"\n')
-            fp.write('extensions = ["everett.sphinxext"]\n')
-
-        super().__init__(
-            srcdir=str(srcdir),
-            confdir=str(confdir),
-            outdir=str(outdir),
-            doctreedir=str(doctreedir),
-            buildername="text",
-            freshenv=True,
-        )
-
-
-def parse(tmpdir, text):
-    fakesphinx = FakeSphinx(tmpdir)
-    fakesphinx.setup_extension("everett.sphinxext")
+    # set up index.rst file
     text = "BEGINBEGIN\n\n%s\n\nENDEND" % text
-
-    with open(str(tmpdir / "index.rst"), "w") as fp:
+    with open(str(docsdir / "index.rst"), "w") as fp:
         fp.write(text)
 
-    fakesphinx.builder.build_all()
+    args = ["-b", builder, "-v", "-E", str(docsdir), str(docsdir / "_build" / builder)]
+    print(args)
+    if sphinx_main(args):
+        raise RuntimeError("Sphinx build failed")
 
-    with open(str(tmpdir / "_build/text/index.txt")) as fp:
+    extension = "txt" if builder == "text" else "html"
+    with open(
+        str(docsdir / "_build" / builder / f"index.{extension}"), encoding="utf8"
+    ) as fp:
         data = fp.read()
 
     # index.text has a bunch of stuff in it. BEGINBEGIN and ENDEND are markers,
@@ -53,15 +39,16 @@ def test_infrastructure(tmpdir):
     # Verify parsing is working at all. This seems like a no-op, but really
     # it's going through all the Sphinx stuff to generate the text that it
     # started off with.
-    assert parse(tmpdir, "*foo*") == dedent(
+    assert run_sphinx(tmpdir, "*foo*") == dedent(
         """\
         *foo*
         """
     )
 
 
-def test_everett_component(tmpdir):
-    # Test .. everett:component:: with an option
+def test_everett_component(tmpdir, capsys):
+    # Test .. everett:component:: with an option and verify Sphinx isn't
+    # spitting out warnings
     rst = dedent(
         """\
     .. everett:component:: test_sphinxext.ComponentDefaults
@@ -71,14 +58,17 @@ def test_everett_component(tmpdir):
     """
     )
 
-    assert parse(tmpdir, rst) == dedent(
+    assert run_sphinx(tmpdir, rst) == dedent(
         """\
         component test_sphinxext.ComponentDefaults
 
            Options:
-              **opt1** (*str*) -- First option. Defaults to "foo".
+              **opt1** ("str") -- First option. Defaults to "foo".
         """
     )
+    captured = capsys.readouterr()
+    assert "WARNING" not in captured.out
+    assert "WARNING" not in captured.err
 
 
 class ComponentDefaults:
@@ -93,12 +83,12 @@ def test_autocomponent_defaults(tmpdir):
     """
     )
 
-    assert parse(tmpdir, rst) == dedent(
+    assert run_sphinx(tmpdir, rst) == dedent(
         """\
         component test_sphinxext.ComponentDefaults
 
            Options:
-              **user** (*str*) --
+              **user** ("str") --
         """
     )
 
@@ -113,12 +103,12 @@ def test_hide_classname(tmpdir):
     """
     )
 
-    assert parse(tmpdir, rst) == dedent(
+    assert run_sphinx(tmpdir, rst) == dedent(
         """\
         Configuration
 
            Options:
-              **user** (*str*) --
+              **user** ("str") --
         """
     )
 
@@ -133,12 +123,12 @@ def test_namespace(tmpdir):
     """
     )
 
-    assert parse(tmpdir, rst) == dedent(
+    assert run_sphinx(tmpdir, rst) == dedent(
         """\
         component test_sphinxext.ComponentDefaults
 
            Options:
-              **foo_user** (*str*) --
+              **foo_user** ("str") --
         """
     )
 
@@ -155,7 +145,7 @@ class TestKeyCase:
         )
 
         # Because "foo" isn't valid, nothing ends up in the file
-        assert parse(tmpdir, rst) == "\n"
+        assert run_sphinx(tmpdir, rst) == "\n"
 
         # FIXME(willkg): Verify an appropriate error was given to the user.
         # It's hard to do since it comes via stderr, but we probalby have to
@@ -170,12 +160,12 @@ class TestKeyCase:
         """
         )
 
-        assert parse(tmpdir, rst) == dedent(
+        assert run_sphinx(tmpdir, rst) == dedent(
             """\
             component test_sphinxext.ComponentDefaults
 
                Options:
-                  **user** (*str*) --
+                  **user** ("str") --
             """
         )
 
@@ -188,12 +178,12 @@ class TestKeyCase:
         """
         )
 
-        assert parse(tmpdir, rst) == dedent(
+        assert run_sphinx(tmpdir, rst) == dedent(
             """\
             component test_sphinxext.ComponentDefaults
 
                Options:
-                  **USER** (*str*) --
+                  **USER** ("str") --
             """
         )
 
@@ -208,12 +198,12 @@ def test_show_docstring_class_has_no_docstring(tmpdir):
     """
     )
 
-    assert parse(tmpdir, rst) == dedent(
+    assert run_sphinx(tmpdir, rst) == dedent(
         """\
         component test_sphinxext.ComponentDefaults
 
            Options:
-              **user** (*str*) --
+              **user** ("str") --
         """
     )
 
@@ -238,7 +228,7 @@ def test_show_docstring(tmpdir):
     """
     )
 
-    assert parse(tmpdir, rst) == dedent(
+    assert run_sphinx(tmpdir, rst) == dedent(
         """\
         component test_sphinxext.ComponentWithDocstring
 
@@ -247,7 +237,7 @@ def test_show_docstring(tmpdir):
            The best!
 
            Options:
-              **user** (*str*) --
+              **user** ("str") --
         """
     )
 
@@ -272,14 +262,14 @@ def test_show_docstring_other_attribute(tmpdir):
     """
     )
 
-    assert parse(tmpdir, rst) == dedent(
+    assert run_sphinx(tmpdir, rst) == dedent(
         """\
         component test_sphinxext.ComponentDocstringOtherAttribute
 
            User-focused help
 
            Options:
-              **user** (*str*) --
+              **user** ("str") --
         """
     )
 
@@ -297,14 +287,14 @@ def test_show_docstring_subclass(tmpdir):
     """
     )
 
-    assert parse(tmpdir, rst) == dedent(
+    assert run_sphinx(tmpdir, rst) == dedent(
         """\
         component test_sphinxext.ComponentSubclass
 
            A different docstring
 
            Options:
-              **user** (*str*) --
+              **user** ("str") --
         """
     )
 
@@ -321,12 +311,12 @@ def test_option_default(tmpdir):
     """
     )
 
-    assert parse(tmpdir, rst) == dedent(
+    assert run_sphinx(tmpdir, rst) == dedent(
         """\
         component test_sphinxext.ComponentOptionDefault
 
            Options:
-              **user** (*str*) -- Defaults to "\'ou812\'".
+              **user** ("str") -- Defaults to "\'ou812\'".
         """
     )
 
@@ -343,12 +333,12 @@ def test_option_doc(tmpdir):
     """
     )
 
-    assert parse(tmpdir, rst) == dedent(
+    assert run_sphinx(tmpdir, rst) == dedent(
         """\
         component test_sphinxext.ComponentOptionDoc
 
            Options:
-              **user** (*str*) -- ou812
+              **user** ("str") -- ou812
         """
     )
 
@@ -366,14 +356,14 @@ def test_option_doc_multiline(tmpdir):
     """
     )
 
-    assert parse(tmpdir, rst) == dedent(
+    assert run_sphinx(tmpdir, rst) == dedent(
         """\
         component test_sphinxext.ComponentOptionDocMultiline
 
            Options:
-              * **user** (*str*) -- ou812
+              * **user** ("str") -- ou812
 
-              * **password** (*str*) --
+              * **password** ("str") --
 
                 First "paragraph".
 
@@ -394,12 +384,12 @@ def test_option_doc_default(tmpdir):
     """
     )
 
-    assert parse(tmpdir, rst) == dedent(
+    assert run_sphinx(tmpdir, rst) == dedent(
         """\
         component test_sphinxext.ComponentOptionDocDefault
 
            Options:
-              **user** (*str*) --
+              **user** ("str") --
 
               This is some docs.
 
@@ -433,21 +423,21 @@ def test_option_parser(tmpdir):
     """
     )
 
-    assert parse(tmpdir, rst) == dedent(
+    assert run_sphinx(tmpdir, rst) == dedent(
         """\
         component test_sphinxext.ComponentOptionParser
 
            Options:
-              * **user_builtin** (*int*) --
+              * **user_builtin** ("int") --
 
-              * **user_parse_class** (*everett.manager.parse_class*) --
+              * **user_parse_class** ("everett.manager.parse_class") --
 
-              * **user_listof** (*<ListOf(str)>*) --
+              * **user_listof** ("<ListOf(str)>") --
 
-              * **user_class_method** (*test_sphinxext.Foo.parse_foo_class*)
+              * **user_class_method** ("test_sphinxext.Foo.parse_foo_class")
                 --
 
               * **user_instance_method**
-                (*test_sphinxext.Foo.parse_foo_instance*) --
+                ("test_sphinxext.Foo.parse_foo_instance") --
         """
     )
