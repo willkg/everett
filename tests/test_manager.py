@@ -767,7 +767,7 @@ def test_component_raw_value():
     assert comp.config("bar", raw_value=True) == "1"
 
 
-class TestRuntimeConfig:
+class TestGetRuntimeConfig:
     def test_bound_config(self):
         config = ConfigManager.from_dict({"foo": 12345})
 
@@ -838,4 +838,24 @@ class TestRuntimeConfig:
             ([], "baz", "abc", Option(default="abc")),
             (["boff"], "foo", "2", Option(parser=int, default="2")),
             (["boff"], "bar", "1", Option(parser=int, default="1")),
+        ]
+
+    def test_slots(self):
+        """Test get_runtime_config works with classes using slots."""
+        config = ConfigManager.from_dict({})
+
+        class Base:
+            __slots__ = ("_slotattr",)
+
+        class ComponentA(Base):
+            class Config:
+                key = Option(default="abc")
+
+            def __init__(self, config_manager):
+                self.config = config_manager.with_options(self)
+
+        comp = ComponentA(config)
+
+        assert list(get_runtime_config(config, comp)) == [
+            ([], "key", "abc", Option(default="abc"))
         ]
