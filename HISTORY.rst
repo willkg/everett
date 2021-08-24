@@ -1,6 +1,16 @@
 History
 =======
 
+2.0.1 (August, 23rd, 2021)
+--------------------------
+
+Fixes:
+
+* Fix Sphinx warning about roles in Everett sphinxext. (#165)
+
+* Fix ``get_runtime_config`` to work with slots (#166)
+
+
 2.0.0 (July 27th, 2021)
 -----------------------
 
@@ -58,7 +68,7 @@ Backwards incompatible changes:
 
 Fixes:
 
-* Switch to src/ repository layout.
+* Switch to ``src/`` repository layout.
 
 * Added type annotations and type checking during CI. (#155)
 

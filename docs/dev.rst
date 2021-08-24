@@ -24,10 +24,9 @@ Release process
 
 5. Verify correctness.
 
-   1. Run ``check-manifest``.
-   2. Run tests.
-   3. Build docs (this runs example code).
-   4. Verify all that works.
+   1. Check the manifest: ``check-manifest``
+   2. Run tests: ``make test``
+   3. Build docs (this runs example code): ``make docs``
 
 6. Tag the release::
 
