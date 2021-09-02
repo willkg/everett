@@ -63,7 +63,7 @@ def test_everett_component(tmpdir, capsys):
         component test_sphinxext.ComponentDefaults
 
            Options:
-              **opt1** ("str") -- First option. Defaults to "foo".
+              **opt1** (*str*) -- First option. Defaults to "foo".
         """
     )
     captured = capsys.readouterr()
@@ -88,7 +88,7 @@ def test_autocomponent_defaults(tmpdir):
         component test_sphinxext.ComponentDefaults
 
            Options:
-              **user** ("str") --
+              **user** (*str*) --
         """
     )
 
@@ -108,7 +108,7 @@ def test_hide_classname(tmpdir):
         Configuration
 
            Options:
-              **user** ("str") --
+              **user** (*str*) --
         """
     )
 
@@ -128,7 +128,7 @@ def test_namespace(tmpdir):
         component test_sphinxext.ComponentDefaults
 
            Options:
-              **foo_user** ("str") --
+              **foo_user** (*str*) --
         """
     )
 
@@ -165,7 +165,7 @@ class TestKeyCase:
             component test_sphinxext.ComponentDefaults
 
                Options:
-                  **user** ("str") --
+                  **user** (*str*) --
             """
         )
 
@@ -183,7 +183,7 @@ class TestKeyCase:
             component test_sphinxext.ComponentDefaults
 
                Options:
-                  **USER** ("str") --
+                  **USER** (*str*) --
             """
         )
 
@@ -203,7 +203,7 @@ def test_show_docstring_class_has_no_docstring(tmpdir):
         component test_sphinxext.ComponentDefaults
 
            Options:
-              **user** ("str") --
+              **user** (*str*) --
         """
     )
 
@@ -237,7 +237,7 @@ def test_show_docstring(tmpdir):
            The best!
 
            Options:
-              **user** ("str") --
+              **user** (*str*) --
         """
     )
 
@@ -269,7 +269,7 @@ def test_show_docstring_other_attribute(tmpdir):
            User-focused help
 
            Options:
-              **user** ("str") --
+              **user** (*str*) --
         """
     )
 
@@ -294,7 +294,7 @@ def test_show_docstring_subclass(tmpdir):
            A different docstring
 
            Options:
-              **user** ("str") --
+              **user** (*str*) --
         """
     )
 
@@ -316,7 +316,7 @@ def test_option_default(tmpdir):
         component test_sphinxext.ComponentOptionDefault
 
            Options:
-              **user** ("str") -- Defaults to "\'ou812\'".
+              **user** (*str*) -- Defaults to "\'ou812\'".
         """
     )
 
@@ -338,7 +338,7 @@ def test_option_doc(tmpdir):
         component test_sphinxext.ComponentOptionDoc
 
            Options:
-              **user** ("str") -- ou812
+              **user** (*str*) -- ou812
         """
     )
 
@@ -361,9 +361,9 @@ def test_option_doc_multiline(tmpdir):
         component test_sphinxext.ComponentOptionDocMultiline
 
            Options:
-              * **user** ("str") -- ou812
+              * **user** (*str*) -- ou812
 
-              * **password** ("str") --
+              * **password** (*str*) --
 
                 First "paragraph".
 
@@ -389,7 +389,7 @@ def test_option_doc_default(tmpdir):
         component test_sphinxext.ComponentOptionDocDefault
 
            Options:
-              **user** ("str") --
+              **user** (*str*) --
 
               This is some docs.
 
@@ -428,16 +428,16 @@ def test_option_parser(tmpdir):
         component test_sphinxext.ComponentOptionParser
 
            Options:
-              * **user_builtin** ("int") --
+              * **user_builtin** (*int*) --
 
-              * **user_parse_class** ("everett.manager.parse_class") --
+              * **user_parse_class** (*everett.manager.parse_class*) --
 
-              * **user_listof** ("<ListOf(str)>") --
+              * **user_listof** (*<ListOf(str)>*) --
 
-              * **user_class_method** ("test_sphinxext.Foo.parse_foo_class")
+              * **user_class_method** (*test_sphinxext.Foo.parse_foo_class*)
                 --
 
               * **user_instance_method**
-                ("test_sphinxext.Foo.parse_foo_instance") --
+                (*test_sphinxext.Foo.parse_foo_instance*) --
         """
     )

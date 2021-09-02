@@ -185,7 +185,6 @@ class EverettComponent(ObjectDescription):
             "options",
             label=_("Options"),
             names=("option", "opt"),
-            typerolename="parser",
             typenames=("parser",),
             can_collapse=True,
         )
@@ -251,13 +250,11 @@ class EverettDomain(Domain):
     name = "everett"
     label = "Everett"
 
-    object_types = {"component": ObjType(_("component"), "comp")}
+    object_types = {"component": ObjType(_("component"), "component")}
     directives = {"component": EverettComponent}
     roles = {
         "component": XRefRole(),
-        "comp": XRefRole(),
         "option": XRefRole(),
-        "parser": XRefRole(),
     }
     initial_data: Dict[str, dict] = {
         # (typ, clspath) -> sphinx document name
