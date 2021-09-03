@@ -29,8 +29,9 @@ From that, Everett has the following features:
   and writing your own configuration environments
 * facilitates helpful error messages for users trying to configure your
   software
-* supports automated documentation of configuration with a Sphinx
-  ``autocomponent`` directive
+* has a Sphinx extension for documenting configuration including
+  ``autocomponentconfig`` and ``automoduleconfig`` directives for
+  automatically generating configuration documentation
 * facilitates testing of configuration values
 * supports parsing values of a variety of types like bool, int, lists of
   things, classes, and others and lets you write your own parsers
@@ -176,4 +177,4 @@ Most other libraries I looked at had one or more of the following issues:
 * provided poor error messages when users configure things wrong
 * had a global configuration object
 * made it really hard to override specific configuration when writing tests
-* had no facilities for auto-generating configuration documentation
+* had no facilities for autogenerating configuration documentation

@@ -1,3 +1,6 @@
+.. NOTE: Make sure to edit the template for this file in docs_tmpl/ and
+.. not the cog-generated version.
+
 ======================
 Configuration Managers
 ======================
