@@ -28,15 +28,16 @@ EXTRAS_REQUIRE = {
     "yaml": ["PyYAML"],
     "dev": [
         "black==20.8b1",
-        "check-manifest==0.46",
-        "flake8==3.9.2",
+        "check-manifest==0.47",
+        "flake8==4.0.1",
         "mypy==0.910",
-        "pytest==6.2.4",
-        "Sphinx==4.1.2",
-        "sphinx_rtd_theme==0.5.2",
-        "tox==3.24.3",
+        "pytest==6.2.5",
+        "Sphinx==4.2.0",
+        "sphinx_rtd_theme==1.0.0",
+        "tox==3.24.4",
+        "tox-gh-actions==2.8.1",
         "twine==3.4.2",
-        "types-PyYAML==5.4.6",
+        "types-PyYAML==6.0.0",
     ],
 }
 
@@ -67,6 +68,7 @@ setup(
         "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
+        "Programming Language :: Python :: 3.10",
     ],
     project_urls={
         "Documentation": "https://everett.readthedocs.io/",
