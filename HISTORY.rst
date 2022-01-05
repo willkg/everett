@@ -1,6 +1,17 @@
 History
 =======
 
+2.1.0 (In development)
+----------------------
+
+Backwards incompatible changes:
+
+* Dropped support for Python 3.6. (#176)
+
+
+Fixes:
+
+
 2.0.1 (August, 23rd, 2021)
 --------------------------
 
