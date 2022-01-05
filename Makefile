@@ -16,7 +16,7 @@ typecheck:  ## Run typechecking (requires Python 3.8)
 
 .PHONY: lint
 lint:  ## Lint and black reformat files
-	black --target-version=py36 --line-length=88 src setup.py tests docs
+	black --target-version=py37 --line-length=88 src setup.py tests docs
 	flake8 src tests
 
 .PHONY: clean
