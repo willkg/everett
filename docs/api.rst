@@ -11,11 +11,12 @@ Configuration things:
 
 Utility functions:
 
-* :py:class:`everett.manager.config_override`
-* :py:class:`everett.manager.generate_uppercase_key`
 * :py:class:`everett.manager.get_config_for_class`
 * :py:class:`everett.manager.get_runtime_config`
-* :py:class:`everett.manager.qualname`
+
+Testing utility functions:
+
+* :py:class:`everett.manager.config_override`
 
 Configuration environments:
 
@@ -35,6 +36,7 @@ Errors:
 
 Parsers:
 
+* :py:func:`everett.manager.parse_bool`
 * :py:func:`everett.manager.parse_class`
 * :py:func:`everett.manager.ListOf`
 
@@ -50,7 +52,6 @@ everett.manager
 
 .. automodule:: everett.manager
    :members:
-
 
 everett.ext.inifile
 ===================

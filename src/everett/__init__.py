@@ -17,6 +17,15 @@ __releasedate__ = ""
 __version__ = "2.1.0.dev0"
 
 
+__all__ = [
+    "NO_VALUE",
+    "ConfigurationError",
+    "DetailedConfigurationError",
+    "InvalidKeyError",
+    "ConfigurationMissingError",
+]
+
+
 # NoValue instances are always false
 class NoValue:
     def __nonzero__(self) -> bool:
@@ -29,7 +38,7 @@ class NoValue:
         return "NO_VALUE"
 
 
-# Singleton indicating a non-value
+#: Singleton indicating a non-value.
 NO_VALUE = NoValue()
 
 

@@ -14,6 +14,7 @@ covered here, add an item to the `issue tracker
 
 
 .. contents::
+   :local:
 
 
 Centralizing configuration specification
@@ -33,7 +34,8 @@ configuration options there and then pass that component around.
 For example, this creates an ``AppConfig`` component which has configuration
 for the application:
 
-.. literalinclude:: code/recipes_appconfig.py
+.. literalinclude:: ../examples/recipes_appconfig.py
+   :language: python
 
 
 Couple of nice things here. First, is that if you do Sphinx documentation, you
@@ -54,15 +56,15 @@ all the things this application does things with.
 Let's create an app component which creates two file system components passing
 them a basedir:
 
-.. literalinclude:: code/recipes_shared.py
+.. literalinclude:: ../examples/recipes_shared.py
    :language: python
 
 
 Why do it this way?
 
 In this scenario, the ``basedir`` is defined at the app-scope and is passed to
-the reader and writer classes when they're created. In this way, ``basedir`` is
-app configuration, but not reader/writer configuration.
+the reader and writer components when they're created. In this way, ``basedir``
+is app configuration, but not reader/writer configuration.
 
 
 Using components that share configuration using alternate keys
@@ -70,11 +72,11 @@ Using components that share configuration using alternate keys
 
 Say we have two components that share a set of credentials. We don't want to
 have to specify the same set of credentials twice, so instead, we use alternate
-keys which let you specify other keys to look at for a configuration value. This
-lets us have both components look at the same keys for their credentials and
-then we only have to define them once.
+keys which let you specify other keys to look at for a configuration value.
+This lets us have both components look at the same keys for their credentials
+and then we only have to define them once.
 
 Let's create a db reader and a db writer component:
 
-.. literalinclude:: code/recipes_alternate_keys.py
+.. literalinclude:: ../examples/recipes_alternate_keys.py
    :language: python

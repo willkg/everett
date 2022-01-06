@@ -12,6 +12,4 @@ config = ConfigManager.from_dict({"debug_mode": "monkey"})
 try:
     some_val = config("debug_mode", parser=bool, doc="set debug mode")
 except InvalidValueError:
-    # The "debug_mode" configuration value is incorrect--alert
-    # user in the logs.
-    logging.exception("logged exception gah!")
+    print("I'm sorry dear user, but DEBUG_MODE must be 'true' or 'false'.")

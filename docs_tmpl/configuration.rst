@@ -1,3 +1,6 @@
+.. NOTE: Make sure to edit the template for this file in docs_tmpl/ and
+.. not the cog-generated version.
+
 =============
 Configuration
 =============
@@ -113,11 +116,20 @@ set ``DEBUG`` to ``foo``:
 
 ::
 
-    <traceback>
-    everett.InvalidValueError: ValueError: 'foo' is not a valid bool value
-    DEBUG requires a value parseable by everett.manager.parse_bool
-    DEBUG docs: Set to True for debugmode; False for regular mode
-    Project docs: Check https://example.com/configuration for documentation.
+    [[[cog
+    import cog
+    import os
+    import subprocess
+    if os.path.exists(".env"):
+        os.remove(".env")
+    os.environ["DEBUG"] = "foo"
+    ret = subprocess.run(["python", "examples/myserver.py"], capture_output=True)
+    stderr = ret.stderr.decode("utf-8").strip()
+    stderr = stderr[stderr.find("everett.InvalidValueError"):]
+    cog.outl("<traceback>")
+    cog.outl(stderr)
+    ]]]
+    [[[end]]]
 
 That last line comes directly from the ``doc`` argument you provide.
 
@@ -155,7 +167,16 @@ and ``DB_PORT``.
 ::
 
     $ python namespaces.py
-    Opened database with admin/ou812 on port 5432
+    [[[cog
+    import cog
+    import os
+    import subprocess
+    if os.path.exists(".env"):
+        os.remove(".env")
+    ret = subprocess.run(["python", "examples/namespaces.py"], capture_output=True)
+    cog.outl(ret.stdout.decode("utf-8").strip())
+    ]]]
+    [[[end]]]
 
 
 This is helpful when you need to create two of the same thing, but using
@@ -170,8 +191,16 @@ configuration keys separated?
 ::
 
     $ python namespaces2.py
-    Opened database with admin/ou812 on port 5432
-    Opened database with admin/P9rwvnnj8CidECMb on port 5432
+    [[[cog
+    import cog
+    import os
+    import subprocess
+    if os.path.exists(".env"):
+        os.remove(".env")
+    ret = subprocess.run(["python", "examples/namespaces2.py"], capture_output=True)
+    cog.outl(ret.stdout.decode("utf-8").strip())
+    ]]]
+    [[[end]]]
 
 
 Handling exceptions when extracting values
@@ -205,8 +234,21 @@ That prints this:
 ::
 
     $ DEBUG=lizard python msg_builder.py
-    <traceback>
-    everett.InvalidValueError: Dear user. debug in section [main] is not correct. Please fix it.
+    [[[cog
+    import cog
+    import os
+    import subprocess
+    os.environ["DEBUG"] = "lizard"
+    if os.path.exists(".env"):
+        os.remove(".env")
+    ret = subprocess.run(["python", "examples/msg_builder.py"], capture_output=True)
+    stderr = ret.stderr.decode("utf-8").strip()
+    stderr = stderr[stderr.find("everett.InvalidValueError"):]
+    cog.outl("<traceback>")
+    cog.outl(stderr)
+    del os.environ["DEBUG"]
+    ]]]
+    [[[end]]]
 
 
 Trouble-shootinging and logging what happened

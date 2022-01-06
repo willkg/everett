@@ -2,14 +2,8 @@
 Documenting
 ===========
 
-No one likes to spend hours updating configuration documentation. Often, it's
-accidentally forgotten or overlooked when maintaining a project.
-
-No one likes to spend hours trying to get something to work only to discover the
-configuration documentation is out of date, missing important information, or
-just wrong.
-
-Blech.
+It's hard to keep configuration documentation up-to-date as projects change
+over time.
 
 Everett comes with a `Sphinx <https://http://www.sphinx-doc.org/en/stable/>`_
 extension to make it easier to document Everett components and configuration.
@@ -21,7 +15,7 @@ to find what they're looking for.
 
 For example, with this code:
 
-.. literalinclude:: code/recipes_appconfig.py
+.. literalinclude:: ../examples/recipes_appconfig.py
 
 
 You can add this to your docs::

@@ -40,6 +40,23 @@ from everett import (
 )
 
 
+__all__ = [
+    "ConfigDictEnv",
+    "ConfigEnvFileEnv",
+    "ConfigManager",
+    "ConfigOSEnv",
+    "ConfigObjEnv",
+    "ListOf",
+    "Option",
+    "config_override",
+    "get_config_for_class",
+    "get_runtime_config",
+    "parse_bool",
+    "parse_class",
+    "parse_env_file",
+]
+
+
 # Regex for valid keys in an env file
 ENV_KEY_RE = re.compile(r"^[a-z][a-z0-9_]*$", flags=re.IGNORECASE)
 
@@ -1098,35 +1115,17 @@ class ConfigManager:
         :raises everett.InvalidValueError: if the configuration value is
             invalid in some way (not an integer, not a bool, etc)
 
-        Examples::
+        .. Note::
 
-            config = ConfigManager([])
+           The default value should **always** be a string that is parseable by
+           the parser. This simplifies thinking about values since **all**
+           values are strings that are parsed by the parser rather than default
+           values do one thing and non-default values doa nother. Further, it
+           simplifies documentation for the user since the default value is an
+           example value.
 
-            # Use the special bool parser
-            DEBUG = config("debug", default="false", parser=bool)
-            DEBUG = config("debug", default="True", parser=bool)
-            DEBUG = config("debug", default="true", parser=bool)
-            DEBUG = config("debug", default="yes", parser=bool)
-            DEBUG = config("debug", default="y", parser=bool)
-
-            # Use the ListOf parser
-            from everett.manager import ListOf
-            ALLOWED_HOSTS = config("allowed_hosts", default="localhost",
-                                   parser=ListOf(str))
-
-            # Use alternate_keys for backwards compatibility with an
-            # older version of your software
-            PASSWORD = config("password", alternate_keys=["SECRET"])
-
-
-        The default value should **always** be a string that is parseable by the
-        parser. This simplifies thinking about values since **all** values
-        are strings that are parsed by the parser rather than default values
-        do one thing and non-default values doa nother. Further, it simplifies
-        documentation for the user since the default value is an example value.
-
-        The parser can be any callable that takes a string value and returns a
-        parsed value.
+           The parser can be any callable that takes a string value and returns
+           a parsed value.
 
         """
         if not (default is NO_VALUE or isinstance(default, str)):

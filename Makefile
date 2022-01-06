@@ -16,8 +16,8 @@ typecheck:  ## Run typechecking (requires Python 3.8)
 
 .PHONY: lint
 lint:  ## Lint and black reformat files
-	black --target-version=py37 --line-length=88 src setup.py tests docs
-	flake8 src tests
+	black --target-version=py37 --line-length=88 src setup.py tests docs examples
+	flake8 src tests examples
 
 .PHONY: clean
 clean:  ## Clean build artifacts
@@ -27,7 +27,10 @@ clean:  ## Clean build artifacts
 	find src/ tests/ -name '*.pyc' | xargs rm -rf
 
 .PHONY: docs
-docs:  ## Build docs
+docs:  ## Runs cog and builds Sphinx docs
+	python -m cogapp -d -o README.rst docs_tmpl/README.rst
+	python -m cogapp -d -o docs/configuration.rst docs_tmpl/configuration.rst
+	rm -rf docs/_build/
 	make -C docs/ html
 
 .PHONY: checkrot
