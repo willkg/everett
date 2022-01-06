@@ -101,9 +101,9 @@ function takes a string and returns a Django database connection value.
 For example::
 
     import dj_database_url
-    from everett.manager import ConfigManager, ConfigOSEnv
+    from everett.manager import ConfigManager
 
-    config = ConfigManager([ConfigOSEnv()])
+    config = ConfigManager.basic_config()
     DATABASE = {
         "default": config("DATABASE_URL", parser=dj_database_url.parse)
     }
@@ -116,12 +116,13 @@ it and returns what Django needs.
 With a default::
 
     import dj_database_url
-    from everett.manager import ConfigManager, ConfigOSEnv
+    from everett.manager import ConfigManager
 
-    config = ConfigManager([ConfigOSEnv()])
+    config = ConfigManager.basic_config()
     DATABASE = {
-        "default": config("DATABASE_URL", default="sqlite:///my.db",
-                          parser=dj_database_url.parse)
+        "default": config(
+            "DATABASE_URL", default="sqlite:///my.db", parser=dj_database_url.parse
+        )
     }
 
 
@@ -139,11 +140,11 @@ Everett works with `django-cache-url <https://pypi.org/project/django-cache-url/
 For example::
 
     import django_cache_url
-    from everett.manager import ConfigManager, ConfigOSEnv
+    from everett.manager import ConfigManager
 
-    config = ConfigManager([ConfigOSEnv()])
+    config = ConfigManager.basic_config()
     CACHES = {
-        'default': config('CACHE_URL', parser=django_cache_url.parse)
+        "default": config("CACHE_URL", parser=django_cache_url.parse)
     }
 
 
@@ -154,12 +155,13 @@ returns what Django needs.
 With a default::
 
     import django_cache_url
-    from everett.manager import ConfigManager, ConfigOSEnv
+    from everett.manager import ConfigManager
 
-    config = ConfigManager([ConfigOSEnv()])
+    config = ConfigManager.basic_config()
     CACHES = {
-        'default': config('CACHE_URL', default='locmem://myapp',
-                          parser=django_cache_url.parse)
+        "default": config(
+            "CACHE_URL", default="locmem://myapp", parser=django_cache_url.parse
+        )
     }
 
 

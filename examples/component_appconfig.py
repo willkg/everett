@@ -1,4 +1,4 @@
-# example_appconfig.py
+# component_appconfig.py
 
 from everett.manager import ConfigManager, Option
 

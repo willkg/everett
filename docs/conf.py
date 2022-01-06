@@ -41,6 +41,7 @@ import everett  # noqa
 # ones.
 extensions = [
     "sphinx.ext.autodoc",
+    "sphinx.ext.doctest",
     "everett.sphinxext",
 ]
 

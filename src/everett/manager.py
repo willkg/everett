@@ -273,6 +273,7 @@ def parse_bool(val: str) -> bool:
     Handles a series of values, but you should probably standardize on
     "true" and "false".
 
+    >>> from everett.manager import parse_bool
     >>> parse_bool("y")
     True
     >>> parse_bool("FALSE")
@@ -296,6 +297,7 @@ def parse_env_file(envfile: Iterable[str]) -> Dict:
 
     Return a dict of config variables.
 
+    >>> from everett.manager import parse_env_file
     >>> parse_env_file(["DUDE=Abides"])
     {'DUDE': 'Abides'}
 
@@ -324,6 +326,7 @@ def parse_env_file(envfile: Iterable[str]) -> Dict:
 def parse_class(val: str) -> Any:
     """Parse a string, imports the module and returns the class.
 
+    >>> from everett.manager import parse_class
     >>> parse_class("everett.manager.Option")
     <class 'everett.manager.Option'>
 
@@ -406,6 +409,7 @@ def get_key_from_envs(envs: Iterable[Any], key: str) -> Union[str, NoValue]:
 class ListOf:
     """Parse a comma-separated list of things.
 
+    >>> from everett.manager import ListOf
     >>> ListOf(str)('')
     []
     >>> ListOf(str)('a,b,c,d')
