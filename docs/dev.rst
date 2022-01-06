@@ -2,6 +2,21 @@
 Hacking
 =======
 
+Install for hacking
+===================
+
+Run::
+
+    # Clone the repository
+    $ git clone https://github.com/willkg/everett
+
+    # Create a virtualenvironment
+    $ mkvirtualenv everett
+
+    # Install Everett and dev requirements
+    $ pip install -e '.[dev,ini,yaml]'
+
+
 Release process
 ===============
 

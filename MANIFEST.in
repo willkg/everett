@@ -4,11 +4,11 @@ include requirements-dev.txt
 include Makefile
 include LICENSE
 include docs/requirements.txt
-
 recursive-include docs *.rst
 recursive-include docs *.py
 recursive-include docs Makefile
-
+recursive-include docs_tmpl *.rst
+recursive-include examples *.py
 recursive-include tests *.env
 recursive-include tests *.ini
 recursive-include tests *.py

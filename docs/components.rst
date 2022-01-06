@@ -3,6 +3,7 @@ Components
 ==========
 
 .. contents::
+   :local:
 
 
 .. versionchanged:: 2.0
@@ -10,64 +11,131 @@ Components
    This is redone for v2.0.0 and simplified.
 
 
-Building components with Everett
-================================
+Configuration components
+========================
 
-Everett allows you to build components that specify the configuration options
-for that component.
+Everett supports configuration components.
 
-This lets you do three things:
+There are two big use cases for this:
 
-1. instantiate components in a specified configuration namespace
-2. restrict the configuration the component uses to that specified in the
-   component
-3. inherit and override configuration from superclasses
+1. Centralizing configuration specification for your application into a single
+   class.
 
-To create a component, add a ``Config`` class to the class definition. In
-the ``Config`` class, specify the options for that class.
-
-For example, let's create a RabbitMQComponent for accessing RabbitMQ::
-
-    from everett.manager import Option
-
-    class RabbitMQComponent:
-        class Config:
-            host = Option(doc="RabbitMQ host to connect to")
-            port = Option(default="5672", doc="Port to use", parser=int)
-            queue_name = Option(doc="Queue to insert things into")
-
-        def __init__(self, config):
-            # Bind the configuration manager to just the options
-            # specified by this component. If this configuration manager
-            # is asked to return a configuration option that's not
-            # specified by # this class, then it'll throw an error.
-            self.config = config.with_options(self)
-            ...
+2. Component architectures.
 
 
-We also need an ``__init__`` method that takes the ``config`` as an argument so
-that you can bind the component's config options with the config using
-``.with_options()``.
+Centralizing configuration
+--------------------------
 
-Then in our app, we could instantiate a ``RabbitMQComponent`` using an ``rmq``
-configuration namespace like this::
+Instead of having configuration-related bits defined across your codebase, you
+can define it in a class.
 
-    rmq = RabbitMQComponent(config.with_namespace('rmq'))
+Here's an example with an ``AppConfig``:
 
-In our environment, we would provide a ``RMQ_HOST`` variable for this
+.. literalinclude:: ../examples/component_appconfig.py
+   :language: python
+
+Let's run it::
+
+    $ python component_appconfig.py
+    debug: False
+
+    $ DEBUG=true python component_appconfig.py
+    debug: True
+
+Let's run a Python shell and do some other things with it::
+
+    >>> import component_appconfig
+    >>> config = component_appconfig.get_config()
+    >>> config("badkey")
+    <traceback>
+    everett.InvalidKeyError: 'badkey' is not a valid key for this component
+
+Notice how you can't use configuration keys that aren't specified in the bound
 component.
 
-Say our app needs to connect to two separate queues--one for regular processing
-and one for priority processing::
+Centrally defining configuration like this helps in a few ways:
 
-    rmq_regular = RabbitMQComponent(config.with_namespace("rmq_regular"))
-    rmq_priority = RabbitMQComponent(config.with_namespace("rmq_priority"))
+1. You can reduce some bugs that occur as your application evolves over time.
+   Every time you use configuration, the ``ConfigManager`` will enforce that
+   the key is a valid option.
 
-In our environment, we provide the host for the regular queue configuration
-with ``RMQ_REGULAR_HOST`` and the the host for the priority queue configuration
-with ``RMQ_PRIORITY_HOST``.
+2. Your application configuration is centralized in one place instead
+   of spread out across your code base.
 
-Same component code--two different instances with two different configurations.
+3. You can automatically document your configuration using the
+   ``everett.sphinxext`` Sphinx extension and ``autocomponent`` directive::
+
+       .. autocomponent:: path.to.AppConfig
+
+   Because it's automatically documented, your documentation is always
+   up-to-date.
+
+
+Component architectures
+-----------------------
+
+Everett configuration supports component architectures. Say your app needs to
+connect to RabbitMQ. With Everett, you can define the component's configuration
+needs in the component class.
+
+Here's an example::
+
+    # myapp.py
+
+    from everett.manager import ConfigManager, Option, ListOf
+
+    class S3Bucket:
+        class Config:
+            region = Option(doc="AWS S3 region")
+            bucket_name = Option(doc="AWS S3 bucket name")
+
+        def __init__(self, config):
+            # Bind the configuration to just the configuration this component
+            # requires such that this component is self-contained
+            self.config = config.with_options(self)
+
+            self.region = self.config("region")
+            self.bucket_name = self.config("bucket_name")
+
+        def repr(self):
+            return f"<S3Bucket {self.region} {self.bucket_name}>"
+
+    config = ConfigManager.from_dict({
+        "S3_SOURCE_REGION": "us-east-1",
+        "S3_SOURCE_BUCKET_NAME": "mycompany_oldbucket",
+
+        "S3_DEST_REGION": "us-east-1",
+        "S3_DEST_BUCKET_NAME": "mycompany_newbucket",
+    })
+
+    s3_config = config.with_namespace("s3")
+
+    source_bucket = S3Bucket(s3_config.with_namespace("source"))
+    dest_bucket = S3Bucket(s3_config.with_namespace("dest"))
+
+    print(repr(source_bucket))
+    print(repr(dest_bucket))
+
+That's not wildly exciting, but if the component was in a library of
+components, then you can string them together using configuraiton.
+
+For example, what if the destination wasn't a single bucket, but rather
+a set of buckets?
+
+::
+
+    dest_config = config("pipeline", default="dest", parser=ListOf(str))
+
+    dest_buckets = []
+    for name in dest_config:
+        dest_buckets.append(S3Bucket(s3_config.with_namespace(name)))
+
+You can auto-generate configuration documentation for this component in your
+Sphinx docs by including the ``everett.sphinxext`` Sphinx extension and
+using the ``autocomponent`` directive::
+
+    .. autocomponent:: myapp.S3Bucket
 
 
 Subclassing

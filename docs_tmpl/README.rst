@@ -66,99 +66,99 @@ Quick start
 
 Example::
 
-    # myserver.py
-
-    """
-    Minimal example showing how to use configuration for a web app.
-    """
-
-    from everett.manager import ConfigManager
-
-    config = ConfigManager.basic_config(
-        doc="Check https://example.com/configuration for documentation."
-    )
-
-    host = config("host", default="localhost")
-    port = config("port", default="8000", parser=int)
-    debug_mode = config(
-        "debug", default="False", parser=bool,
-        doc="Set to True for debugmode; False for regular mode"
-    )
-
-    print(f"host: {host}")
-    print(f"port: {port}")
-    print(f"debug_mode: {debug_mode}")
+    [[[cog
+    import cog
+    with open("examples/myserver.py", "r") as fp:
+        cog.outl(fp.read().strip())
+    ]]]
+    [[[end]]]
 
 Then you can run it::
 
     $ python myserver.py
-    host: localhost
-    port: 8000
-    debug_mode: False
+    [[[cog
+    import cog
+    import os
+    import subprocess
+    if os.path.exists(".env"):
+        os.remove(".env")
+    ret = subprocess.run(["python", "examples/myserver.py"], capture_output=True)
+    cog.outl(ret.stdout.decode("utf-8").strip())
+    ]]]
+    [[[end]]]
 
 You can set environment variables to affect configuration::
 
     $ PORT=7000 python myserver.py
-    host: localhost
-    port: 7000
-    debug_mode: False
+    [[[cog
+    import cog
+    import os
+    import subprocess
+    if os.path.exists(".env"):
+        os.remove(".env")
+    os.environ["PORT"] = "7000"
+    ret = subprocess.run(["python", "examples/myserver.py"], capture_output=True)
+    cog.outl(ret.stdout.decode("utf-8").strip())
+    del os.environ["PORT"]
+    ]]]
+    [[[end]]]
 
 It checks a ``.env`` file in the current directory::
 
     $ echo "HOST=127.0.0.1" > .env
     $ python myserver.py
-    host: 127.0.0.1
-    port: 8000
-    debug_mode: False
+    [[[cog
+    import cog
+    import os
+    import subprocess
+    if os.path.exists(".env"):
+        os.remove(".env")
+    with open(".env", "w") as fp:
+        fp.write("HOST=127.0.0.1")
+    ret = subprocess.run(["python", "examples/myserver.py"], capture_output=True)
+    cog.outl(ret.stdout.decode("utf-8").strip())
+    ]]]
+    [[[end]]]
 
 It spits out useful error information if configuration is wrong::
 
     $ DEBUG=foo python myserver.py
-    <traceback>
-    everett.InvalidValueError: ValueError: 'foo' is not a valid bool value
-    DEBUG requires a value parseable by everett.manager.parse_bool
-    DEBUG docs: Set to True for debugmode; False for regular mode
-    Project docs: Check https://example.com/configuration for documentation.
+    [[[cog
+    import cog
+    import os
+    import subprocess
+    if os.path.exists(".env"):
+        os.remove(".env")
+    os.environ["DEBUG"] = "foo"
+    ret = subprocess.run(["python", "examples/myserver.py"], capture_output=True)
+    stderr = ret.stderr.decode("utf-8").strip()
+    stderr = stderr[stderr.find("everett.InvalidValueError"):]
+    cog.outl("<traceback>")
+    cog.outl(stderr)
+    ]]]
+    [[[end]]]
 
 You can test your code using ``config_override`` in your tests to test various
 configuration values::
 
-    # testdebug.py
-
-    """
-    Minimal example showing how to override configuration values when testing.
-    """
-
-    import unittest
-
-    from everett.manager import ConfigManager, config_override
-
-    class App:
-        def __init__(self):
-            config = ConfigManager.basic_config()
-            self.debug = config("debug", default="False", parser=bool)
-
-    class TestDebug(unittest.TestCase):
-        def test_debug_on(self):
-            with config_override(DEBUG="on"):
-                app = App()
-                self.assertTrue(app.debug)
-
-        def test_debug_off(self):
-            with config_override(DEBUG="off"):
-                app = App()
-                self.assertFalse(app.debug)
-
-    if __name__ == "__main__":
-        unittest.main()
+    [[[cog
+    import cog
+    with open("examples/testdebug.py", "r") as fp:
+        cog.outl(fp.read().strip())
+    ]]]
+    [[[end]]]
 
 Run that::
 
-    ..
-    ----------------------------------------------------------------------
-    Ran 2 tests in 0.000s
-
-    OK
+    [[[cog
+    import cog
+    import os
+    import subprocess
+    ret = subprocess.run(["python", "examples/testdebug.py"], capture_output=True)
+    stderr = ret.stderr.decode("utf-8").strip()
+    cog.outl(stderr)
+    ]]]
+    [[[end]]]
 
 That's perfectly fine for a `12-Factor <https://12factor.net/>`_ app.
 

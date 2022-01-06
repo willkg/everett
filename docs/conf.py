@@ -25,8 +25,8 @@ project_root = os.path.dirname(cwd)
 src_root = os.path.join(project_root, "src")
 sys.path.insert(0, src_root)
 
-# Add code/ directory so we can use autocomponent with a recipe
-sys.path.insert(0, os.path.join(cwd, "code/"))
+# Add ../examples/ directory so we can use autocomponent with a recipe
+sys.path.insert(0, os.path.join(project_root, "examples"))
 
 import everett  # noqa
 
@@ -62,7 +62,7 @@ master_doc = "index"
 
 # General information about the project.
 project = "Everett"
-copyright = "2016-2021, Will Kahn-Greene"
+copyright = "2016-2022, Will Kahn-Greene"
 author = "Will Kahn-Greene"
 
 # The version info for the project you're documenting, acts as replacement for

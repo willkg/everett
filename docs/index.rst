@@ -7,7 +7,10 @@ Contents
 .. toctree::
    :maxdepth: 2
 
+   configmanager
    configuration
+   parsers
+   environments
    components
    documenting
    testing
