@@ -81,8 +81,10 @@ Example::
     host = config("host", default="localhost")
     port = config("port", default="8000", parser=int)
     debug_mode = config(
-        "debug", default="False", parser=bool,
-        doc="Set to True for debugmode; False for regular mode"
+        "debug",
+        default="False",
+        parser=bool,
+        doc="Set to True for debugmode; False for regular mode",
     )
 
     print(f"host: {host}")
@@ -133,10 +135,12 @@ configuration values::
 
     from everett.manager import ConfigManager, config_override
 
+
     class App:
         def __init__(self):
             config = ConfigManager.basic_config()
             self.debug = config("debug", default="False", parser=bool)
+
 
     class TestDebug(unittest.TestCase):
         def test_debug_on(self):
@@ -148,6 +152,7 @@ configuration values::
             with config_override(DEBUG="off"):
                 app = App()
                 self.assertFalse(app.debug)
+
 
     if __name__ == "__main__":
         unittest.main()

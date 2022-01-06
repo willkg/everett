@@ -1,3 +1,6 @@
+.. NOTE: Make sure to edit the template for this file in docs_tmpl/ and
+.. not the cog-generated version.
+
 ======================
 Configuration Managers
 ======================
@@ -63,16 +66,32 @@ Let's set ``DEBUG`` wrong and see what it tells us:
 ::
 
     $ python myserver.py
-    host: localhost
-    port: 8000
-    debug_mode: False
+    [[[cog
+    import cog
+    import os
+    import subprocess
+    if os.path.exists(".env"):
+        os.remove(".env")
+    ret = subprocess.run(["python", "examples/myserver.py"], capture_output=True)
+    cog.outl(ret.stdout.decode("utf-8").strip())
+    ]]]
+    [[[end]]]
 
     $ DEBUG=foo python myserver.py
-    <traceback>
-    everett.InvalidValueError: ValueError: 'foo' is not a valid bool value
-    DEBUG requires a value parseable by everett.manager.parse_bool
-    DEBUG docs: Set to True for debugmode; False for regular mode
-    Project docs: Check https://example.com/configuration for documentation.
+    [[[cog
+    import cog
+    import os
+    import subprocess
+    if os.path.exists(".env"):
+        os.remove(".env")
+    os.environ["DEBUG"] = "foo"
+    ret = subprocess.run(["python", "examples/myserver.py"], capture_output=True)
+    stderr = ret.stderr.decode("utf-8").strip()
+    stderr = stderr[stderr.find("everett.InvalidValueError"):]
+    cog.outl("<traceback>")
+    cog.outl(stderr)
+    ]]]
+    [[[end]]]
 
 
 Here, we see the documentation for the ``DEBUG`` option, the documentation from

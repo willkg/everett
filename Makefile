@@ -29,8 +29,11 @@ clean:  ## Clean build artifacts
 .PHONY: docs
 docs:  ## Runs cog and builds Sphinx docs
 	python -m cogapp -d -o README.rst docs_tmpl/README.rst
+	python -m cogapp -d -o docs/components.rst docs_tmpl/components.rst
+	python -m cogapp -d -o docs/configmanager.rst docs_tmpl/configmanager.rst
 	python -m cogapp -d -o docs/configuration.rst docs_tmpl/configuration.rst
 	rm -rf docs/_build/
+	make -C docs/ doctest
 	make -C docs/ html
 
 .PHONY: checkrot

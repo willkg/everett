@@ -1,4 +1,4 @@
-# parsers.py
+# parser_examples.py
 
 from everett.manager import ConfigManager, get_parser
 

@@ -1,3 +1,6 @@
+.. NOTE: Make sure to edit the template for this file in docs_tmpl/ and
+.. not the cog-generated version.
+
 ==========
 Components
 ==========
@@ -38,10 +41,30 @@ Here's an example with an ``AppConfig``:
 Let's run it::
 
     $ python component_appconfig.py
-    debug: False
+    [[[cog
+    import cog
+    import os
+    import subprocess
+    if os.path.exists(".env"):
+        os.remove(".env")
+    ret = subprocess.run(["python", "examples/component_appconfig.py"], capture_output=True)
+    cog.outl(ret.stdout.decode("utf-8").strip())
+    ]]]
+    [[[end]]]
 
     $ DEBUG=true python component_appconfig.py
-    debug: True
+    [[[cog
+    import cog
+    import os
+    import subprocess
+    if os.path.exists(".env"):
+        os.remove(".env")
+    os.environ["DEBUG"] = "true"
+    ret = subprocess.run(["python", "examples/component_appconfig.py"], capture_output=True)
+    cog.outl(ret.stdout.decode("utf-8").strip())
+    del os.environ["DEBUG"]
+    ]]]
+    [[[end]]]
 
 Let's run a Python shell and do some other things with it:
 
@@ -125,8 +148,16 @@ That prints:
 ::
 
     $ python components_subclass.py
-    foo_from_b
-    bar_from_a
+    [[[cog
+    import cog
+    import os
+    import subprocess
+    if os.path.exists(".env"):
+        os.remove(".env")
+    ret = subprocess.run(["python", "examples/components_subclass.py"], capture_output=True)
+    cog.outl(ret.stdout.decode("utf-8").strip())
+    ]]]
+    [[[end]]]
 
 
 Getting configuration information for components

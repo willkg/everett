@@ -70,6 +70,3 @@ exceptions go unhandled--Everett will wrap them in a :py:class:`everett.Configur
 If your environment promises never to throw an exception, then you should
 handle them all and return ``NO_VALUE`` since with that promise all exceptions
 would indicate the key is not in the environment.
-
-
-
