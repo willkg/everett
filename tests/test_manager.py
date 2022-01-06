@@ -427,7 +427,7 @@ def test_configurationmissingerror():
         exc_info.value.args[0]
         == "FOO_DOESNOTEXISTNOWAY requires a value parseable by str"
     )
-    assert exc_info.value.namespace == "foo"
+    assert exc_info.value.namespace == ["foo"]
     assert exc_info.value.key == "DOESNOTEXISTNOWAY"
     assert exc_info.value.parser == str
 
@@ -628,7 +628,6 @@ def test_with_options():
 
 def test_nested_options():
     """Verify nested BoundOptions works."""
-    config = ConfigManager.from_dict({})
 
     class Foo:
         class Config:
@@ -645,6 +644,38 @@ def test_nested_options():
     assert config("option2") == "opt2default"
     with pytest.raises(ConfigurationError):
         config("option1")
+
+
+def test_namespace_and_options():
+    """Verify namespace and then options works"""
+
+    class Foo:
+        class Config:
+            option = Option(default="opt1default", parser=str)
+
+    config = ConfigManager.from_dict({"NS_OPTION": "val"})
+    config = config.with_namespace("ns").with_options(Foo)
+
+    assert config("option") == "val"
+
+
+def test_options_and_namespace():
+    """Verify options and then namespace works"""
+    # NOTE(willkg): This doesn't make sense to me, but there's no technical
+    # reason it shouldn't work.
+    class App:
+        class Config:
+            http_port = Option(default="80")
+            db_port = Option(default="3306")
+
+    config = ConfigManager.from_dict({})
+    config = config.with_options(App)
+
+    http_config = config.with_namespace("http")
+    db_config = config.with_namespace("db")
+
+    assert http_config("port") == "80"
+    assert db_config("port") == "3306"
 
 
 def test_default_comes_from_options():
@@ -814,7 +845,6 @@ class TestGetRuntimeConfig:
 
     def test_tree_inferred_namespace(self):
         """Test get_runtime_config can pull namespace from config."""
-        config = ConfigManager.from_dict({})
 
         class ComponentB:
             class Config:
@@ -832,6 +862,7 @@ class TestGetRuntimeConfig:
                 self.config = config.with_options(self)
                 self.boff = ComponentB(config.with_namespace("boff"))
 
+        config = ConfigManager.from_dict({})
         comp = ComponentA(config)
 
         assert list(get_runtime_config(config, comp)) == [
