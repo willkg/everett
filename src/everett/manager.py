@@ -117,7 +117,21 @@ def build_msg(
 # FIXME(willkg): we can rewrite this as a dataclass as soon as we can drop
 # Python 3.6 support
 class Option:
-    """Settings for a single configuration option."""
+    """Settings for a single configuration option.
+
+    Use this when creating Everett configuration components.
+
+    Example::
+
+        from everett.manager import Option
+
+        class MyService:
+            # Note: The Config class has to be called "Config".
+            class Config:
+                host = Option(default="localhost")
+                port = Option(default="8000", parser=int)
+
+    """
 
     def __init__(
         self,
@@ -711,58 +725,8 @@ def _get_component_name(component: Any) -> str:
     return cls.__module__ + "." + cls.__name__
 
 
-class ConfigManagerBase:
-    """Base configuration manager class."""
-
-    def _get_base_config(self) -> "ConfigManagerBase":
-        return self
-
-    def get_namespace(self) -> List[str]:
-        """Retrieve the complete namespace for this config object.
-
-        :returns: namespace as a list of strings
-
-        """
-        return []
-
-    def with_options(self, component: Any) -> "ConfigManagerBase":
-        """Apply options component options to this configuration."""
-        # If this is an instance, get the class
-        if not inspect.isclass(component):
-            component = component.__class__
-
-        options = get_config_for_class(component)
-        # FIXME(willkg): if the component has no options, then this is likely a
-        # programming bug and we should raise an error here
-        if not options:
-            return self
-
-        component_name = _get_component_name(component)
-        return BoundConfig(self._get_base_config(), component_name, options)
-
-    def with_namespace(self, namespace: str) -> "ConfigManagerBase":
-        """Apply namespace to this configuration."""
-        return NamespacedConfig(self._get_base_config(), namespace)
-
-    def __call__(
-        self,
-        key: str,
-        namespace: Optional[List[str]] = None,
-        default: Union[str, NoValue] = NO_VALUE,
-        alternate_keys: Optional[List[str]] = None,
-        doc: str = "",
-        parser: Callable = str,
-        raise_error: bool = True,
-        raw_value: bool = False,
-    ) -> Any:
-        return None
-
-    def __repr__(self) -> str:
-        return "<ConfigManagerBase>"
-
-
 def get_runtime_config(
-    config: ConfigManagerBase,
+    config: "ConfigManager",
     component: Any,
     traverse: Callable = traverse_tree,
 ) -> List[Tuple[List[str], str, Any, Option]]:
@@ -850,8 +814,8 @@ def get_runtime_config(
             (
                 namespace,
                 key,
-                config.with_options(obj)(
-                    key, namespace=namespace, raise_error=False, raw_value=True
+                config.with_namespace(namespace).with_options(obj)(
+                    key, raise_error=False, raw_value=True
                 ),
                 option,
             )
@@ -859,170 +823,7 @@ def get_runtime_config(
     return runtime_config
 
 
-class BoundConfig(ConfigManagerBase):
-    """Wrap a config and binds it to a set of options.
-
-    This restricts the config to only return keys from the option set. Further,
-    it uses the option set to determine the default and the parser for that
-    option.
-
-    This is useful for binding configuration to a component's specified
-    options.
-
-    """
-
-    def __init__(
-        self, config: ConfigManagerBase, component_name: str, options: Mapping[str, Any]
-    ):
-        self.config = config
-        self.component_name = component_name
-        self.options = options
-
-    def _get_base_config(self) -> ConfigManagerBase:
-        return self.config
-
-    def get_namespace(self) -> List[str]:
-        """Retrieve the complete namespace for this config object.
-
-        :returns: namespace as a list of strings
-
-        """
-        return self.config.get_namespace()
-
-    def __call__(
-        self,
-        key: str,
-        namespace: Optional[List[str]] = None,
-        default: Union[str, NoValue] = NO_VALUE,
-        alternate_keys: Optional[List[str]] = None,
-        doc: str = "",
-        parser: Callable = str,
-        raise_error: bool = True,
-        raw_value: bool = False,
-    ) -> Any:
-        """Return a config value bound to a component's options.
-
-        :param key: the key to look up
-
-        :param namespace: the namespace for the key--different environments
-            use this differently
-
-        :param default: IGNORED
-
-        :param alternate_keys: IGNORED
-
-        :param doc: IGNORED
-
-        :param parser: IGNORED
-
-        :param raise_error: True if you want a lack of value to raise a
-            ``ConfigurationError``
-
-        :param raw_value: False if you wanted the parsed value, True if
-            you want the raw value.
-
-        """
-        try:
-            option, cls = self.options[key]
-        except KeyError:
-            if raise_error:
-                raise InvalidKeyError(f"{key!r} is not a valid key for this component")
-            return None
-
-        return self.config(
-            key,
-            namespace=namespace,
-            default=option.default,
-            alternate_keys=option.alternate_keys,
-            doc=option.doc,
-            parser=option.parser,
-            raise_error=raise_error,
-            raw_value=raw_value,
-        )
-
-    def __repr__(self) -> str:
-        return f"<BoundConfig({self.component_name}): namespace:{self.get_namespace()}>"
-
-
-class NamespacedConfig(ConfigManagerBase):
-    """Apply a namespace to a config.
-
-    This restricts keys in a config to those belonging to the specified
-    namespace.
-
-    """
-
-    def __init__(self, config: ConfigManagerBase, namespace: str):
-        self.config = config
-        self.namespace = namespace
-
-    def get_namespace(self) -> List[str]:
-        """Retrieve the complete namespace for this config object.
-
-        :returns: namespace as a list of strings
-
-        """
-        return self.config.get_namespace() + [self.namespace]
-
-    def __call__(
-        self,
-        key: str,
-        namespace: Optional[List[str]] = None,
-        default: Union[str, NoValue] = NO_VALUE,
-        alternate_keys: Optional[List[str]] = None,
-        doc: str = "",
-        parser: Callable = str,
-        raise_error: bool = True,
-        raw_value: bool = False,
-    ) -> Any:
-        """Return a config value bound to a component's options.
-
-        :param key: the key to look up
-
-        :param namespace: the namespace for the key--different environments
-            use this differently
-
-        :param default: the default value (if any); this must be a string that is
-            parseable by the specified parser
-
-        :param alternate_keys: the list of alternate keys to look up;
-            supports a ``root:`` key prefix which will cause this to look at
-            the configuration root rather than the current namespace
-
-            .. versionadded:: 0.3
-
-        :param doc: documentation for this config option
-
-            .. versionadded:: 0.6
-
-        :param parser: the parser for converting this value to a Python object
-
-        :param raise_error: True if you want a lack of value to raise a
-            ``ConfigurationError``
-
-        :param raw_value: False if you wanted the parsed value, True if
-            you want the raw value.
-
-        """
-        new_namespace = [self.namespace]
-        if namespace:
-            new_namespace.extend(namespace)
-
-        return self.config(
-            key,
-            namespace=new_namespace,
-            default=default,
-            alternate_keys=alternate_keys,
-            parser=parser,
-            raise_error=raise_error,
-            raw_value=raw_value,
-        )
-
-    def __repr__(self) -> str:
-        return f"<NamespacedConfig: namespace:{self.get_namespace()}>"
-
-
-class ConfigManager(ConfigManagerBase):
+class ConfigManager:
     """Manage multiple configuration environment layers."""
 
     def __init__(
@@ -1062,12 +863,26 @@ class ConfigManager(ConfigManagerBase):
             of sources
 
         """
+        self.with_override = with_override
         if with_override:
-            environments.insert(0, ConfigOverrideEnv())
+            # Add ConfigOverrideEnv if it's not in the environments list already
+            override = [
+                env for env in environments if isinstance(env, ConfigOverrideEnv)
+            ]
+            if not override:
+                environments.insert(0, ConfigOverrideEnv())
 
         self.envs = environments
         self.doc = doc
         self.msg_builder = msg_builder
+
+        self.namespace: List[str] = []
+
+        self.bound_component: Any = None
+        self.bound_component_prefix: List[str] = []
+        self.bound_component_options: Mapping[str, Any] = {}
+
+        self.original_manager = self
 
     @classmethod
     def basic_config(cls, env_file: str = ".env", doc: str = "") -> "ConfigManager":
@@ -1128,10 +943,103 @@ class ConfigManager(ConfigManagerBase):
         """
         return cls([ConfigDictEnv(dict_config)])
 
+    def get_bound_component(self) -> Any:
+        """Retrieve the bound component for this config object.
+
+        :returns: component or None
+
+        """
+        return self.bound_component
+
+    def get_namespace(self) -> List[str]:
+        """Retrieve the complete namespace for this config object.
+
+        :returns: namespace as a list of strings
+
+        """
+        return self.namespace
+
+    def _get_base_config(self) -> "ConfigManager":
+        return self.original_manager
+
+    def clone(self) -> "ConfigManager":
+        my_clone = ConfigManager(
+            environments=list(self.envs),
+            doc=self.doc,
+            msg_builder=self.msg_builder,
+            with_override=self.with_override,
+        )
+        my_clone.namespace = list(self.namespace)
+        my_clone.bound_component = self.bound_component
+        my_clone.bound_component_prefix = []
+        my_clone.bound_component_options = self.bound_component_options
+
+        my_clone.original_manager = self.original_manager
+
+        return my_clone
+
+    def with_namespace(self, namespace: Union[List[str], str]) -> "ConfigManager":
+        """Apply a namespace to this configuration.
+
+        Namespaces accumulate as you add them.
+
+        :param namepace: namespace as a string or list of strings
+
+        :returns: a clone of the ConfigManager instance with the namespace applied
+
+        """
+        namespace = listify(namespace)
+        if not namespace:
+            return self
+
+        my_clone = self.clone()
+        if my_clone.bound_component:
+            my_clone.bound_component_prefix.extend(namespace)
+        else:
+            my_clone.namespace.extend(namespace)
+        return my_clone
+
+    def with_options(self, component: Any) -> "ConfigManager":
+        """Apply options component options to this configuration.
+
+        :param component: the instance or class with a Config to bind this
+            ConfigManager to
+
+        :returns: a clone of the ConfigManager instance bound to specified
+            component
+
+        """
+        # If this is an instance, get the class
+        if not inspect.isclass(component):
+            component = component.__class__
+
+        options = get_config_for_class(component)
+        # NOTE(willkg): if the component has no options, then there's nothing
+        # to bind to
+        if not options:
+            return self
+
+        my_clone = self.clone()
+        my_clone.bound_component = component
+        my_clone.bound_component_prefix = []
+        my_clone.bound_component_options = options
+
+        # IF there's a bound component with a prefix, then it means someone is doing
+        # something like:
+        #
+        # config = config.with_options(Comp).with_namespace("foo").with_options(SubComp)
+        #
+        # In that case, we want the namespace "foo" to be part of the namespace
+        # and not part of the key prefix for SubComp.
+        if self.bound_component_prefix:
+            my_clone.namespace.extend(self.bound_component_prefix)
+
+        return my_clone
+
     def __call__(
         self,
         key: str,
-        namespace: Optional[List[str]] = None,
+        namespace: Union[List[str], str, None] = None,
         default: Union[str, NoValue] = NO_VALUE,
         alternate_keys: Optional[List[str]] = None,
         doc: str = "",
@@ -1151,17 +1059,30 @@ class ConfigManager(ConfigManagerBase):
             will raise an error or return ``everett.NO_VALUE`` depending on
             the value of ``raise_error``
 
+            If this ConfigManager is bound to a component, the default will be
+            the default of the option in the bound component configuration.
+
         :param alternate_keys: the list of alternate keys to look up;
             supports a ``root:`` key prefix which will cause this to look at
             the configuration root rather than the current namespace
+
+            If this ConfigManager is bound to a component, the alternate_keys
+            will be the alternate_keys of the option in the bound component
+            configuration.
 
             .. versionadded:: 0.3
 
         :param doc: documentation for this config option
 
+            If this ConfigManager is bound to a component, the doc will be the
+            doc of the option in the bound component configuration.
+
             .. versionadded:: 0.6
 
         :param parser: the parser for converting this value to a Python object
+
+            If this ConfigManager is bound to a component, the parser will be
+            the parser of the option in the bound component configuration.
 
         :param raise_error: True if you want a lack of value to raise a
             ``everett.ConfigurationError``
@@ -1210,6 +1131,33 @@ class ConfigManager(ConfigManagerBase):
         """
         if not (default is NO_VALUE or isinstance(default, str)):
             raise ConfigurationError(f"default value {default!r} is not a string")
+
+        # If we have a bound component, then the "namespace" is a key prefix,
+        # so do that. Otherwise it's a namespace.
+        if self.bound_component:
+            key = "_".join(
+                listify(self.bound_component_prefix) + listify(namespace) + [key]
+            )
+            namespace = self.namespace
+
+        else:
+            namespace = self.namespace + listify(namespace)
+
+        # If this is a bound config, then apply everything to that
+        if self.bound_component:
+            try:
+                option, cls = self.bound_component_options[key]
+            except KeyError:
+                if raise_error:
+                    raise InvalidKeyError(
+                        f"{key!r} is not a valid key for this component"
+                    )
+                return None
+
+            default = option.default
+            alternate_keys = option.alternate_keys
+            doc = option.doc
+            parser = option.parser
 
         if raw_value:
             # If we're returning raw values, then we can just use str which is
@@ -1307,7 +1255,11 @@ class ConfigManager(ConfigManagerBase):
         return NO_VALUE
 
     def __repr__(self) -> str:
-        return "<ConfigManager>"
+        if self.bound_component:
+            name = _get_component_name(self.bound_component)
+            return f"<ConfigManager({name}): namespace:{self.get_namespace()}>"
+        else:
+            return f"<ConfigManager: namespace:{self.get_namespace()}>"
 
 
 # This is a stack of overrides to be examined in reverse order
