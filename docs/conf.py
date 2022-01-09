@@ -25,7 +25,7 @@ project_root = os.path.dirname(cwd)
 src_root = os.path.join(project_root, "src")
 sys.path.insert(0, src_root)
 
-# Add ../examples/ directory so we can use autocomponent with a recipe
+# Add ../examples/ directory so we can use autocomponentconfig with a recipe
 sys.path.insert(0, os.path.join(project_root, "examples"))
 
 import everett  # noqa

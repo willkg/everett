@@ -1,15 +1,40 @@
 History
 =======
 
-2.1.0 (In development)
+3.0.0 (In development)
 ----------------------
 
 Backwards incompatible changes:
 
 * Dropped support for Python 3.6. (#176)
 
+* Dropped ``autocomponent`` Sphinx directive in favor of
+  ``autocomponentconfig``.
 
-Fixes:
+Fixes and features:
+
+* Add support for Python 3.10. (#173)
+
+* Rework namespaces so that you can apply a namespace (``with_namespace()``)
+  after binding a component (``with_options()``) (#175)
+
+* Overhauled, simplified, and improved documentation. Files with example output
+  are now generated using `cog <https://pypi.org/project/cogapp/>`_.
+
+* Rewrite Sphinx extension.
+
+  This now supports manually documenting configuration using
+  ``everett:component`` and ``everett:option`` directives.
+
+  This adds ``:everett:component:`` and ``:everett:option:`` roles for linking
+  to specific configuration in the docs.
+
+  It also addsh ``autocomponentconfig`` and ``automoduleconfig`` directives for
+  automatically generating documentation.
+
+  When using these directives, items are added to the index and everything is
+  linkable making it easier to find and talk to users about specific
+  configuration items. (#172)
 
 
 2.0.1 (August, 23rd, 2021)

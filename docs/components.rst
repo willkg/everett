@@ -1,3 +1,6 @@
+.. NOTE: Make sure to edit the template for this file in docs_tmpl/ and
+.. not the cog-generated version.
+
 ==========
 Components
 ==========
@@ -68,9 +71,9 @@ Centrally defining configuration like this helps in a few ways:
    of spread out across your code base.
 
 3. You can automatically document your configuration using the
-   ``everett.sphinxext`` Sphinx extension and ``autocomponent`` directive::
+   ``everett.sphinxext`` Sphinx extension and ``autocomponentconfig`` directive::
 
-       .. autocomponent:: path.to.AppConfig
+       .. autocomponentconfig:: path.to.AppConfig
 
    Because it's automatically documented, your documentation is always
    up-to-date.
@@ -103,11 +106,11 @@ a set of buckets?
     for name in dest_config:
         dest_buckets.append(S3Bucket(s3_config.with_namespace(name)))
 
-You can auto-generate configuration documentation for this component in your
+You can autogenerate configuration documentation for this component in your
 Sphinx docs by including the ``everett.sphinxext`` Sphinx extension and
-using the ``autocomponent`` directive::
+using the ``autocomponentconfig`` directive::
 
-    .. autocomponent:: myapp.S3Bucket
+    .. autocomponentconfig:: myapp.S3Bucket
 
 
 Subclassing

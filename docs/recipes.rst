@@ -39,9 +39,10 @@ for the application:
 
 
 Couple of nice things here. First, is that if you do Sphinx documentation, you
-can use ``autocomponent`` to automatically document your configuration based on
-the code. Second, you can use :py:func:`everett.manager.get_runtime_config` to
-print out the runtime configuration at startup.
+can use ``autocomponentconfig`` to automatically document your configuration
+based on the code. Second, you can use
+:py:func:`everett.manager.get_runtime_config` to print out the runtime
+configuration at startup.
 
 
 Using components that share configuration by passing arguments
