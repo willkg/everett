@@ -182,7 +182,7 @@ class Test_autocomponentconfig:
         assert run_sphinx(tmpdir, rst) == "\n"
         captured = capsys.readouterr()
         assert "WARNING" not in captured.out
-        assert "argument must be \"upper\", \"lower\" or None." in captured.err
+        assert 'argument must be "upper", "lower" or None.' in captured.err
 
     def test_case_lower(self, tmpdir, capsys):
         rst = dedent(
