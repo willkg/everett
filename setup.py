@@ -31,14 +31,14 @@ EXTRAS_REQUIRE = {
         "check-manifest==0.47",
         "cogapp==3.3.0",
         "flake8==4.0.1",
-        "mypy==0.930",
+        "mypy==0.931",
         "pytest==6.2.5",
         "Sphinx==4.3.2",
         "sphinx_rtd_theme==1.0.0",
         "tox==3.24.5",
-        "tox-gh-actions==2.8.1",
+        "tox-gh-actions==2.9.1",
         "twine==3.7.1",
-        "types-PyYAML==6.0.1",
+        "types-PyYAML==6.0.3",
     ],
 }
 
