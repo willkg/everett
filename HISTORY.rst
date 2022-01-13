@@ -1,8 +1,8 @@
 History
 =======
 
-3.0.0 (In development)
-----------------------
+3.0.0 (January 13th, 2022)
+--------------------------
 
 Backwards incompatible changes:
 
