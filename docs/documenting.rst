@@ -257,13 +257,17 @@ That gives you something that looks like this:
 You can link to components with the ``:everett:component:`` role and options
 using the ``:everett:option:`` role.
 
-Examples::
+Example component link::
 
     Component link: :everett:component:`recipes_appconfig.AppConfig`
 
-    Option link: :everett:option:`recipes_appconfig.AppConfig.DEBUG`
 
 Component link: :everett:component:`recipes_appconfig.AppConfig`
+
+Example option link::
+
+    Option link: :everett:option:`recipes_appconfig.AppConfig.DEBUG`
+
 
 Option link: :everett:option:`recipes_appconfig.AppConfig.DEBUG`
 
