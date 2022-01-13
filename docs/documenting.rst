@@ -39,8 +39,20 @@ Directives
    .. Note::
 
       The automoduleconfig directive works by parsing the Python module as an
-      AST and then traverses the AST. It does not execute the module, so it
-      doesn't evaluate any values.
+      AST and then traverses the AST.
+
+      It does not execute the module, so it doesn't evaluate any values.
+
+   .. Note::
+
+      ``automoduleconfig`` requires Python 3.8 or higher.
+
+      If you're using ReadTheDocs, it defaults to Python 3.7. You'll need to
+      configure the version of Python to use by adding a configuration file.
+
+      See `ReadTheDocs configuration file documentation
+      <https://docs.readthedocs.io/en/stable/config-file/v2.html>`_ for more
+      details.
 
    .. rubric:: Options
 
