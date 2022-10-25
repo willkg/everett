@@ -154,7 +154,10 @@ class EverettOption(ObjectDescription):
             objects[key] = (self.env.docname, targetname)
 
         indextext = _("%s (component)") % name
-        self.indexnode["entries"].append(("single", indextext, targetname, "", None))
+        if self.indexnode is not None:
+            self.indexnode["entries"].append(
+                ("single", indextext, targetname, "", None)
+            )
 
     def transform_content(self, contentnode: addnodes.desc_content) -> None:
         # We want to insert some stuff before the content
@@ -247,7 +250,10 @@ class EverettComponent(ObjectDescription):
             objects[key] = (self.env.docname, targetname)
 
         indextext = _("%s (component)") % name
-        self.indexnode["entries"].append(("single", indextext, targetname, "", None))
+        if self.indexnode is not None:
+            self.indexnode["entries"].append(
+                ("single", indextext, targetname, "", None)
+            )
 
     def before_content(self) -> None:
         if self.names:

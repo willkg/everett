@@ -7,17 +7,14 @@ help:
 	@fgrep -h "##" Makefile | fgrep -v fgrep | sed 's/\(.*\):.*##/\1:  /'
 
 .PHONY: test
-test:  ## Run tests and static typechecking
+test:  ## Run tests, linting, and static typechecking
 	tox
-
-.PHONY: typecheck
-typecheck:  ## Run typechecking (requires Python 3.8)
-	mypy src/everett/
 
 .PHONY: lint
 lint:  ## Lint and black reformat files
+	# NOTE(willkg): Make sure this matches what's in tox.ini.
 	black --target-version=py37 --line-length=88 src setup.py tests docs examples
-	flake8 src tests examples
+	tox -e py37-flake8
 
 .PHONY: clean
 clean:  ## Clean build artifacts
@@ -40,6 +37,6 @@ docs:  ## Runs cog and builds Sphinx docs
 checkrot:  ## Check package rot for dev dependencies
 	python -m venv ./tmpvenv/
 	./tmpvenv/bin/pip install -U pip
-	./tmpvenv/bin/pip install '.[dev,ini,yaml]'
+	./tmpvenv/bin/pip install -r requirements-dev.txt
 	./tmpvenv/bin/pip list -o
 	rm -rf ./tmpvenv/

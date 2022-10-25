@@ -26,20 +26,6 @@ INSTALL_REQUIRES = []
 EXTRAS_REQUIRE = {
     "ini": ["configobj"],
     "yaml": ["PyYAML"],
-    "dev": [
-        "black==20.8b1",
-        "check-manifest==0.47",
-        "cogapp==3.3.0",
-        "flake8==4.0.1",
-        "mypy==0.931",
-        "pytest==6.2.5",
-        "Sphinx==4.3.2",
-        "sphinx_rtd_theme==1.0.0",
-        "tox==3.24.5",
-        "tox-gh-actions==2.9.1",
-        "twine==3.7.1",
-        "types-PyYAML==6.0.3",
-    ],
 }
 
 
@@ -69,6 +55,7 @@ setup(
         "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
         "Programming Language :: Python :: 3.10",
+        "Programming Language :: Python :: 3.11",
     ],
     project_urls={
         "Documentation": "https://everett.readthedocs.io/",
