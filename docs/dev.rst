@@ -14,7 +14,7 @@ Run::
     $ mkvirtualenv everett
 
     # Install Everett and dev requirements
-    $ pip install -e '.[dev,ini,yaml]'
+    $ pip install -r requirements-dev.txt
 
 
 Release process
