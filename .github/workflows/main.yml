@@ -10,7 +10,7 @@ jobs:
 
     strategy:
       matrix:
-        python-version: ['3.7', '3.8', '3.9', '3.10']
+        python-version: ['3.7', '3.8', '3.9', '3.10', '3.11']
 
     name: Python ${{ matrix.python-version}}
     steps:
@@ -24,10 +24,7 @@ jobs:
       - name: Update pip and install dev requirements
         run: |
           python -m pip install --upgrade pip
-          pip install '.[dev,datadog.statsd]'
-
-      - name: Lint
-        run: make lint
+          pip install -r requirements-dev.txt
 
       - name: Test
         run: tox
