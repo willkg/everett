@@ -754,7 +754,7 @@ class AutoModuleConfigDirective(ConfigDirective):
                     continue
 
                 cat, value = extract_value(source, keyword.value)
-                value = "" if value is None else value
+                value = value or ""
                 if keyword.arg == "doc":
                     value = textwrap.dedent(value)
 
