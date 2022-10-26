@@ -592,10 +592,25 @@ class Test_automoduleconfig:
                      Yes
 
                   Woah.
+
+               cache_location
+
+                  Parser:
+                     *str*
+
+                  Default:
+                     "127.0.0.1:11211"
+
+                  Required:
+                     No
+
+                  The location
             """
         )
         captured = capsys.readouterr()
+        print(captured.out)
         assert "WARNING" not in captured.out
+        print(captured.err)
         assert "WARNING" not in captured.err
 
     def test_hide_name(self, tmpdir, capsys):

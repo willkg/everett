@@ -8,7 +8,16 @@ import ast
 from importlib import import_module
 import re
 import textwrap
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple, Union
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Dict,
+    Generator,
+    List,
+    Optional,
+    Tuple,
+    Union,
+)
 
 from docutils import nodes
 from docutils.parsers.rst import Directive, directives
@@ -578,8 +587,8 @@ def build_table(table: List[List[str]]) -> List[str]:
 def get_value_from_ast_node(source: str, val: ast.AST) -> str:
     """Wrapper for ast.get_source_segment.
 
-    NOTE(willkg): ``ast.get_source_segment()`` was implemented in Python 3.8 and
-    when we drop support for Python 3.6 and 3.7, we can drop this code, too.
+    NOTE(willkg): ``ast.get_source_segment()`` was implemented in Python 3.8
+    and when we drop support for Python 3.7, we can drop this code, too.
 
     This is to get the source code for the AST node in question so that we can
     display it as is in the docs. For a wildly contrived example, if you did
@@ -636,6 +645,18 @@ class AutoModuleConfigDirective(ConfigDirective):
         "show-table": directives.flag,
     }
 
+    def _walk_ast(self, tree: ast.AST) -> Generator[ast.AST, None, None]:
+        """Walks an AST returning Assign nodes
+
+        :param tree: the tree to walk
+
+        :returns: generator of Assign nodes
+
+        """
+        for node in ast.walk(tree):
+            if isinstance(node, (ast.Assign, ast.Dict)):
+                yield node
+
     def extract_configuration(
         self,
         filepath: str,
@@ -657,19 +678,38 @@ class AutoModuleConfigDirective(ConfigDirective):
             source = fp.read()
 
         tree = ast.parse(source=source, filename=filepath, mode="exec")
-        config_nodes = [
-            (node.targets[0].id, node.value)
-            for node in tree.body
-            if (
-                isinstance(node, ast.Assign)
-                and len(node.targets) == 1
-                and isinstance(node.targets[0], ast.Name)
-                and SETTING_RE.match(node.targets[0].id)
-                and isinstance(node.value, ast.Call)
-                and isinstance(node.value.func, ast.Name)
-                and node.value.func.id == variable_name
-            )
-        ]
+        config_nodes = []
+
+        for node in self._walk_ast(tree):
+            if isinstance(node, ast.Assign):
+                # Covers:
+                #
+                # SOMESETTING = _config("option", default="foo", ...)
+                if (
+                    len(node.targets) == 1
+                    and isinstance(node.targets[0], ast.Name)
+                    and SETTING_RE.match(node.targets[0].id)
+                    and isinstance(node.value, ast.Call)
+                    and isinstance(node.value.func, ast.Name)
+                    and node.value.func.id == variable_name
+                ):
+                    config_nodes.append((node.targets[0].id, node.value))
+
+            elif isinstance(node, ast.Dict):
+                # Covers:
+                #
+                # SOMESETTING = {
+                #     "NAME": _config("option", default="foo", ...),
+                #     "NAME2": _config("option2", default="foo", ...),
+                # }
+                for key, val in zip(node.keys, node.values):
+                    if (
+                        isinstance(key, ast.Str)
+                        and isinstance(val, ast.Call)
+                        and isinstance(val.func, ast.Name)
+                        and val.func.id == variable_name
+                    ):
+                        config_nodes.append((key.s, val))
 
         CONFIG_ARGS = [
             "key",
@@ -691,8 +731,7 @@ class AutoModuleConfigDirective(ConfigDirective):
         # defined multiple times
         configuration = {}
 
-        for node in config_nodes:
-            name = node[0]
+        for name, node in config_nodes:
             args: Dict[str, Any] = {
                 "key": name,
                 "default": NO_VALUE,
@@ -700,7 +739,7 @@ class AutoModuleConfigDirective(ConfigDirective):
                 "doc": "",
                 "meta": {},
             }
-            for i, arg in enumerate(node[1].args):
+            for i, arg in enumerate(node.args):
                 cat, value = extract_value(source, arg)
 
                 # NOTE(willkg): we're dropping the cat here; but we might want
@@ -708,7 +747,7 @@ class AutoModuleConfigDirective(ConfigDirective):
                 # leaving the figuring in for now
                 args[CONFIG_ARGS[i]] = value
 
-            for keyword in node[1].keywords:
+            for keyword in node.keywords:
                 # NOTE(willkg): mypy thinks this can be None for some reason,
                 # but I'm not sure why. If it is None, we should skip it.
                 if keyword.arg is None:
@@ -728,7 +767,7 @@ class AutoModuleConfigDirective(ConfigDirective):
             if namespace:
                 namespaced_key = f"{namespace}_{key}"
             else:
-                namespaced_key = key
+                namespaced_key = str(key)
 
             if case == "upper":
                 namespaced_key = namespaced_key.upper()

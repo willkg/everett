@@ -21,3 +21,12 @@ LOGGING_LEVEL = _config(key="logging_level", parser=parse_logging_level, doc="Le
 PASSWORD = _config(key="password", doc="Password field.\n\nMust be provided.")
 
 FUN = _config(key="fun", parser=(int if 0 else float), doc="Woah.")
+
+CACHES = {
+    "default": {
+        "BACKEND": "django.core.cache.backends.memcached.PyMemcacheCache",
+        "LOCATION": _config(
+            "cache_location", default="127.0.0.1:11211", doc="The location"
+        ),
+    }
+}
