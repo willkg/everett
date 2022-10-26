@@ -405,14 +405,22 @@ def test_config():
     )
 
 
+def test_raise_configuration_error():
+    config = ConfigManager.from_dict({"foo_bar": "bat"})
+    config.doc = "Check https://example.com/configuration for documentation."
+
+    with pytest.raises(ConfigurationError) as excinfo:
+        config.raise_configuration_error("This is an error")
+    assert str(excinfo.value) == "This is an error\nProject docs: " + config.doc
+
+
 def test_invalidvalueerror():
     config = ConfigManager.from_dict({"foo_bar": "bat"})
     with pytest.raises(InvalidValueError) as excinfo:
         config("bar", namespace="foo", parser=bool)
-
-        assert excinfo.value.namespace == "foo"
-        assert excinfo.value.key == "bar"
-        assert excinfo.value.parser == bool
+    assert excinfo.value.namespace == ["foo"]
+    assert excinfo.value.key == "bar"
+    assert excinfo.value.parser == parse_bool
 
 
 def test_configurationmissingerror():

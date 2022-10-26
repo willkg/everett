@@ -100,17 +100,17 @@ def qualname(thing: Any) -> str:
 
 def build_msg(
     namespace: Optional[List[str]],
-    key: str,
-    parser: Callable,
+    key: Optional[str],
+    parser: Optional[Callable],
     msg: str = "",
     option_doc: str = "",
     config_doc: str = "",
 ) -> str:
     """Builds a message for a configuration error exception
 
-    :param namespace: list of strings or None that represent the configuration variable namespace
-    :param key: the configuration variable key
-    :param parser: the parser that will be used to parse the value for this configuration variable
+    :param namespace: list of strings that represent the configuration variable namespace or ``None``
+    :param key: the configuration variable key or ``None``
+    :param parser: the parser that will be used to parse the value for this configuration variable or ``None``
     :param msg: the error message
     :param option_doc: the configuration option documentation
     :param config_doc: the ConfigManager documentation
@@ -118,12 +118,13 @@ def build_msg(
     :returns: the error message string
 
     """
-    full_key = generate_uppercase_key(key, namespace)
-    text = [
-        msg,
-        f"{full_key} requires a value parseable by {qualname(parser)}",
-    ]
-    if option_doc:
+    text = [msg]
+    if key and parser:
+        full_key = generate_uppercase_key(key, namespace)
+        text.append(f"{full_key} requires a value parseable by {qualname(parser)}")
+    else:
+        full_key = None
+    if option_doc and full_key:
         text.append(f"{full_key} docs: {option_doc}")
     if config_doc:
         text.append(f"Project docs: {config_doc}")
@@ -1256,6 +1257,40 @@ class ConfigManager:
         logger.debug("Found nothing--returning NO_VALUE")
         # Otherwise return NO_VALUE
         return NO_VALUE
+
+    def raise_configuration_error(self, msg: str) -> None:
+        """Convenience function for raising configuration errors.
+
+        This is helpful for situations where you need to do additional checking
+        of configuration values and need to raise a configuration error for the
+        user that includes the configuration documentation.
+
+        For example::
+
+            from everett.manager import ConfigManager
+
+            config = ConfigManager.basic_config()
+            host = config("host")
+            port = config("port")
+
+            if host is None or port is None:
+                config.raise_configuration_error(
+                    "Both HOST and PORT must be specified."
+                )
+
+        :param msg: the configuration error message
+
+        """
+
+        msg = self.msg_builder(
+            namespace=None,
+            key=None,
+            parser=None,
+            msg=msg,
+            option_doc=None,
+            config_doc=self.doc,
+        )
+        raise ConfigurationError(msg)
 
     def __repr__(self) -> str:
         if self.bound_component:
