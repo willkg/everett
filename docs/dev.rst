@@ -1,9 +1,9 @@
-=======
-Hacking
-=======
+==================
+Developing Everett
+==================
 
-Install for hacking
-===================
+Install for development
+=======================
 
 Run::
 
