@@ -130,7 +130,7 @@ class ConfigYamlEnv:
                 break
 
         if not self.path:
-            logger.debug("No YAML file found: %s", possible_paths)
+            logger.debug(f"No YAML file found: {possible_paths}")
 
     def parse_yaml_file(self, path: str) -> Dict:
         """Parse yaml file at ``path`` and return a dict."""
@@ -172,4 +172,4 @@ class ConfigYamlEnv:
         return get_key_from_envs(self.cfg, full_key)
 
     def __repr__(self) -> str:
-        return "<ConfigYamlEnv: %s>" % self.path
+        return f"<ConfigYamlEnv: {self.path}>"

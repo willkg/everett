@@ -145,7 +145,7 @@ class ConfigIniEnv:
                 break
 
         if not self.path:
-            logger.debug("No INI file found: %s", possible_paths)
+            logger.debug(f"No INI file found: {possible_paths}")
 
     def parse_ini_file(self, path: str) -> Dict:
         """Parse ini file at ``path`` and return dict."""
@@ -177,4 +177,4 @@ class ConfigIniEnv:
         return get_key_from_envs(self.cfg, full_key)
 
     def __repr__(self) -> str:
-        return "<ConfigIniEnv: %s>" % self.path
+        return f"<ConfigIniEnv: {self.path}>"
