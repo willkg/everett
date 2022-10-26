@@ -1,6 +1,31 @@
 History
 =======
 
+3.1.0 (October 26th, 2022)
+--------------------------
+
+Fixes and features:
+
+* Add support for Python 3.11. (#187)
+
+* Add ``raise_configuration_error`` method on ``ConfigManager``. (#185)
+
+* Improve ``automoduleconfig`` to walk the whole AST and document configuration
+  set by assign::
+
+      SOMEVAR = _config("somevar")
+
+  and dict::
+     
+      SOMEGROUP = {
+          "SOMEVAR": _config("somevar"),
+      }
+
+  (#184)
+
+* Fix options not showing up on ReadTheDocs. (#186)
+
+
 3.0.0 (January 13th, 2022)
 --------------------------
 

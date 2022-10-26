@@ -1,10 +1,10 @@
 include *.rst
 include tox.ini
 include requirements-dev.txt
+include requirements-flake8.txt
 include Makefile
 include LICENSE
 include .readthedocs.yaml
-include docs/requirements.txt
 recursive-include docs *.rst
 recursive-include docs *.py
 recursive-include docs Makefile
