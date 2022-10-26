@@ -5,15 +5,21 @@ Developing Everett
 Install for development
 =======================
 
-Run::
+Clone the repository::
 
-    # Clone the repository
     $ git clone https://github.com/willkg/everett
 
-    # Create a virtualenvironment
+Create and activate a virtualenvironment::
+
     $ mkvirtualenv everett
 
-    # Install Everett and dev requirements
+    OR
+
+    $ python -m venv venv
+    $ . ./venv/bin/activate
+
+Install Everett and dev requirements into virtual environment::
+
     $ pip install -r requirements-dev.txt
 
 
@@ -52,8 +58,10 @@ Release process
 7. Update PyPI::
 
        $ rm -rf dist/*
-       $ python setup.py sdist bdist_wheel
-       $ twine upload dist/*
+       $ python -m build
+       $ twine upload -r REPO dist/*
+
+   Make sure ``REPO`` matches a section in your ``~/.pypyrc`` file.
 
 8. Push everything::
 
