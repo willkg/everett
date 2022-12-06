@@ -1,7 +1,13 @@
 ---
 name: CI
 
-on: [push]
+on:
+  push:
+    branches:
+      - 'main'
+  pull_request:
+    branches:
+      - 'main'
 
 jobs:
   build:
@@ -14,10 +20,10 @@ jobs:
 
     name: Python ${{ matrix.python-version}}
     steps:
-      - uses: actions/checkout@v2.3.5
+      - uses: actions/checkout@v3.1.0
 
       - name: Set up Python
-        uses: actions/setup-python@v2.2.2
+        uses: actions/setup-python@v4.3.0
         with:
           python-version: ${{ matrix.python-version }}
 
