@@ -519,6 +519,14 @@ def test_default_must_be_string():
         assert config("DOESNOTEXIST", default=True)
 
 
+def test_default_if_unset():
+    config = ConfigManager.from_dict({"FOO": ""})
+
+    assert config("FOO", default="5", parser=int) == 5
+    with pytest.raises(InvalidValueError):
+        assert config("FOO", default="5", parser=int, default_if_unset=False)
+
+
 def test_with_namespace():
     config = ConfigManager(
         [ConfigDictEnv({"FOO_BAR": "foobaz", "BAR": "baz", "BAT": "bat"})]
