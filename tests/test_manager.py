@@ -519,12 +519,13 @@ def test_default_must_be_string():
         assert config("DOESNOTEXIST", default=True)
 
 
-def test_default_if_unset():
+def test_default_if_empty():
     config = ConfigManager.from_dict({"FOO": ""})
 
     assert config("FOO", default="5", parser=int) == 5
+    assert config("FOO", default="5", parser=int, default_if_empty=True) == 5
     with pytest.raises(InvalidValueError):
-        assert config("FOO", default="5", parser=int, default_if_unset=False)
+        assert config("FOO", default="5", parser=int, default_if_empty=False)
 
 
 def test_with_namespace():
