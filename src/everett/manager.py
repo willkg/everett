@@ -1063,7 +1063,7 @@ class ConfigManager:
         key: str,
         namespace: Union[List[str], str, None] = None,
         default: Union[str, NoValue] = NO_VALUE,
-        default_if_unset: bool = True,
+        default_if_empty: bool = True,
         alternate_keys: Optional[List[str]] = None,
         doc: str = "",
         parser: Callable = str,
@@ -1085,8 +1085,8 @@ class ConfigManager:
             If this ConfigManager is bound to a component, the default will be
             the default of the option in the bound component configuration.
 
-        :param default_if_unset: if True, treat empty string values as a
-            non-value and use the default if specified
+        :param default_if_empty: if True, treat empty string values as a
+            non-value and return the specified default
 
         :param alternate_keys: the list of alternate keys to look up;
             supports a ``root:`` key prefix which will cause this to look at
@@ -1193,9 +1193,9 @@ class ConfigManager:
             for env in self.envs:
                 val = env.get(possible_key, use_namespace)
 
-                # If the value is the empty string and default_if_unset, treat
-                # it as a non-value
-                if val == "" and default_if_unset:
+                # If the value is the empty string and default_if_empty is
+                # True, treat it as a non-value
+                if val == "" and default_if_empty:
                     val = NO_VALUE
 
                 if val is not NO_VALUE:
