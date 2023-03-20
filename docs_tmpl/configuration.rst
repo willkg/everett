@@ -135,7 +135,7 @@ That last line comes directly from the ``doc`` argument you provide.
 
 
 .. automethod:: everett.manager.ConfigManager.__call__
-
+   :noindex:
 
 .. autoclass:: everett.ConfigurationError
    :noindex:

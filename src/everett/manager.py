@@ -376,12 +376,15 @@ def parse_data_size(val: str) -> Any:
 
     * b - bytes
     * decimal:
+
       * kb - kilobytes
       * mb - megabytes
       * gb - gigabytes
       * tb - terabytes
       * pb - petabytes
+
     * binary:
+
       * kib - kibibytes
       * mib - mebibytes
       * gib - gibibytes
