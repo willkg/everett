@@ -32,6 +32,7 @@ from everett.manager import (
     parse_bool,
     parse_class,
     parse_data_size,
+    parse_time_period,
     parse_env_file,
     qualname,
 )
@@ -187,8 +188,11 @@ def test_parse_class():
     "text, expected",
     [
         ("0", 0),
+        ("1_000", 1_000),
         # decimal
         ("10b", 10),
+        ("  10b  ", 10),
+        ("1_000b", 1_000),
         ("1kb", 1_000),
         ("10kb", 10_000),
         ("5mb", 5_000_000),
@@ -203,6 +207,36 @@ def test_parse_class():
 )
 def test_parse_data_size(text, expected):
     assert parse_data_size(text) == expected
+
+
+@pytest.mark.parametrize("text", ["", "gb", "15yy"])
+def test_parse_data_size_bad_values(text):
+    with pytest.raises(ValueError):
+        parse_data_size(text)
+
+
+@pytest.mark.parametrize(
+    "text, expected",
+    [
+        ("15", 15),
+        ("1_000", 1_000),
+        ("1s", 1),
+        ("10m", 600),
+        ("1_000m", 60_000),
+        ("10m3s", 603),
+        ("1d10m", 87_000),
+        ("1w2d", 777_600),
+        ("  1w 2d  ", 777_600),
+    ],
+)
+def test_parse_time_period(text, expected):
+    assert parse_time_period(text) == expected
+
+
+@pytest.mark.parametrize("text", ["", "m", "10j"])
+def test_parse_time_period_bad_values(text):
+    with pytest.raises(ValueError):
+        parse_time_period(text)
 
 
 def test_parse_class_config():

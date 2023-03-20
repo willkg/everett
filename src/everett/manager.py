@@ -53,6 +53,8 @@ __all__ = [
     "get_runtime_config",
     "parse_bool",
     "parse_class",
+    "parse_data_size",
+    "parse_time_period",
     "parse_env_file",
 ]
 
@@ -356,7 +358,7 @@ _DATA_SIZE_METRIC_TO_MULTIPLIER = {
     "tib": pow(1_024, 4),
 }
 _DATA_SIZE_RE = re.compile(
-    r"^([0-9]+)(" + "|".join(_DATA_SIZE_METRIC_TO_MULTIPLIER.keys()) + ")?$"
+    r"^([0-9_]+)(" + "|".join(_DATA_SIZE_METRIC_TO_MULTIPLIER.keys()) + ")?$"
 )
 
 
@@ -389,17 +391,72 @@ def parse_data_size(val: str) -> Any:
     The metrics are not case sensitive--it supports upper, lower, and mixed case.
 
     >>> from everett.manager import parse_data_size
+    >>> parse_data_size("40_000_000")
+    40000000
     >>> parse_data_size("40gb")
     40000000000
     >>> parse_data_size("20KiB")
     20480
 
     """
-    match = _DATA_SIZE_RE.match(val.lower())
+    fixed_val = val.lower().strip()
+    try:
+        return int(fixed_val)
+    except ValueError:
+        pass
+
+    match = _DATA_SIZE_RE.match(fixed_val)
     if not match:
         raise ValueError(f"{val!r} is not a valid data size")
     amount, metric = match.groups()
     return int(amount) * _DATA_SIZE_METRIC_TO_MULTIPLIER[metric]
+
+
+_TIME_UNIT_TO_MULTIPLIER = {
+    "w": 7 * 24 * 60 * 60,
+    "d": 24 * 60 * 60,
+    "h": 60 * 60,
+    "m": 60,
+    "s": 1,
+}
+_TIME_RE = re.compile(r"([0-9_]+)([" + "".join(_TIME_UNIT_TO_MULTIPLIER.keys()) + r"])")
+
+
+def parse_time_period(val: str) -> Any:
+    """Parse a string denoting a time period into a number of seconds.
+
+    Units:
+
+    * w - week
+    * d - day
+    * h - hour
+    * m - minute
+    * s - second
+
+    >>> from everett.manager import parse_time_period
+    >>> parse_time_period("103")
+    103
+    >>> parse_time_period("1_000m")
+    60000
+    >>> parse_time_period("15m4s")
+    904
+
+    """
+    fixed_val = val.lower().strip()
+    try:
+        return int(fixed_val)
+    except ValueError:
+        pass
+
+    parts = _TIME_RE.findall(fixed_val)
+    if not parts:
+        raise ValueError(f"{val!r} is not a valid time period")
+
+    total = 0
+    for part in parts:
+        amount, unit = part
+        total = total + (int(amount) * _TIME_UNIT_TO_MULTIPLIER[unit])
+    return total
 
 
 def get_parser(parser: Callable) -> Callable:
