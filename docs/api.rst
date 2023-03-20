@@ -38,6 +38,7 @@ Parsers:
 
 * :py:func:`everett.manager.parse_bool`
 * :py:func:`everett.manager.parse_class`
+* :py:func:`everett.manager.parse_data_size`
 * :py:func:`everett.manager.ListOf`
 
 

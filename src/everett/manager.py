@@ -268,31 +268,6 @@ def traverse_tree(
     return options
 
 
-def parse_bool(val: str) -> bool:
-    """Parse a bool value.
-
-    Handles a series of values, but you should probably standardize on
-    "true" and "false".
-
-    >>> from everett.manager import parse_bool
-    >>> parse_bool("y")
-    True
-    >>> parse_bool("FALSE")
-    False
-
-    """
-    true_vals = ("t", "true", "yes", "y", "1", "on")
-    false_vals = ("f", "false", "no", "n", "0", "off")
-
-    val = val.lower()
-    if val in true_vals:
-        return True
-    if val in false_vals:
-        return False
-
-    raise ValueError(f"{val!r} is not a valid bool value")
-
-
 def parse_env_file(envfile: Iterable[str]) -> Dict:
     """Parse the content of an iterable of lines as ``.env``.
 
@@ -324,6 +299,31 @@ def parse_env_file(envfile: Iterable[str]) -> Dict:
     return data
 
 
+def parse_bool(val: str) -> bool:
+    """Parse a bool value.
+
+    Handles a series of values, but you should probably standardize on
+    "true" and "false".
+
+    >>> from everett.manager import parse_bool
+    >>> parse_bool("y")
+    True
+    >>> parse_bool("FALSE")
+    False
+
+    """
+    true_vals = ("t", "true", "yes", "y", "1", "on")
+    false_vals = ("f", "false", "no", "n", "0", "off")
+
+    val = val.lower()
+    if val in true_vals:
+        return True
+    if val in false_vals:
+        return False
+
+    raise ValueError(f"{val!r} is not a valid bool value")
+
+
 def parse_class(val: str) -> Any:
     """Parse a string, imports the module and returns the class.
 
@@ -341,6 +341,65 @@ def parse_class(val: str) -> Any:
         return getattr(module, class_name)
     except AttributeError:
         raise ValueError(f"{class_name!r} is not a valid member of {qualname(module)}")
+
+
+_DATA_SIZE_METRIC_TO_MULTIPLIER = {
+    "": 1,
+    "b": 1,
+    "kb": 1_000,
+    "mb": pow(1_000, 2),
+    "gb": pow(1_000, 3),
+    "tb": pow(1_000, 4),
+    "kib": 1_024,
+    "mib": pow(1_024, 2),
+    "gib": pow(1_024, 3),
+    "tib": pow(1_024, 4),
+}
+_DATA_SIZE_RE = re.compile(
+    r"^([0-9]+)(" + "|".join(_DATA_SIZE_METRIC_TO_MULTIPLIER.keys()) + ")?$"
+)
+
+
+def parse_data_size(val: str) -> Any:
+    """Parse a string denoting a data size into an int of bytes.
+
+    This allows you to parse data sizes with a number and then the metric. Examples:
+
+    * 10b - 10 bytes
+    * 100kb - 100 kilobytes = 100 * 1000
+    * 40gb - 40 gigabytes = 40 * 1000^3
+    * 23gib - 40 gibibytes = 23 * 1024^3
+
+    Supported metrics:
+
+    * b - bytes
+    * decimal:
+      * kb - kilobytes
+      * mb - megabytes
+      * gb - gigabytes
+      * tb - terabytes
+      * pb - petabytes
+    * binary:
+      * kib - kibibytes
+      * mib - mebibytes
+      * gib - gibibytes
+      * tib - tebibytes
+      * pib - pebibytes
+
+    The metrics are not case sensitive--it supports upper, lower, and mixed case.
+
+    >>> from everett.manager import parse_data_size
+    >>> parse_data_size("40gb")
+    40000000000
+    >>> parse_data_size("20KiB")
+    20480
+
+    """
+    match = _DATA_SIZE_RE.match(val.lower())
+    if not match:
+        raise ValueError(f"{val!r} is not a valid data size")
+    amount, metric = match.groups()
+    return int(amount) * _DATA_SIZE_METRIC_TO_MULTIPLIER[metric]
 
 
 def get_parser(parser: Callable) -> Callable:

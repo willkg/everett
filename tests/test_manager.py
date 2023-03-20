@@ -31,6 +31,7 @@ from everett.manager import (
     listify,
     parse_bool,
     parse_class,
+    parse_data_size,
     parse_env_file,
     qualname,
 )
@@ -180,6 +181,28 @@ def test_parse_class():
     from hashlib import md5
 
     assert parse_class("hashlib.md5") == md5
+
+
+@pytest.mark.parametrize(
+    "text, expected",
+    [
+        ("0", 0),
+        # decimal
+        ("10b", 10),
+        ("1kb", 1_000),
+        ("10kb", 10_000),
+        ("5mb", 5_000_000),
+        ("7gb", 7_000_000_000),
+        ("32tb", 32_000_000_000_000),
+        # binary
+        ("10kib", 10_240),
+        ("2MiB", 2_097_152),
+        ("17gib", 18_253_611_008),
+        ("4tib", 4_398_046_511_104),
+    ],
+)
+def test_parse_data_size(text, expected):
+    assert parse_data_size(text) == expected
 
 
 def test_parse_class_config():
