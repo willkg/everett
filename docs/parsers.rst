@@ -79,11 +79,22 @@ specifying a module and class and returns the class.
 
 
 data size
-----------
+---------
 
 Everett provides a ``everett.manager.parse_data_size`` that takes a string
 specifying an amount and a data size metric (e.g. kb, kib, tb, etc) and returns
 the amount of bytes that represents.
+
+.. autofunction:: everett.manager.parse_data_size
+   :noindex:
+
+
+time period
+-----------
+
+Everett provides a ``everett.manager.parse_time_period`` that takes a string
+specifying a period of time and returns the total number of seconds represented
+by that period.
 
 .. autofunction:: everett.manager.parse_data_size
    :noindex:
