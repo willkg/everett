@@ -78,6 +78,17 @@ specifying a module and class and returns the class.
    :noindex:
 
 
+data size
+----------
+
+Everett provides a ``everett.manager.parse_data_size`` that takes a string
+specifying an amount and a data size metric (e.g. kb, kib, tb, etc) and returns
+the amount of bytes that represents.
+
+.. autofunction:: everett.manager.parse_data_size
+   :noindex:
+
+
 ListOf(parser)
 --------------
 
