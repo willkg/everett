@@ -46,16 +46,18 @@ Release process
 5. Verify correctness.
 
    1. Check the manifest: ``check-manifest``
-   2. Run tests: ``make test``
-   3. Build docs (this runs example code): ``make docs``
+   2. Run tests and linting: ``make test``
+   3. Build docs and verify example code: ``make docs``
 
-6. Tag the release::
+6. Land any changes.
+
+7. Tag the release::
 
        $ git tag --sign v1.0.0
 
    Copy the details from ``HISTORY.rst`` into the tag comment.
 
-7. Update PyPI::
+8. Update PyPI::
 
        $ rm -rf dist/*
        $ python -m build
@@ -63,8 +65,8 @@ Release process
 
    Make sure ``REPO`` matches a section in your ``~/.pypyrc`` file.
 
-8. Push everything::
+9. Push everything::
 
        $ git push --tags origin main
 
-9. Announce the release.
+10. Announce the release.
