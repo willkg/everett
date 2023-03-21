@@ -735,6 +735,7 @@ def test_namespace_and_options():
 
 def test_options_and_namespace():
     """Verify options and then namespace works"""
+
     # NOTE(willkg): This doesn't make sense to me, but there's no technical
     # reason it shouldn't work.
     class App:
