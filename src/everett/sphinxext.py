@@ -64,6 +64,7 @@ def get_module_and_objpath(path: str) -> Any:
     :returns: "a.b.c" module and "Class"
 
     """
+    module = None
     parts = path.split(".")
 
     # Figure out the module
@@ -92,6 +93,8 @@ def import_class(clspath: str) -> Any:
 
     """
     module, objpath = get_module_and_objpath(clspath)
+    if module is None:
+        raise ValueError(f"{clspath!r} does not point to a valid thing")
 
     obj = module
     for part in objpath.split(","):
@@ -785,6 +788,9 @@ class AutoModuleConfigDirective(ConfigDirective):
         clspath = self.arguments[0]
 
         module, objpath = get_module_and_objpath(clspath)
+        if module is None:
+            raise ValueError(f"{clspath!r} does not point to a valid thing")
+
         filepath = module.__file__
         variable_name = objpath
 

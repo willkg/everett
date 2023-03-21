@@ -816,6 +816,21 @@ class Test_automoduleconfig:
             """
         )
 
+    def test_import_error(self, tmpdir, capsys):
+        rst = dedent(
+            """\
+            .. automoduleconfig:: badpath
+            """
+        )
+
+        with pytest.raises(RuntimeError):
+            run_sphinx(tmpdir, rst)
+
+            captured = capsys.readouterr()
+            assert (
+                "ValueError: 'badpath' does not point to a valid thing" in captured.err
+            )
+
 
 class Test_everett_option:
     def test_basic(self, tmpdir, capsys):
