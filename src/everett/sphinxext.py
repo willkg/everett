@@ -324,7 +324,6 @@ class EverettDomain(Domain):
         node: pending_xref,
         contnode: nodes.Element,
     ) -> Optional[nodes.Element]:
-
         objtypes = self.objtypes_for_role(typ) or []
         for objtype in objtypes:
             if (objtype, target) in self.objects:
@@ -362,7 +361,6 @@ class ConfigDirective(Directive):
         option_data: List[Dict],
         more_content: Any,
     ) -> None:
-
         indent = "   "
 
         # Add the classname or 'Configuration'
