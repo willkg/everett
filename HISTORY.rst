@@ -1,6 +1,41 @@
 History
 =======
 
+3.2.0 (March 21st, 2023)
+------------------------
+
+Fixes and features:
+
+* Implement ``default_if_empty`` argument which will return the default value
+  (if specified) if the value is the empty string. (#205)
+
+* Implement ``parse_time_period`` parser for converting time periods like "10m4s"
+  into the total number of seconds that represents.
+
+  ::
+
+      >>> from everett.manager import parse_time_period
+      >>> parse_time_period("4m")
+      240
+
+  (#203)
+
+* Implement ``parse_data_size`` parser for converting values like "40gb" into
+  the total number of bytes that represents.
+
+  ::
+
+      >>> from everett.manager import parse_data_size
+      >>> parse_time_period("40gb")
+      40000000000
+
+  (#204)
+
+* Fix an ``UnboundLocalError`` when using ``automoduleconfig`` and providing a
+  Python dotted path to a thing that either kicks up an ``ImportError`` or
+  doesn't exist. Now it raises a more helpful error. (#201)
+
+
 3.1.0 (October 26th, 2022)
 --------------------------
 
