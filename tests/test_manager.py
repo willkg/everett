@@ -297,8 +297,8 @@ class TestConfigObjEnv:
             pass
 
         obj = Namespace()
-        setattr(obj, "foo", "bar")
-        setattr(obj, "foo_baz", "bar")
+        setattr(obj, "foo", "bar")  # noqa
+        setattr(obj, "foo_baz", "bar")  # noqa
 
         coe = ConfigObjEnv(obj)
         assert coe.get("foo") == "bar"
