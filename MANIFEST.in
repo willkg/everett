@@ -1,7 +1,6 @@
 include *.rst
-include tox.ini
+include pyproject.toml
 include requirements-dev.txt
-include requirements-flake8.txt
 include Makefile
 include LICENSE
 include .readthedocs.yaml

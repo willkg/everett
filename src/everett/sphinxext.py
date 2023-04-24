@@ -26,7 +26,7 @@ from sphinx import addnodes
 from sphinx.addnodes import desc_signature, pending_xref
 from sphinx.directives import ObjectDescription
 from sphinx.domains import Domain, ObjType
-from sphinx.locale import _
+from sphinx.locale import _ as gettext
 from sphinx.roles import XRefRole
 from sphinx.util import ws_re
 from sphinx.util import logging
@@ -165,7 +165,7 @@ class EverettOption(ObjectDescription):
 
             objects[key] = (self.env.docname, targetname)
 
-        indextext = _("%s (component)") % name
+        indextext = gettext("%s (component)") % name
         if self.indexnode is not None:
             self.indexnode["entries"].append(
                 ("single", indextext, targetname, "", None)
@@ -206,7 +206,7 @@ class EverettComponent(ObjectDescription):
         Field(
             "options",
             names=("option",),
-            label=_("Options"),
+            label=gettext("Options"),
             rolename="option",
         )
     ]
@@ -261,7 +261,7 @@ class EverettComponent(ObjectDescription):
                 )
             objects[key] = (self.env.docname, targetname)
 
-        indextext = _("%s (component)") % name
+        indextext = gettext("%s (component)") % name
         if self.indexnode is not None:
             self.indexnode["entries"].append(
                 ("single", indextext, targetname, "", None)
@@ -282,8 +282,8 @@ class EverettDomain(Domain):
     label = "Everett"
 
     object_types = {
-        "component": ObjType(_("component"), "component"),
-        "option": ObjType(_("option"), "option"),
+        "component": ObjType(gettext("component"), "component"),
+        "option": ObjType(gettext("option"), "option"),
     }
     directives = {
         "component": EverettComponent,
@@ -474,7 +474,7 @@ class AutoComponentConfigDirective(ConfigDirective):
         options: List[Dict] = []
 
         # Go through options and figure out relevant information
-        for key, (option, cls) in config.items():
+        for key, (option, _) in config.items():
             if namespace:
                 namespaced_key = namespace + "_" + key
             else:

@@ -17,11 +17,11 @@ TEXT_TO_LOGGING_LEVEL = {
 def parse_loglevel(value):
     try:
         return TEXT_TO_LOGGING_LEVEL[value.upper()]
-    except KeyError:
+    except KeyError as exc:
         raise ValueError(
             f'"{value}" is not a valid logging level. Try CRITICAL, ERROR, '
             "WARNING, INFO, DEBUG"
-        )
+        ) from exc
 
 
 class AppConfig:

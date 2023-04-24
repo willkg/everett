@@ -13,8 +13,8 @@ test:  ## Run tests, linting, and static typechecking
 .PHONY: lint
 lint:  ## Lint and black reformat files
 	# NOTE(willkg): Make sure this matches what's in tox.ini.
-	black --target-version=py37 --line-length=88 src setup.py tests docs examples
-	tox -e py37-flake8
+	black src setup.py tests docs examples
+	tox -e py37-lint
 
 .PHONY: clean
 clean:  ## Clean build artifacts

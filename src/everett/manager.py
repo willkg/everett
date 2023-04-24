@@ -213,18 +213,18 @@ def get_config_for_class(cls: Type) -> Dict[str, Tuple[Option, Type]]:
 
     """
     options = {}
-    for cls in reversed(cls.__mro__):
-        if not hasattr(cls, "Config"):
+    for subcls in reversed(cls.__mro__):
+        if not hasattr(subcls, "Config"):
             continue
 
-        cls_config = cls.Config
-        for attr in cls_config.__dict__.keys():
+        subcls_config = subcls.Config
+        for attr in subcls_config.__dict__.keys():
             if attr.startswith("__"):
                 continue
 
-            val = getattr(cls_config, attr)
+            val = getattr(subcls_config, attr)
             if isinstance(val, Option):
-                options[attr] = (val, cls)
+                options[attr] = (val, subcls)
     return options
 
 
@@ -341,8 +341,10 @@ def parse_class(val: str) -> Any:
     module = importlib.import_module(module_name)
     try:
         return getattr(module, class_name)
-    except AttributeError:
-        raise ValueError(f"{class_name!r} is not a valid member of {qualname(module)}")
+    except AttributeError as exc:
+        raise ValueError(
+            f"{class_name!r} is not a valid member of {qualname(module)}"
+        ) from exc
 
 
 _DATA_SIZE_METRIC_TO_MULTIPLIER = {
@@ -1274,11 +1276,11 @@ class ConfigManager:
         if self.bound_component:
             try:
                 option, cls = self.bound_component_options[key]
-            except KeyError:
+            except KeyError as exc:
                 if raise_error:
                     raise InvalidKeyError(
                         f"{key!r} is not a valid key for this component"
-                    )
+                    ) from exc
                 return None
 
             default = option.default
@@ -1326,7 +1328,7 @@ class ConfigManager:
                         # Re-raise ConfigurationError and friends since that's
                         # what we want to be raising.
                         raise
-                    except Exception:
+                    except Exception as exc:
                         exc_type, exc_value, exc_traceback = sys.exc_info()
                         exc_type_name = exc_type.__name__ if exc_type else "None"
 
@@ -1339,7 +1341,7 @@ class ConfigManager:
                             config_doc=self.doc,
                         )
 
-                        raise InvalidValueError(msg, namespace, key, parser)
+                        raise InvalidValueError(msg, namespace, key, parser) from exc
 
         # Return the default if there is one
         if default is not NO_VALUE:
@@ -1353,7 +1355,7 @@ class ConfigManager:
                 # Re-raise ConfigurationError and friends since that's
                 # what we want to be raising.
                 raise
-            except Exception:
+            except Exception as exc:
                 # FIXME(willkg): This is a programmer error--not a user
                 # configuration error. We might want to denote that better.
                 exc_type, exc_value, exc_traceback = sys.exc_info()
@@ -1368,7 +1370,7 @@ class ConfigManager:
                     config_doc=self.doc,
                 )
 
-                raise InvalidValueError(msg, namespace, key, parser)
+                raise InvalidValueError(msg, namespace, key, parser) from exc
 
         # No value specified and no default, so raise an error to the user
         if raise_error:
