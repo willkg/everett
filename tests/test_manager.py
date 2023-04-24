@@ -263,9 +263,6 @@ def test_get_parser():
     assert get_parser(bool) == parse_bool
     assert get_parser(str) == str
 
-    # Note: I'd like to do this with a lambda, but flake8 has a bug where it
-    # complains about assigning lambdas to a varaible and doing "noqa" doesn't
-    # work.
     def foo():
         pass
 
