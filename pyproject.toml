@@ -16,7 +16,7 @@ docstring-quotes = "double"
 
 [tool.black]
 line-length = 88
-target-version = ["py37"]
+target-version = ["py38"]
 
 [tool.mypy]
 python_version = "3.8"
@@ -45,11 +45,17 @@ filterwarnings = [
 [tool.tox]
 legacy_tox_ini = """
 [tox]
-envlist = py37,py38,py39,py310,py311,py37-doctest,py37-lint,py38-typecheck
+envlist =
+    py38
+    py39
+    py310
+    py311
+    py38-doctest
+    py38-lint
+    py38-typecheck
 
 [gh-actions]
 python =
-    3.7: py37
     3.8: py38
     3.9: py39
     3.10: py310
@@ -59,12 +65,12 @@ python =
 deps = -rrequirements-dev.txt
 commands = pytest {posargs} tests/
 
-[testenv:py37-doctest]
+[testenv:py38-doctest]
 deps = -rrequirements-dev.txt
 commands = pytest --doctest-modules src/
 
-[testenv:py37-lint]
-basepython = python3.7
+[testenv:py38-lint]
+basepython = python3.8
 changedir = {toxinidir}
 commands =
     black --check src setup.py tests docs examples

@@ -1,6 +1,18 @@
 History
 =======
 
+3.3.0 (in development)
+----------------------
+
+Backwards incompatible changes:
+
+* Dropped support for Python 3.7. (#220)
+
+Fixes and features:
+
+None
+
+
 3.2.0 (March 21st, 2023)
 ------------------------
 
