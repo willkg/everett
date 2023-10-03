@@ -24,6 +24,7 @@ def get_file(fn):
 
 INSTALL_REQUIRES = []
 EXTRAS_REQUIRE = {
+    "sphinx": ["sphinx"],
     "ini": ["configobj"],
     "yaml": ["PyYAML"],
 }
@@ -56,6 +57,9 @@ setup(
         "Programming Language :: Python :: 3.9",
         "Programming Language :: Python :: 3.10",
         "Programming Language :: Python :: 3.11",
+        "Programming Language :: Python :: 3.12",
+        "Programming Language :: Python :: Implementation :: CPython",
+        "Topic :: Software Development :: Libraries :: Python Modules",
     ],
     project_urls={
         "Documentation": "https://everett.readthedocs.io/",

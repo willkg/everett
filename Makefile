@@ -14,7 +14,7 @@ test:  ## Run tests, linting, and static typechecking
 lint:  ## Lint and black reformat files
 	# NOTE(willkg): Make sure this matches what's in tox.ini.
 	black src setup.py tests docs examples
-	tox -e py37-lint
+	tox -e py38-lint
 
 .PHONY: clean
 clean:  ## Clean build artifacts
