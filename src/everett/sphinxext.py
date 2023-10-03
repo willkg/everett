@@ -2,7 +2,13 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-"""Sphinx extension for auto-documenting components with configuration."""
+"""Sphinx extension for auto-documenting components with configuration.
+
+To use this, you must install the optional requirements::
+
+    $ pip install 'everett[sphinx]'
+
+"""
 
 import ast
 from importlib import import_module
@@ -705,12 +711,12 @@ class AutoModuleConfigDirective(ConfigDirective):
                 # }
                 for key, val in zip(node.keys, node.values):
                     if (
-                        isinstance(key, ast.Str)
+                        isinstance(key, ast.Constant)
                         and isinstance(val, ast.Call)
                         and isinstance(val.func, ast.Name)
                         and val.func.id == variable_name
                     ):
-                        config_nodes.append((key.s, val))
+                        config_nodes.append((key.value, val))
 
         CONFIG_ARGS = [
             "key",

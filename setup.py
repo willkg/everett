@@ -24,6 +24,7 @@ def get_file(fn):
 
 INSTALL_REQUIRES = []
 EXTRAS_REQUIRE = {
+    "sphinx": ["sphinx"],
     "ini": ["configobj"],
     "yaml": ["PyYAML"],
 }

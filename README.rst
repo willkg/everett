@@ -54,13 +54,17 @@ Run::
 
 Some configuration environments require additional dependencies::
 
-
     # For INI support
     $ pip install 'everett[ini]'
 
     # for YAML support
     $ pip install 'everett[yaml]'
 
+Additionally, if you want to use the Sphinx extension to document
+your configuration, you need to add Sphinx::
+
+    # to use the Sphinx extension
+    $ pip install 'everett[sphinx]'
 
 Quick start
 ===========
