@@ -60,7 +60,7 @@ __all__ = [
 
 
 # Regex for valid keys in an env file
-ENV_KEY_RE = re.compile(r"^[a-z][a-z0-9_]*$", flags=re.IGNORECASE)
+ENV_KEY_RE = re.compile(r"^[a-z_][a-z0-9_]*$", flags=re.IGNORECASE)
 
 logger = logging.getLogger("everett")
 
