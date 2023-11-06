@@ -12,9 +12,9 @@ __author__ = "Will Kahn-Greene"
 __email__ = "willkg@mozilla.com"
 
 # yyyymmdd
-__releasedate__ = ""
+__releasedate__ = "20231106"
 # x.y.z or x.y.z.dev0
-__version__ = "3.3.0.dev0"
+__version__ = "3.3.0"
 
 
 __all__ = [
