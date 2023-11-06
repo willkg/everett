@@ -386,16 +386,40 @@ def test_ConfigEnvFileEnv(datadir):
     assert cefe.get("loglevel") is NO_VALUE
 
 
-def test_parse_env_file():
-    assert parse_env_file(["PLAN9=outerspace"]) == {"PLAN9": "outerspace"}
+@pytest.mark.parametrize(
+    "line, expected",
+    [
+        ("PLAN9=outerspace", {"PLAN9": "outerspace"}),
+        ('KEY="val"', {"KEY": "val"}),
+        ("KEY='val'", {"KEY": "val"}),
+        # Only strips outer-most quote
+        ("KEY=\"'val'\"", {"KEY": "'val'"}),
+        ("KEY='\"val\"'", {"KEY": '"val"'}),
+        (
+            "CSP_SCRIPT_SRC='self' www.googletagmanager.com",
+            {"CSP_SCRIPT_SRC": "'self' www.googletagmanager.com"},
+        ),
+        (
+            "CSP_SCRIPT_SRC=\"'self' www.googletagmanager.com\"",
+            {"CSP_SCRIPT_SRC": "'self' www.googletagmanager.com"},
+        ),
+    ],
+)
+def test_parse_env_file_line(line, expected):
+    assert parse_env_file([line]) == expected
+
+
+def test_parse_env_file_errors():
     with pytest.raises(ConfigurationError) as exc_info:
         parse_env_file(["3AMIGOS=infamous"])
     assert str(exc_info.value) == "Invalid variable name '3AMIGOS' in env file (line 1)"
+
     with pytest.raises(ConfigurationError) as exc_info:
         parse_env_file(["INVALID-CHAR=value"])
     assert str(exc_info.value) == (
         "Invalid variable name 'INVALID-CHAR' in env file (line 1)"
     )
+
     with pytest.raises(ConfigurationError) as exc_info:
         parse_env_file(["", "MISSING-equals"])
     assert str(exc_info.value) == "Env file line missing = operator (line 2)"
