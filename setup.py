@@ -35,6 +35,7 @@ setup(
     version=get_version(),
     description="Configuration library for Python applications",
     long_description=(get_file("README.rst") + "\n\n" + get_file("HISTORY.rst")),
+    long_description_content_type="text/x-rst",
     author="Will Kahn-Greene",
     author_email="willkg@mozilla.com",
     url="https://github.com/willkg/everett",
