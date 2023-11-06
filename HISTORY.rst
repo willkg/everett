@@ -10,7 +10,9 @@ Backwards incompatible changes:
 
 Fixes and features:
 
-None
+* Added support for Python 3.12 (#221)
+
+* Fix env file parsing in regards to quotes. (#230)
 
 
 3.2.0 (March 21st, 2023)
