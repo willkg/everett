@@ -295,7 +295,16 @@ def parse_env_file(envfile: Iterable[str]) -> Dict:
             raise ConfigurationError(
                 f"Invalid variable name {k!r} in env file (line {line_no + 1})"
             )
-        v = v.strip().strip("'\"")
+
+        v = v.strip()
+
+        # Need to strip matching ' and " from beginning and end--but only one
+        # round
+        for quote in "'\"":
+            if v.startswith(quote) and v.endswith(quote):
+                v = v[1:-1]
+                break
+
         data[k] = v
 
     return data
@@ -774,6 +783,9 @@ class ConfigEnvFileEnv:
         # database setup
         DB_HOST=localhost
         DB_PORT=5432
+
+        # CSP reporting
+        CSP_SCRIPT_SRC="'self' www.googletagmanager.com"
 
     """
 
