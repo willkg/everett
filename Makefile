@@ -10,10 +10,12 @@ help:
 test:  ## Run tests, linting, and static typechecking
 	tox
 
+.PHONY: format
+format:  ## Format files
+	tox exec -e py38-lint -- ruff format
+
 .PHONY: lint
-lint:  ## Lint and black reformat files
-	# NOTE(willkg): Make sure this matches what's in tox.ini.
-	black src setup.py tests docs examples
+lint:  ## Lint files
 	tox -e py38-lint
 
 .PHONY: clean
