@@ -212,7 +212,7 @@ That prints this:
     everett.InvalidValueError: Dear user. debug in section [main] is not correct. Please fix it.
 
 
-Trouble-shootinging and logging what happened
+Trouble-shooting and logging what happened
 =============================================
 
 If you have a non-trivial Everett configuration, it might be difficult to

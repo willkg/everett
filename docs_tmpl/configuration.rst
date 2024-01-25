@@ -251,7 +251,7 @@ That prints this:
     [[[end]]]
 
 
-Trouble-shootinging and logging what happened
+Trouble-shooting and logging what happened
 =============================================
 
 If you have a non-trivial Everett configuration, it might be difficult to
