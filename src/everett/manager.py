@@ -540,6 +540,10 @@ def get_key_from_envs(envs: Iterable[Any], key: str) -> Union[str, NoValue]:
 class ListOf:
     """Parse a comma-separated list of things.
 
+    After delimiting items, this strips the whitespace at the beginning and end
+    of each string. Then it passes each string into the parser to get the final
+    value.
+
     >>> from everett.manager import ListOf
     >>> ListOf(str)('')
     []
@@ -547,6 +551,8 @@ class ListOf:
     ['a', 'b', 'c', 'd']
     >>> ListOf(int)('1,2,3,4')
     [1, 2, 3, 4]
+    >>> ListOf(str)('1, 2  ,3,4')
+    ['1', '2', '3', '4']
 
     Note: This doesn't handle quotes or backslashes or any complicated string
     parsing.
@@ -565,7 +571,7 @@ class ListOf:
     def __call__(self, value: str) -> List[Any]:
         parser = get_parser(self.sub_parser)
         if value:
-            return [parser(token) for token in value.split(self.delimiter)]
+            return [parser(token.strip()) for token in value.split(self.delimiter)]
         else:
             return []
 
