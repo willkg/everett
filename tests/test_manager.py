@@ -274,6 +274,7 @@ def test_ListOf():
     assert ListOf(str)("foo") == ["foo"]
     assert ListOf(bool)("t,f") == [True, False]
     assert ListOf(int)("1,2,3") == [1, 2, 3]
+    assert ListOf(str)("1  , 2, 3") == ["1", "2", "3"]
     assert ListOf(int, delimiter=":")("1:2") == [1, 2]
 
 
