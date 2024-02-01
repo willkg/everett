@@ -593,6 +593,22 @@ class Test_automoduleconfig:
 
                   Woah.
 
+               long_description
+
+                  Parser:
+                     *str*
+
+                  Default:
+                     ""
+
+                  Required:
+                     No
+
+                  This configuration item has a really long description that spans
+                  several lines so we can test runtime string concatenation.
+
+                  Multiple lines should work, too.
+
                cache_location
 
                   Parser:
