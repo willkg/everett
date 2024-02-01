@@ -30,3 +30,13 @@ CACHES = {
         ),
     }
 }
+
+LONG_DESC = _config(
+    key="long_description",
+    default="",
+    doc=(
+        "This configuration item has a really long description that spans "
+        + "several lines so we can test runtime string concatenation.\n\n"
+        + "Multiple lines should work, too."
+    ),
+)

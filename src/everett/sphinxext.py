@@ -732,6 +732,10 @@ class AutoModuleConfigDirective(ConfigDirective):
                 return "constant", val.value
             if isinstance(val, ast.Name):
                 return "name", val.id
+            if isinstance(val, ast.BinOp) and isinstance(val.op, ast.Add):
+                _, left = extract_value(source, val.left)
+                _, right = extract_value(source, val.right)
+                return "binop", left + right
             return "unknown", get_value_from_ast_node(source, val)
 
         # Using a dict here avoids the case where configuration options are
