@@ -20,4 +20,4 @@ Create and activate a virtualenvironment::
 
 Install Everett and dev requirements into virtual environment::
 
-    $ pip install -r requirements-dev.txt
+    $ pip install -e '.[dev,ini,yaml,sphinx]'

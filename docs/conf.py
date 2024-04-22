@@ -57,7 +57,7 @@ exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 # The short X.Y version.
 version = everett.__version__
 # The full version with the release date.
-release = everett.__version__ + " " + everett.__releasedate__
+release = everett.__version__
 
 # The name of the Pygments (syntax highlighting) style to use.
 pygments_style = "sphinx"
