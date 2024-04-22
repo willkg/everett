@@ -1,6 +1,5 @@
 include *.rst
 include pyproject.toml
-include requirements-dev.txt
 include Makefile
 include LICENSE
 include .readthedocs.yaml

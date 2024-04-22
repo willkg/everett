@@ -34,11 +34,3 @@ docs:  ## Runs cog and builds Sphinx docs
 	make -C docs/ clean
 	make -C docs/ doctest
 	make -C docs/ html
-
-.PHONY: checkrot
-checkrot:  ## Check package rot for dev dependencies
-	python -m venv ./tmpvenv/
-	./tmpvenv/bin/pip install -U pip
-	./tmpvenv/bin/pip install -r requirements-dev.txt
-	./tmpvenv/bin/pip list -o
-	rm -rf ./tmpvenv/

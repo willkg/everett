@@ -5,16 +5,17 @@
 
 """Everett is a Python library for configuration."""
 
+from importlib.metadata import (
+    version as importlib_version,
+    PackageNotFoundError,
+)
 from typing import Callable, List, Union
 
 
-__author__ = "Will Kahn-Greene"
-__email__ = "willkg@mozilla.com"
-
-# yyyymmdd
-__releasedate__ = "20231106"
-# x.y.z or x.y.z.dev0
-__version__ = "3.3.0"
+try:
+    __version__ = importlib_version("everett")
+except PackageNotFoundError:
+    __version__ = "unknown"
 
 
 __all__ = [

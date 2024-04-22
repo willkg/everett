@@ -1,3 +1,62 @@
+[project]
+name = "everett"
+description = "Configuration library for Python applications"
+version = "3.3.0"
+readme = "README.rst"
+keywords = ["conf", "config", "configuration", "ini", "env", "yaml"]
+authors = [{name = "Will Kahn-Greene"}]
+license = {text = "MPLv2"}
+requires-python = ">=3.8"
+dependencies = []
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: Mozilla Public License 2.0 (MPL 2.0)",
+    "Natural Language :: English",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: Implementation :: CPython",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
+urls.Homepage = "https://everett.readthedocs.io/"
+urls.Source = "https://github.com/willkg/everett/"
+urls.Issues = "https://github.com/willkg/everett/issues"
+
+[project.optional-dependencies]
+sphinx = [
+    "sphinx",
+]
+ini = [
+    "configobj",
+]
+yaml = [
+    "PyYAML",
+]
+dev = [
+    "check-manifest",
+    "cogapp",
+    "mypy",
+    "pytest",
+    "ruff",
+    "tox",
+    "tox-gh-actions",
+    "twine",
+    "types-PyYAML",
+    "Sphinx==7.2.6; python_version > '3.8'",
+    "Sphinx==6.2.1; python_version <= '3.8'",
+    "sphinx_rtd_theme",
+]
+
+
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+
 [tool.ruff]
 # Enable pycodestyle (E), pyflakes (F), and bugbear (B) rules
 select = ["E", "F", "B"]
@@ -43,13 +102,13 @@ legacy_tox_ini = """
 [tox]
 envlist =
     py38
+    py38-doctest
+    py38-lint
+    py38-typecheck
     py39
     py310
     py311
     py312
-    py38-doctest
-    py38-lint
-    py38-typecheck
 
 [gh-actions]
 python =
@@ -60,19 +119,18 @@ python =
     3.12: py312
 
 [testenv]
-deps = -rrequirements-dev.txt
+extras = dev,ini,sphinx,yaml
 commands = pytest {posargs} tests/
 
 [testenv:py38-doctest]
-deps = -rrequirements-dev.txt
 commands = pytest --doctest-modules src/
 
 [testenv:py38-lint]
 basepython = python3.8
 changedir = {toxinidir}
 commands =
-    ruff format --check setup.py tests docs examples
-    ruff check src setup.py tests docs examples
+    ruff format --check tests docs examples
+    ruff check src tests docs examples
 
 [testenv:py38-typecheck]
 basepython = python3.8
