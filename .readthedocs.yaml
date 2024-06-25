@@ -19,4 +19,10 @@ sphinx:
 # Install dev requirements so that the documentation can build correctly
 python:
   install:
-    - requirements: requirements-dev.txt
+    - method: pip
+      path: .
+      extra_requirements:
+        - dev
+        - ini
+        - sphinx
+        - yaml
