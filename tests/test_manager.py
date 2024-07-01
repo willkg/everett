@@ -261,7 +261,7 @@ def test_parse_class_config():
 
 def test_get_parser():
     assert get_parser(bool) == parse_bool
-    assert get_parser(str) == str
+    assert get_parser(str) is str
 
     def foo():
         pass
@@ -516,7 +516,7 @@ def test_configurationmissingerror():
     )
     assert exc_info.value.namespace == ["foo"]
     assert exc_info.value.key == "DOESNOTEXISTNOWAY"
-    assert exc_info.value.parser == str
+    assert exc_info.value.parser is str
 
 
 def test_config_from_dict():
