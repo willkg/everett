@@ -23,6 +23,7 @@ __all__ = [
     "ConfigurationError",
     "DetailedConfigurationError",
     "InvalidKeyError",
+    "InvalidValueError",
     "ConfigurationMissingError",
 ]
 
@@ -78,6 +79,13 @@ class ConfigurationMissingError(DetailedConfigurationError):
 
 
 class InvalidValueError(DetailedConfigurationError):
-    """Error that indicates that the value is not valid."""
+    """Error that indicates that the value is not valid.
+
+    .. Note::
+
+       Parsers should not raise this exception. Parsers should raise ``ValueError``
+       when the value is not a valid value.
+
+    """
 
     pass
