@@ -44,6 +44,7 @@ dev = [
     "ruff",
     "tox",
     "tox-gh-actions",
+    "tox-uv",
     "twine",
     "types-PyYAML",
     "Sphinx==7.2.6; python_version > '3.8'",
@@ -110,6 +111,7 @@ envlist =
     py310
     py311
     py312
+uv_python_preference = only-managed
 
 [gh-actions]
 python =
@@ -127,6 +129,7 @@ commands = pytest {posargs} tests/
 commands = pytest --doctest-modules src/
 
 [testenv:py38-lint]
+allowlist_externals = ruff
 basepython = python3.8
 changedir = {toxinidir}
 commands =
