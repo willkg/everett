@@ -5,19 +5,19 @@ Developing Everett
 Install for development
 =======================
 
+Requirements:
+
+* `uv <https://docs.astral.sh/uv/>`__
+* `just <https://just.systems/>`__
+* `git <https://git-scm.com/>`__
+
 Clone the repository::
 
     $ git clone https://github.com/willkg/everett
 
-Create and activate a virtualenvironment::
+Create a dev environment::
 
-    $ mkvirtualenv everett
+    $ just devenv
 
-    OR
-
-    $ python -m venv venv
-    $ . ./venv/bin/activate
-
-Install Everett and dev requirements into virtual environment::
-
-    $ pip install -e '.[dev,ini,yaml,sphinx]'
+Development recipes are in ``justfile``. You can get a list with
+``just --list``.
