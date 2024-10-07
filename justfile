@@ -33,3 +33,9 @@ docs: devenv
     SPHINXBUILD={{sphinxbuild}} make -e -C docs/ clean
     SPHINXBUILD={{sphinxbuild}} make -e -C docs/ doctest
     SPHINXBUILD={{sphinxbuild}} make -e -C docs/ html
+
+build: devenv
+    rm -rf build/ dist/
+    uv run python -m build
+    uv run twine check dist/*
+    uv run check-manifest
