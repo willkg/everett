@@ -1,6 +1,8 @@
+sphinxbuild := "../.venv/bin/sphinx-build"
+
 # Build a development environment
 devenv:
-    uv sync --extra sphinx --extra ini --extra yaml --extra dev
+    uv sync --extra sphinx --extra ini --extra yaml --extra dev --refresh --upgrade
 
 # Run tests, linting, and static typechecking
 test: devenv
@@ -24,10 +26,10 @@ clean:
 
 # Runs cog and builds Sphinx docs
 docs: devenv
-    uv run python -m cogapp -d -o README.rst docs_tmpl/README.rst
-    uv run python -m cogapp -d -o docs/components.rst docs_tmpl/components.rst
-    uv run python -m cogapp -d -o docs/configmanager.rst docs_tmpl/configmanager.rst
-    uv run python -m cogapp -d -o docs/configuration.rst docs_tmpl/configuration.rst
-    make -C docs/ clean
-    make -C docs/ doctest
-    make -C docs/ html
+    uv run python -m cogapp -r README.rst
+    uv run python -m cogapp -r docs/components.rst
+    uv run python -m cogapp -r docs/configmanager.rst
+    uv run python -m cogapp -r docs/configuration.rst
+    SPHINXBUILD={{sphinxbuild}} make -e -C docs/ clean
+    SPHINXBUILD={{sphinxbuild}} make -e -C docs/ doctest
+    SPHINXBUILD={{sphinxbuild}} make -e -C docs/ html
