@@ -1,6 +1,6 @@
 include *.rst
 include pyproject.toml
-include Makefile
+include justfile
 include LICENSE
 include .readthedocs.yaml
 recursive-include docs *.rst
