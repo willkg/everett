@@ -60,23 +60,61 @@ For example:
 .. literalinclude:: ../examples/myserver.py
    :language: python
 
+Let's run that:
 
-Let's set ``DEBUG`` wrong and see what it tells us:
+.. [[[cog
+   import cog
+   import os
+   import subprocess
+   if os.path.exists(".env"):
+       os.remove(".env")
+   ret = subprocess.run(["python", "examples/myserver.py"], capture_output=True)
+   cog.outl("\n::\n")
+   cog.outl("   $ python myserver.py")
+   for line in ret.stdout.decode("utf-8").splitlines():
+       cog.outl(f"   {line}")
+   cog.outl()
+   ]]]
 
 ::
 
-    $ python myserver.py
-    host: localhost
-    port: 8000
-    debug_mode: False
+   $ python myserver.py
+   host: localhost
+   port: 8000
+   debug_mode: False
 
-    $ DEBUG=foo python myserver.py
-    <traceback>
-    everett.InvalidValueError: ValueError: 'foo' is not a valid bool value
-    DEBUG requires a value parseable by everett.manager.parse_bool
-    DEBUG docs: Set to True for debugmode; False for regular mode
-    Project docs: Check https://example.com/configuration for documentation.
+.. [[[end]]]
 
+Let's set ``DEBUG`` wrong and see what it tells us:
+
+.. [[[cog
+   import cog
+   import os
+   import subprocess
+   if os.path.exists(".env"):
+       os.remove(".env")
+   os.environ["DEBUG"] = "foo"
+   ret = subprocess.run(["python", "examples/myserver.py"], capture_output=True)
+   stderr = ret.stderr.decode("utf-8").strip()
+   stderr = stderr[stderr.find("everett.InvalidValueError"):]
+   cog.outl("\n::\n")
+   cog.outl("   $ DEBUG=foo python myserver.py")
+   cog.outl("   <traceback>")
+   for line in stderr.splitlines():
+       cog.outl(f"   {line}")
+   cog.outl()
+   ]]]
+
+::
+
+   $ DEBUG=foo python myserver.py
+   <traceback>
+   everett.InvalidValueError: ValueError: 'foo' is not a valid bool value
+   DEBUG requires a value parseable by everett.manager.parse_bool
+   DEBUG docs: Set to True for debugmode; False for regular mode
+   Project docs: Check https://example.com/configuration for documentation.
+
+.. [[[end]]]
 
 Here, we see the documentation for the ``DEBUG`` option, the documentation from
 the ``ConfigManager``, and the specific Python exception information.

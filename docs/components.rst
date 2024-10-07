@@ -38,13 +38,53 @@ Here's an example with an ``AppConfig``:
 .. literalinclude:: ../examples/component_appconfig.py
    :language: python
 
-Let's run it::
+Let's run it with the defaults:
 
-    $ python component_appconfig.py
-    debug: False
+.. [[[cog
+   import cog
+   import os
+   import subprocess
+   if os.path.exists(".env"):
+       os.remove(".env")
+   ret = subprocess.run(["python", "examples/component_appconfig.py"], capture_output=True)
+   cog.outl("\n::\n")
+   cog.outl("   $ python component_appconfig.py")
+   for line in ret.stdout.decode("utf-8").splitlines():
+       cog.outl(f"   {line}")
+   cog.outl()
+   ]]]
 
-    $ DEBUG=true python component_appconfig.py
-    debug: True
+::
+
+   $ python component_appconfig.py
+   debug: False
+
+.. [[[end]]]
+
+Now with ``DEBUG=true``:
+
+.. [[[cog
+   import cog
+   import os
+   import subprocess
+   if os.path.exists(".env"):
+       os.remove(".env")
+   os.environ["DEBUG"] = "true"
+   ret = subprocess.run(["python", "examples/component_appconfig.py"], capture_output=True)
+   cog.outl("\n::\n")
+   cog.outl("   $ DEBUG=true python component_appconfig.py")
+   for line in ret.stdout.decode("utf-8").splitlines():
+       cog.outl(f"   {line}")
+   cog.outl()
+   del os.environ["DEBUG"]
+   ]]]
+
+::
+
+   $ DEBUG=true python component_appconfig.py
+   debug: True
+
+.. [[[end]]]
 
 Let's run a Python shell and do some other things with it:
 
@@ -125,11 +165,27 @@ For example:
 
 That prints:
 
+.. [[[cog
+   import cog
+   import os
+   import subprocess
+   if os.path.exists(".env"):
+       os.remove(".env")
+   ret = subprocess.run(["python", "examples/components_subclass.py"], capture_output=True)
+   cog.outl("\n::\n")
+   cog.outl("   $ python components_subclass.py")
+   for line in ret.stdout.decode("utf-8").splitlines():
+       cog.outl(f"   {line}")
+   cog.outl()
+   ]]]
+
 ::
 
-    $ python components_subclass.py
-    foo_from_b
-    bar_from_a
+   $ python components_subclass.py
+   foo_from_b
+   bar_from_a
+
+.. [[[end]]]
 
 
 Getting configuration information for components

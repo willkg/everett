@@ -114,13 +114,34 @@ error.
 Example of error message for an option that specifies ``doc`` when trying to
 set ``DEBUG`` to ``foo``:
 
+.. [[[cog
+   import cog
+   import os
+   import subprocess
+   if os.path.exists(".env"):
+       os.remove(".env")
+   os.environ["DEBUG"] = "foo"
+   ret = subprocess.run(["python", "examples/myserver.py"], capture_output=True)
+   stderr = ret.stderr.decode("utf-8").strip()
+   stderr = stderr[stderr.find("everett.InvalidValueError"):]
+   cog.outl("\n::\n")
+   cog.outl("   $ python example.py")
+   cog.outl("   <traceback>")
+   for line in stderr.splitlines():
+       cog.outl(f"   {line}")
+   cog.outl()
+   ]]]
+
 ::
 
-    <traceback>
-    everett.InvalidValueError: ValueError: 'foo' is not a valid bool value
-    DEBUG requires a value parseable by everett.manager.parse_bool
-    DEBUG docs: Set to True for debugmode; False for regular mode
-    Project docs: Check https://example.com/configuration for documentation.
+   $ python example.py
+   <traceback>
+   everett.InvalidValueError: ValueError: 'foo' is not a valid bool value
+   DEBUG requires a value parseable by everett.manager.parse_bool
+   DEBUG docs: Set to True for debugmode; False for regular mode
+   Project docs: Check https://example.com/configuration for documentation.
+
+.. [[[end]]]
 
 That last line comes directly from the ``doc`` argument you provide.
 
@@ -155,10 +176,26 @@ in the "db" namespace:
 These variables in the environment would be ``DB_USERNAME``, ``DB_PASSWORD``
 and ``DB_PORT``.
 
+.. [[[cog
+   import cog
+   import os
+   import subprocess
+   if os.path.exists(".env"):
+       os.remove(".env")
+   ret = subprocess.run(["python", "examples/namespaces.py"], capture_output=True)
+   cog.outl("\n::\n")
+   cog.outl("   $ python namespaces.py")
+   for line in ret.stdout.decode("utf-8").splitlines():
+       cog.outl(f"   {line}")
+   cog.outl()
+   ]]]
+
 ::
 
-    $ python namespaces.py
-    Opened database with admin/ou812 on port 5432
+   $ python namespaces.py
+   Opened database with admin/ou812 on port 5432
+
+.. [[[end]]]
 
 
 This is helpful when you need to create two of the same thing, but using
@@ -170,11 +207,27 @@ configuration keys separated?
 .. literalinclude:: ../examples/namespaces2.py
    :language: python
 
+.. [[[cog
+   import cog
+   import os
+   import subprocess
+   if os.path.exists(".env"):
+       os.remove(".env")
+   ret = subprocess.run(["python", "examples/namespaces2.py"], capture_output=True)
+   cog.outl("\n::\n")
+   cog.outl("   $ python namespaces2.py")
+   for line in ret.stdout.decode("utf-8").splitlines():
+       cog.outl(f"   {line}")
+   cog.outl()
+   ]]]
+
 ::
 
-    $ python namespaces2.py
-    Opened database with admin/ou812 on port 5432
-    Opened database with admin/P9rwvnnj8CidECMb on port 5432
+   $ python namespaces2.py
+   Opened database with admin/ou812 on port 5432
+   Opened database with admin/P9rwvnnj8CidECMb on port 5432
+
+.. [[[end]]]
 
 
 Handling exceptions when extracting values
@@ -205,11 +258,32 @@ want to tailor the message accordingly.
 
 That prints this:
 
+.. [[[cog
+   import cog
+   import os
+   import subprocess
+   os.environ["DEBUG"] = "lizard"
+   if os.path.exists(".env"):
+       os.remove(".env")
+   ret = subprocess.run(["python", "examples/msg_builder.py"], capture_output=True)
+   stderr = ret.stderr.decode("utf-8").strip()
+   stderr = stderr[stderr.find("everett.InvalidValueError"):]
+   cog.outl("\n::\n")
+   cog.outl("   $ DEBUG=lizard python msg_builder.py")
+   cog.outl("   <traceback>")
+   for line in stderr.splitlines():
+       cog.outl(f"   {line}")
+   cog.outl()
+   del os.environ["DEBUG"]
+   ]]]
+
 ::
 
-    $ DEBUG=lizard python msg_builder.py
-    <traceback>
-    everett.InvalidValueError: Dear user. debug in section [main] is not correct. Please fix it.
+   $ DEBUG=lizard python msg_builder.py
+   <traceback>
+   everett.InvalidValueError: Dear user. debug in section [main] is not correct. Please fix it.
+
+.. [[[end]]]
 
 
 Trouble-shooting and logging what happened
