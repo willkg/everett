@@ -1,5 +1,8 @@
 sphinxbuild := "../.venv/bin/sphinx-build"
 
+@_default:
+    just --list
+
 # Build a development environment
 devenv:
     uv sync --extra sphinx --extra ini --extra yaml --extra dev --refresh --upgrade
