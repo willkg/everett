@@ -9,7 +9,7 @@ from importlib.metadata import (
     version as importlib_version,
     PackageNotFoundError,
 )
-from typing import Callable, List, Union
+from typing import Callable, Union
 
 
 try:
@@ -60,7 +60,7 @@ class DetailedConfigurationError(ConfigurationError):
     """Base class for configuration errors that have a msg, namespace, key, and parser."""
 
     def __init__(
-        self, msg: str, namespace: Union[List[str], None], key: str, parser: Callable
+        self, msg: str, namespace: Union[list[str], None], key: str, parser: Callable
     ):
         self.msg = msg
         self.namespace = namespace
