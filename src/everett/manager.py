@@ -20,15 +20,10 @@ from types import TracebackType
 from typing import (
     Any,
     Callable,
-    Dict,
-    Iterable,
-    List,
-    Mapping,
     Optional,
-    Tuple,
-    Type,
     Union,
 )
+from collections.abc import Iterable, Mapping
 
 from everett import (
     ConfigurationError,
@@ -101,7 +96,7 @@ def qualname(thing: Any) -> str:
 
 
 def build_msg(
-    namespace: Optional[List[str]],
+    namespace: Optional[list[str]],
     key: Optional[str],
     parser: Optional[Callable],
     msg: str = "",
@@ -156,7 +151,7 @@ class Option:
     def __init__(
         self,
         default: Union[str, NoValue] = NO_VALUE,
-        alternate_keys: Optional[List[str]] = None,
+        alternate_keys: Optional[list[str]] = None,
         doc: str = "",
         parser: Callable = str,
         meta: Any = None,
@@ -201,7 +196,7 @@ class Option:
         )
 
 
-def get_config_for_class(cls: Type) -> Dict[str, Tuple[Option, Type]]:
+def get_config_for_class(cls: type) -> dict[str, tuple[Option, type]]:
     """Roll up configuration options for this class and parent classes.
 
     This handles subclasses overriding configuration options in parent classes.
@@ -229,8 +224,8 @@ def get_config_for_class(cls: Type) -> Dict[str, Tuple[Option, Type]]:
 
 
 def traverse_tree(
-    instance: Any, namespace: Optional[List[str]] = None
-) -> Iterable[Tuple[List[str], str, Option, Any]]:
+    instance: Any, namespace: Optional[list[str]] = None
+) -> Iterable[tuple[list[str], str, Option, Any]]:
     """Traverses a tree of objects and computes the configuration for it
 
     Note: This expects the tree not to have any loops or repeated nodes.
@@ -270,7 +265,7 @@ def traverse_tree(
     return options
 
 
-def parse_env_file(envfile: Iterable[str]) -> Dict:
+def parse_env_file(envfile: Iterable[str]) -> dict:
     """Parse the content of an iterable of lines as ``.env``.
 
     Return a dict of config variables.
@@ -482,7 +477,7 @@ def get_parser(parser: Callable) -> Callable:
     return parser
 
 
-def listify(thing: Any) -> List[Any]:
+def listify(thing: Any) -> list[Any]:
     """Convert thing to a list.
 
     If thing is a string, then returns a list of thing. Otherwise
@@ -500,7 +495,7 @@ def listify(thing: Any) -> List[Any]:
     return thing
 
 
-def generate_uppercase_key(key: str, namespace: Optional[List[str]] = None) -> str:
+def generate_uppercase_key(key: str, namespace: Optional[list[str]] = None) -> str:
     """Given a key and a namespace, generates a final uppercase key.
 
     >>> generate_uppercase_key("foo")
@@ -568,7 +563,7 @@ class ListOf:
         self.sub_parser = parser
         self.delimiter = delimiter
 
-    def __call__(self, value: str) -> List[Any]:
+    def __call__(self, value: str) -> list[Any]:
         parser = get_parser(self.sub_parser)
         if value:
             return [parser(token.strip()) for token in value.split(self.delimiter)]
@@ -583,7 +578,7 @@ class ConfigOverrideEnv:
     """Override configuration layer for testing."""
 
     def get(
-        self, key: str, namespace: Optional[List[str]] = None
+        self, key: str, namespace: Optional[list[str]] = None
     ) -> Union[str, NoValue]:
         """Retrieve value for key."""
         global _CONFIG_OVERRIDE
@@ -644,7 +639,7 @@ class ConfigObjEnv:
         self.obj = obj
 
     def get(
-        self, key: str, namespace: Optional[List[str]] = None
+        self, key: str, namespace: Optional[list[str]] = None
     ) -> Union[str, NoValue]:
         """Retrieve value for key."""
         full_key = generate_uppercase_key(key, namespace)
@@ -727,11 +722,11 @@ class ConfigDictEnv:
 
     """
 
-    def __init__(self, cfg: Dict):
+    def __init__(self, cfg: dict):
         self.cfg = {key.upper(): val for key, val in cfg.items()}
 
     def get(
-        self, key: str, namespace: Optional[List[str]] = None
+        self, key: str, namespace: Optional[list[str]] = None
     ) -> Union[str, NoValue]:
         """Retrieve value for key."""
         full_key = generate_uppercase_key(key, namespace)
@@ -795,7 +790,7 @@ class ConfigEnvFileEnv:
 
     """
 
-    def __init__(self, possible_paths: Union[str, List[str]]):
+    def __init__(self, possible_paths: Union[str, list[str]]):
         self.data = {}
         self.path = None
 
@@ -812,7 +807,7 @@ class ConfigEnvFileEnv:
                     break
 
     def get(
-        self, key: str, namespace: Optional[List[str]] = None
+        self, key: str, namespace: Optional[list[str]] = None
     ) -> Union[str, NoValue]:
         """Retrieve value for key."""
         full_key = generate_uppercase_key(key, namespace)
@@ -867,7 +862,7 @@ class ConfigOSEnv:
     """
 
     def get(
-        self, key: str, namespace: Optional[List[str]] = None
+        self, key: str, namespace: Optional[list[str]] = None
     ) -> Union[str, NoValue]:
         """Retrieve value for key."""
         full_key = generate_uppercase_key(key, namespace)
@@ -890,7 +885,7 @@ def get_runtime_config(
     config: "ConfigManager",
     component: Any,
     traverse: Callable = traverse_tree,
-) -> List[Tuple[List[str], str, Any, Option]]:
+) -> list[tuple[list[str], str, Any, Option]]:
     """Returns configuration specification and values for a component tree
 
     For example, if you had a tree of components instantiated, you could
@@ -989,7 +984,7 @@ class ConfigManager:
 
     def __init__(
         self,
-        environments: List[Any],
+        environments: list[Any],
         doc: str = "",
         msg_builder: Callable = build_msg,
         with_override: bool = True,
@@ -1037,10 +1032,10 @@ class ConfigManager:
         self.doc = doc
         self.msg_builder = msg_builder
 
-        self.namespace: List[str] = []
+        self.namespace: list[str] = []
 
         self.bound_component: Any = None
-        self.bound_component_prefix: List[str] = []
+        self.bound_component_prefix: list[str] = []
         self.bound_component_options: Mapping[str, Any] = {}
 
         self.original_manager = self
@@ -1084,7 +1079,7 @@ class ConfigManager:
         return cls(environments=[ConfigOSEnv(), ConfigEnvFileEnv([env_file])], doc=doc)
 
     @classmethod
-    def from_dict(cls, dict_config: Dict) -> "ConfigManager":
+    def from_dict(cls, dict_config: dict) -> "ConfigManager":
         """Create a ConfigManager with specified configuration as a Python dict.
 
         This is shorthand for::
@@ -1112,7 +1107,7 @@ class ConfigManager:
         """
         return self.bound_component
 
-    def get_namespace(self) -> List[str]:
+    def get_namespace(self) -> list[str]:
         """Retrieve the complete namespace for this config object.
 
         :returns: namespace as a list of strings
@@ -1139,7 +1134,7 @@ class ConfigManager:
 
         return my_clone
 
-    def with_namespace(self, namespace: Union[List[str], str]) -> "ConfigManager":
+    def with_namespace(self, namespace: Union[list[str], str]) -> "ConfigManager":
         """Apply a namespace to this configuration.
 
         Namespaces accumulate as you add them.
@@ -1200,10 +1195,10 @@ class ConfigManager:
     def __call__(
         self,
         key: str,
-        namespace: Union[List[str], str, None] = None,
+        namespace: Union[list[str], str, None] = None,
         default: Union[str, NoValue] = NO_VALUE,
         default_if_empty: bool = True,
-        alternate_keys: Optional[List[str]] = None,
+        alternate_keys: Optional[list[str]] = None,
         doc: str = "",
         parser: Callable = str,
         raise_error: bool = True,
@@ -1475,7 +1470,7 @@ class ConfigOverride:
 
     def __exit__(
         self,
-        exc_type: Optional[Type[BaseException]],
+        exc_type: Optional[type[BaseException]],
         exc_value: Optional[BaseException],
         traceback: Optional[TracebackType],
     ) -> None:

@@ -12,7 +12,7 @@ To use this, you must install the optional requirements::
 
 import logging
 import os
-from typing import Dict, List, Optional, Union
+from typing import Optional, Union
 
 import yaml
 
@@ -109,7 +109,7 @@ class ConfigYamlEnv:
 
     """
 
-    def __init__(self, possible_paths: Union[str, List[str]]) -> None:
+    def __init__(self, possible_paths: Union[str, list[str]]) -> None:
         """
         :param possible_paths: either a single string with a file path (e.g.
             ``"/etc/project.yaml"`` or a list of strings with file paths
@@ -132,15 +132,15 @@ class ConfigYamlEnv:
         if not self.path:
             logger.debug("No YAML file found: %s", possible_paths)
 
-    def parse_yaml_file(self, path: str) -> Dict:
+    def parse_yaml_file(self, path: str) -> dict:
         """Parse yaml file at ``path`` and return a dict."""
-        with open(path, "r") as fp:
+        with open(path) as fp:
             data = yaml.safe_load(fp)
 
         if not data:
             return {}
 
-        def traverse(namespace: List[str], d: Dict) -> Dict:
+        def traverse(namespace: list[str], d: dict) -> dict:
             cfg = {}
             for key, val in d.items():
                 if isinstance(val, dict):
@@ -161,7 +161,7 @@ class ConfigYamlEnv:
         return traverse([], data)
 
     def get(
-        self, key: str, namespace: Optional[List[str]] = None
+        self, key: str, namespace: Optional[list[str]] = None
     ) -> Union[str, NoValue]:
         """Retrieve value for key."""
         if not self.path:

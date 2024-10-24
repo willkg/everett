@@ -17,13 +17,10 @@ import textwrap
 from typing import (
     TYPE_CHECKING,
     Any,
-    Dict,
-    Generator,
-    List,
     Optional,
-    Tuple,
     Union,
 )
+from collections.abc import Generator
 
 from docutils import nodes
 from docutils.parsers.rst import Directive, directives
@@ -52,7 +49,7 @@ if TYPE_CHECKING:
 LOGGER = logging.getLogger(__name__)
 
 
-def split_clspath(clspath: str) -> List[str]:
+def split_clspath(clspath: str) -> list[str]:
     """Split clspath into module and class names.
 
     Note: This is a really simplistic implementation.
@@ -299,13 +296,13 @@ class EverettDomain(Domain):
         "component": XRefRole(),
         "option": XRefRole(),
     }
-    initial_data: Dict[str, dict] = {
+    initial_data: dict[str, dict] = {
         # (typ, clspath) -> sphinx document name
         "objects": {}
     }
 
     @property
-    def objects(self) -> Dict[Tuple[str, str], Tuple[str, str]]:
+    def objects(self) -> dict[tuple[str, str], tuple[str, str]]:
         return self.data.setdefault("objects", {})
 
     def clear_doc(self, docname: str) -> None:
@@ -315,7 +312,7 @@ class EverettDomain(Domain):
                 del self.objects[key]
 
     # FIXME(willkg): What's the value in otherdata dict?
-    def merge_domaindata(self, docnames: List[str], otherdata: Dict[str, Any]) -> None:
+    def merge_domaindata(self, docnames: list[str], otherdata: dict[str, Any]) -> None:
         for key, val in otherdata["objects"].items():
             if val[0] in docnames:
                 self.objects[key] = val
@@ -364,7 +361,7 @@ class ConfigDirective(Directive):
         component_index: str,
         docstring: str,
         sourcename: str,
-        option_data: List[Dict],
+        option_data: list[dict],
         more_content: Any,
     ) -> None:
         indent = "   "
@@ -391,7 +388,7 @@ class ConfigDirective(Directive):
             self.add_line("", sourcename)
 
             # First build a table of metric items
-            table: List[List[str]] = []
+            table: list[list[str]] = []
             table.append(["Setting", "Parser", "Required?"])
             for option_item in option_data:
                 ref = f"{component_name}.{option_item['key']}"
@@ -466,7 +463,7 @@ class AutoComponentConfigDirective(ConfigDirective):
         obj: Any,
         namespace: Optional[str] = None,
         case: Optional[str] = None,
-    ) -> List[Dict]:
+    ) -> list[dict]:
         """Extracts configuration values from list of Everett configuration options
 
         :param obj: object/class to extract configuration from
@@ -477,7 +474,7 @@ class AutoComponentConfigDirective(ConfigDirective):
 
         """
         config = get_config_for_class(obj)
-        options: List[Dict] = []
+        options: list[dict] = []
 
         # Go through options and figure out relevant information
         for key, (option, _) in config.items():
@@ -502,7 +499,7 @@ class AutoComponentConfigDirective(ConfigDirective):
             )
         return options
 
-    def run(self) -> List[nodes.Node]:
+    def run(self) -> list[nodes.Node]:
         self.reporter = self.state.document.reporter
         self.result = ViewList()
 
@@ -553,7 +550,7 @@ class AutoComponentConfigDirective(ConfigDirective):
 SETTING_RE = re.compile(r"^[A-Z_]+$")
 
 
-def build_table(table: List[List[str]]) -> List[str]:
+def build_table(table: list[list[str]]) -> list[str]:
     """Generates reST for a table.
 
     :param table: a 2d array of rows and columns
@@ -561,7 +558,7 @@ def build_table(table: List[List[str]]) -> List[str]:
     :returns: list of strings
 
     """
-    output: List[str] = []
+    output: list[str] = []
 
     col_size = [0] * len(table[0])
     for row in table:
@@ -589,43 +586,6 @@ def build_table(table: List[List[str]]) -> List[str]:
         )
     output.append("  ".join("=" * width for width in col_size))
     return output
-
-
-def get_value_from_ast_node(source: str, val: ast.AST) -> str:
-    """Wrapper for ast.get_source_segment.
-
-    NOTE(willkg): ``ast.get_source_segment()`` was implemented in Python 3.8
-    and when we drop support for Python 3.7, we can drop this code, too.
-
-    This is to get the source code for the AST node in question so that we can
-    display it as is in the docs. For a wildly contrived example, if you did
-    something bizarre like::
-
-        config = ConfigManager.basic_config()
-        DEBUG = config("debug, parser=bool, default="False")
-        WEIRD = config("weird", parser=(bool if config("debug") else int))
-
-    then the node for ``bool if config("debug") else int`` will be an
-    ``ast.IfEq`` (or something like that) and this function will return::
-
-       bool if config("debug") else int
-
-    and show that as the parser in the docs.
-
-    :param source: the complete source text for the file being parsed
-    :param val: the ast node in question
-
-    :returns: a string representation of the ast node for display in docs
-
-    """
-    if hasattr(ast, "get_source_segment"):
-        return ast.get_source_segment(source, val) or "?"
-
-    # If we have < Python 3.8, return a "?" because it's not clear what it is.
-    # Python 3.6 and 3.7 don't have end_lineno and end_col_offset either, so I
-    # couldn't figure out a good way to figure out the source segment to
-    # return.
-    return "?"
 
 
 class AutoModuleConfigDirective(ConfigDirective):
@@ -670,7 +630,7 @@ class AutoModuleConfigDirective(ConfigDirective):
         variable_name: str,
         namespace: Optional[str] = None,
         case: Optional[str] = None,
-    ) -> List[Dict]:
+    ) -> list[dict]:
         """Extracts configuration values from a module at filepath
 
         :param filepath: the filepath to parse configuration from
@@ -726,7 +686,7 @@ class AutoModuleConfigDirective(ConfigDirective):
             "meta",
         ]
 
-        def extract_value(source: str, val: ast.AST) -> Tuple[str, str]:
+        def extract_value(source: str, val: ast.AST) -> tuple[str, str]:
             """Returns (category, value)"""
             if isinstance(val, ast.Constant):
                 return "constant", val.value
@@ -736,14 +696,14 @@ class AutoModuleConfigDirective(ConfigDirective):
                 _, left = extract_value(source, val.left)
                 _, right = extract_value(source, val.right)
                 return "binop", left + right
-            return "unknown", get_value_from_ast_node(source, val)
+            return "unknown", ast.get_source_segment(source, val) or "?"
 
         # Using a dict here avoids the case where configuration options are
         # defined multiple times
         configuration = {}
 
         for name, node in config_nodes:
-            args: Dict[str, Any] = {
+            args: dict[str, Any] = {
                 "key": name,
                 "default": NO_VALUE,
                 "parser": "str",
@@ -789,7 +749,7 @@ class AutoModuleConfigDirective(ConfigDirective):
 
         return list(configuration.values())
 
-    def run(self) -> List[nodes.Node]:
+    def run(self) -> list[nodes.Node]:
         self.reporter = self.state.document.reporter
         self.result = ViewList()
 
@@ -849,7 +809,7 @@ class AutoModuleConfigDirective(ConfigDirective):
 
 
 # FIXME(willkg): this takes a Sphinx app
-def setup(app: Any) -> Dict[str, Any]:
+def setup(app: Any) -> dict[str, Any]:
     """Register domain and directive in Sphinx."""
     app.add_domain(EverettDomain)
     app.add_directive("autocomponentconfig", AutoComponentConfigDirective)
