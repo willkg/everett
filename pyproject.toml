@@ -6,7 +6,7 @@ readme = "README.rst"
 keywords = ["conf", "config", "configuration", "ini", "env", "yaml"]
 authors = [{name = "Will Kahn-Greene"}]
 license = {text = "MPLv2"}
-requires-python = ">=3.8"
+requires-python = ">=3.9"
 dependencies = []
 classifiers = [
     "Development Status :: 5 - Production/Stable",
@@ -14,7 +14,6 @@ classifiers = [
     "License :: OSI Approved :: Mozilla Public License 2.0 (MPL 2.0)",
     "Natural Language :: English",
     "Programming Language :: Python :: 3 :: Only",
-    "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
@@ -48,8 +47,7 @@ dev = [
     "tox-uv",
     "twine",
     "types-PyYAML",
-    "Sphinx==7.2.6; python_version > '3.8'",
-    "Sphinx==6.2.1; python_version <= '3.8'",
+    "Sphinx==7.2.6",
     "sphinx_rtd_theme",
 ]
 
@@ -60,7 +58,7 @@ build-backend = "setuptools.build_meta"
 
 
 [tool.ruff]
-target-version = "py38"
+target-version = "py39"
 src = ["src"]
 line-length = 88
 
@@ -77,7 +75,7 @@ docstring-quotes = "double"
 
 
 [tool.mypy]
-python_version = "3.8"
+python_version = "3.9"
 disallow_untyped_defs = true
 
 [[tool.mypy.overrides]]
@@ -104,11 +102,10 @@ filterwarnings = [
 legacy_tox_ini = """
 [tox]
 envlist =
-    py38
-    py38-doctest
-    py38-lint
-    py38-typecheck
     py39
+    py39-doctest
+    py39-lint
+    py39-typecheck
     py310
     py311
     py312
@@ -117,7 +114,6 @@ uv_python_preference = only-managed
 
 [gh-actions]
 python =
-    3.8: py38
     3.9: py39
     3.10: py310
     3.11: py311
@@ -128,19 +124,19 @@ python =
 extras = dev,ini,sphinx,yaml
 commands = pytest {posargs} tests/
 
-[testenv:py38-doctest]
+[testenv:py39-doctest]
 commands = pytest --doctest-modules src/
 
-[testenv:py38-lint]
+[testenv:py39-lint]
 allowlist_externals = ruff
-basepython = python3.8
+basepython = python3.9
 changedir = {toxinidir}
 commands =
     ruff format --check tests docs examples
     ruff check src tests docs examples
 
-[testenv:py38-typecheck]
-basepython = python3.8
+[testenv:py39-typecheck]
+basepython = python3.9
 changedir = {toxinidir}
 commands =
     mypy src/everett/

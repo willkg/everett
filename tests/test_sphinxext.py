@@ -4,7 +4,6 @@
 
 """Test sphinxext directives."""
 
-import sys
 from textwrap import dedent
 
 import pytest
@@ -530,12 +529,6 @@ class Test_autocomponentconfig:
         assert "WARNING" not in captured.err
 
 
-@pytest.mark.skipif(
-    # NOTE(willkg): The automodule stuff doesn't work with Python < 3.8 because
-    # ast.get_source_segment() isn't available.
-    sys.version_info < (3, 8),
-    reason="requires Python 3.8 or higher",
-)
 class Test_automoduleconfig:
     def test_basic(self, tmpdir, capsys):
         rst = dedent(
