@@ -1,16 +1,31 @@
 History
 =======
 
+3.4.0 (in development)
+----------------------
+
+Backwards incompatible changes:
+
+* Drop support for Python 3.8. Thanks, Rob!
+
+Fixes and features:
+
+* Add support for Python 3.13. (#260) Thanks, Rob!
+
+* Add support for underscore as first character in variable names in env files.
+  (#263)
+
+
 3.3.0 (November 6th, 2023)
 --------------------------
 
 Backwards incompatible changes:
 
-* Dropped support for Python 3.7. (#220)
+* Drop support for Python 3.7. (#220)
 
 Fixes and features:
 
-* Added support for Python 3.12 (#221)
+* Add support for Python 3.12 (#221)
 
 * Fix env file parsing in regards to quotes. (#230)
 
