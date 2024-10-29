@@ -20,6 +20,7 @@ from everett.manager import (
     ConfigManager,
     ConfigOSEnv,
     ConfigObjEnv,
+    ChoiceOf,
     ListOf,
     Option,
     config_override,
@@ -53,6 +54,8 @@ from everett.manager import (
         (ConfigManager.basic_config, "everett.manager.ConfigManager.basic_config"),
         # instance
         (ListOf(bool), "<ListOf(bool)>"),
+        # instance
+        (ChoiceOf(int, ["1", "10", "100"]), "<ChoiceOf(int, ['1', '10', '100'])>"),
         # instance method
         (ConfigOSEnv().get, "everett.manager.ConfigOSEnv.get"),
     ],
@@ -286,6 +289,46 @@ def test_ListOf_error():
     assert str(exc_info.value) == (
         "ValueError: 'badbool' is not a valid bool value\n"
         "BOOLS requires a value parseable by <ListOf(bool)>"
+    )
+
+
+def test_ChoiceOf():
+    # Supports any choice
+    assert ChoiceOf(str, ["a", "b", "c"])("a") == "a"
+    assert ChoiceOf(str, ["a", "b", "c"])("b") == "b"
+    assert ChoiceOf(str, ["a", "b", "c"])("c") == "c"
+
+    # Supports different parsers
+    assert ChoiceOf(int, ["1", "2", "3"])("1") == 1
+
+
+def test_ChoiceOf_bad_choices():
+    # Must provide choices
+    with pytest.raises(ValueError) as exc_info:
+        ChoiceOf(str, [])
+    assert str(exc_info.value) == "choices [] must be a non-empty list of strings"
+
+    # Must be a list of strings
+    with pytest.raises(ValueError) as exc_info:
+        ChoiceOf(str, [1, 2, 3])
+    assert (
+        str(exc_info.value) == "choices [1, 2, 3] must be a non-empty list of strings"
+    )
+
+
+def test_ChoiceOf_error():
+    # Value is the wrong case
+    with pytest.raises(ValueError) as exc_info:
+        ChoiceOf(str, ["A", "B", "C"])("c")
+    assert str(exc_info.value) == "'c' is not a valid choice"
+
+    # Value isn't a valid choice
+    config = ConfigManager.from_dict({"cloud_provider": "foo"})
+    with pytest.raises(InvalidValueError) as exc_info:
+        config("cloud_provider", parser=ChoiceOf(str, ["aws", "gcp"]))
+    assert str(exc_info.value) == (
+        "ValueError: 'foo' is not a valid choice\n"
+        "CLOUD_PROVIDER requires a value parseable by <ChoiceOf(str, ['aws', 'gcp'])>"
     )
 
 

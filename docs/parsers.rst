@@ -113,6 +113,16 @@ parses a list of some other type. For example::
    :noindex:
 
 
+ChoiceOf(parser, list-of-choices)
+---------------------------------
+
+Everett provides a ``everett.manager.ChoiceOf`` parser which can enforce that
+configuration values belong to a specificed value domain.
+
+.. autofunction:: everett.manager.ChoiceOf
+   :noindex:
+
+
 dj_database_url
 ---------------
 

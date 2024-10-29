@@ -15,6 +15,9 @@ Fixes and features:
 * Add support for underscore as first character in variable names in env files.
   (#263)
 
+* Add ``ChoiceOf`` parser for enforcing configuration values belong in
+  specified value domain. (#253)
+
 
 3.3.0 (November 6th, 2023)
 --------------------------

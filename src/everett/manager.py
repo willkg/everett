@@ -36,6 +36,7 @@ from everett import (
 
 
 __all__ = [
+    "ChoiceOf",
     "ConfigDictEnv",
     "ConfigEnvFileEnv",
     "ConfigManager",
@@ -572,6 +573,52 @@ class ListOf:
 
     def __repr__(self) -> str:
         return f"<ListOf({qualname(self.sub_parser)})>"
+
+
+class ChoiceOf:
+    """Parser that enforces values are in a specified value domain.
+
+    Choices can be a list of string values that are parseable by the sub
+    parser. For example, say you only supported two cloud providers and need
+    the configuration value to be one of "aws" or "gcp":
+
+    >>> from everett.manager import ChoiceOf
+    >>> ChoiceOf(str, choices=["aws", "gcp"])("aws")
+    'aws'
+
+    Choices works with the int sub-parser:
+
+    >>> from everett.manager import ChoiceOf
+    >>> ChoiceOf(int, choices=["1", "2", "3"])("1")
+    1
+
+    Choices works with any sub-parser:
+
+    >>> from everett.manager import ChoiceOf, parse_data_size
+    >>> ChoiceOf(parse_data_size, choices=["1kb", "1mb", "1gb"])("1mb")
+    1000000
+
+    Note: The choices list is a list of strings--these are values before being
+    parsed. This makes it easier for people who are doing configuration to know
+    what the values they put in their configuration files need to look like.
+
+    """
+
+    def __init__(self, parser: Callable, choices: list[str]):
+        self.sub_parser = parser
+        if not choices or not all(isinstance(choice, str) for choice in choices):
+            raise ValueError(f"choices {choices!r} must be a non-empty list of strings")
+
+        self.choices = choices
+
+    def __call__(self, value: str) -> Any:
+        parser = get_parser(self.sub_parser)
+        if value and value in self.choices:
+            return parser(value)
+        raise ValueError(f"{value!r} is not a valid choice")
+
+    def __repr__(self) -> str:
+        return f"<ChoiceOf({qualname(self.sub_parser)}, {self.choices})>"
 
 
 class ConfigOverrideEnv:
