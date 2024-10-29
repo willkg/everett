@@ -372,12 +372,14 @@ def test_ConfigEnvFileEnv(datadir):
     assert cefe.get("not_a", namespace="youre") == "golfer"
     assert cefe.get("loglevel") == "walter"
     assert cefe.get("LOGLEVEL") == "walter"
+    assert cefe.get("_typer_standard_traceback") == "1"
     assert cefe.get("missing") is NO_VALUE
     assert cefe.data == {
         "LOGLEVEL": "walter",
         "DEBUG": "True",
         "YOURE_NOT_A": "golfer",
         "DATABASE_URL": "sqlite:///kahlua.db",
+        "_TYPER_STANDARD_TRACEBACK": "1",
     }
 
     cefe = ConfigEnvFileEnv(env_filename)
