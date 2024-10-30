@@ -9,20 +9,18 @@ import pytest
 
 from everett import (
     ConfigurationError,
-    InvalidValueError,
     ConfigurationMissingError,
+    InvalidValueError,
     NO_VALUE,
 )
 import everett.manager
 from everett.manager import (
+    ChoiceOf,
     ConfigDictEnv,
     ConfigEnvFileEnv,
     ConfigManager,
-    ConfigOSEnv,
     ConfigObjEnv,
-    ChoiceOf,
-    ListOf,
-    Option,
+    ConfigOSEnv,
     config_override,
     generate_uppercase_key,
     get_config_for_class,
@@ -30,11 +28,13 @@ from everett.manager import (
     get_parser,
     get_runtime_config,
     listify,
+    ListOf,
+    Option,
     parse_bool,
     parse_class,
     parse_data_size,
-    parse_time_period,
     parse_env_file,
+    parse_time_period,
     qualname,
 )
 
@@ -53,7 +53,7 @@ from everett.manager import (
         # class method
         (ConfigManager.basic_config, "everett.manager.ConfigManager.basic_config"),
         # instance
-        (ListOf(bool), "<ListOf(bool)>"),
+        (ListOf(bool), "<ListOf(bool, delimiter=',', allow_empty=True)>"),
         # instance
         (ChoiceOf(int, ["1", "10", "100"]), "<ChoiceOf(int, ['1', '10', '100'])>"),
         # instance method
@@ -279,6 +279,7 @@ def test_ListOf():
     assert ListOf(int)("1,2,3") == [1, 2, 3]
     assert ListOf(str)("1  , 2, 3") == ["1", "2", "3"]
     assert ListOf(int, delimiter=":")("1:2") == [1, 2]
+    assert ListOf(str)("a,,b") == ["a", "", "b"]
 
 
 def test_ListOf_error():
@@ -288,7 +289,20 @@ def test_ListOf_error():
 
     assert str(exc_info.value) == (
         "ValueError: 'badbool' is not a valid bool value\n"
-        "BOOLS requires a value parseable by <ListOf(bool)>"
+        "BOOLS requires a value parseable by "
+        "<ListOf(bool, delimiter=',', allow_empty=True)>"
+    )
+
+
+def test_ListOf_allow_empty_error():
+    config = ConfigManager.from_dict({"names": "bob,,alice"})
+    with pytest.raises(InvalidValueError) as exc_info:
+        config("names", parser=ListOf(str, allow_empty=False))
+
+    assert str(exc_info.value) == (
+        "ValueError: 'bob,,alice' can not have empty values\n"
+        "NAMES requires a value parseable by "
+        "<ListOf(str, delimiter=',', allow_empty=False)>"
     )
 
 

@@ -40,18 +40,18 @@ __all__ = [
     "ConfigDictEnv",
     "ConfigEnvFileEnv",
     "ConfigManager",
-    "ConfigOSEnv",
     "ConfigObjEnv",
-    "ListOf",
-    "Option",
+    "ConfigOSEnv",
     "config_override",
     "get_config_for_class",
     "get_runtime_config",
+    "ListOf",
+    "Option",
     "parse_bool",
     "parse_class",
     "parse_data_size",
-    "parse_time_period",
     "parse_env_file",
+    "parse_time_period",
 ]
 
 
@@ -534,7 +534,7 @@ def get_key_from_envs(envs: Iterable[Any], key: str) -> Union[str, NoValue]:
 
 
 class ListOf:
-    """Parse a comma-separated list of things.
+    """Parse a delimiter-separated list of things.
 
     After delimiting items, this strips the whitespace at the beginning and end
     of each string. Then it passes each string into the parser to get the final
@@ -550,6 +550,25 @@ class ListOf:
     >>> ListOf(str)('1, 2  ,3,4')
     ['1', '2', '3', '4']
 
+    ``ListOf`` defaults to using a comma as a delimiter, but supports other
+    delimiters:
+
+    >>> ListOf(str, delimiter=":")("/path/a/:/path/b/")
+    ['/path/a/', '/path/b/']
+
+    ``ListOf`` supports raising a configuration error when one of the values
+    is an empty string:
+
+    >>> ListOf(str, allow_empty=False)("a,,b")
+    Traceback (most recent call last):
+      ...
+    ValueError: 'a,,b' can not have empty values
+
+    The user will get a configuration error like this::
+
+        ValueError: 'a,,b' can not have empty values
+        NAMES requires a value parseable by <ListOf(str, delimiter=',', allow_empty=False)>
+
     Note: This doesn't handle quotes or backslashes or any complicated string
     parsing.
 
@@ -560,19 +579,32 @@ class ListOf:
 
     """
 
-    def __init__(self, parser: Callable, delimiter: str = ","):
+    def __init__(
+        self, parser: Callable, delimiter: str = ",", allow_empty: bool = True
+    ):
         self.sub_parser = parser
         self.delimiter = delimiter
+        self.allow_empty = allow_empty
 
     def __call__(self, value: str) -> list[Any]:
         parser = get_parser(self.sub_parser)
         if value:
-            return [parser(token.strip()) for token in value.split(self.delimiter)]
+            parsed_values = []
+            for token in value.split(self.delimiter):
+                token = token.strip()
+                if not token and not self.allow_empty:
+                    raise ValueError(f"{value!r} can not have empty values")
+                parsed_values.append(parser(token))
+            return parsed_values
         else:
             return []
 
     def __repr__(self) -> str:
-        return f"<ListOf({qualname(self.sub_parser)})>"
+        return (
+            f"<ListOf({qualname(self.sub_parser)}, "
+            + f"delimiter={self.delimiter!r}, "
+            + f"allow_empty={self.allow_empty!r})>"
+        )
 
 
 class ChoiceOf:
