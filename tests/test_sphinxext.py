@@ -520,7 +520,7 @@ class Test_autocomponentconfig:
                user_listof
 
                   Parser:
-                     *<ListOf(str)>*
+                     *<ListOf(str, delimiter=',', allow_empty=True)>*
 
                   Required:
                      Yes
