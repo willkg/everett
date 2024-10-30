@@ -18,6 +18,8 @@ Fixes and features:
 * Add ``ChoiceOf`` parser for enforcing configuration values belong in
   specified value domain. (#253)
 
+* Fix ``autocomponentconfig`` to support components with no options. (#244)
+
 
 3.3.0 (November 6th, 2023)
 --------------------------
