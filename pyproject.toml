@@ -1,7 +1,7 @@
 [project]
 name = "everett"
 description = "Configuration library for Python applications"
-version = "3.3.0"
+version = "3.4.0"
 readme = "README.rst"
 keywords = ["conf", "config", "configuration", "ini", "env", "yaml"]
 authors = [{name = "Will Kahn-Greene"}]
@@ -37,7 +37,6 @@ yaml = [
     "PyYAML",
 ]
 dev = [
-    "check-manifest",
     "cogapp",
     "mypy",
     "pytest",
