@@ -383,11 +383,11 @@ class ConfigDirective(Directive):
                 self.add_line(indent + line, src[0], src[1])
             self.add_line("", "")
 
-        if "show-table" in self.options:
+        if "show-table" in self.options and option_data:
             self.add_line(indent + "Configuration summary:", sourcename)
             self.add_line("", sourcename)
 
-            # First build a table of metric items
+            # Build a table of metric items
             table: list[list[str]] = []
             table.append(["Setting", "Parser", "Required?"])
             for option_item in option_data:
@@ -408,10 +408,9 @@ class ConfigDirective(Directive):
             self.add_line(indent + "Configuration options:", sourcename)
             self.add_line("", sourcename)
 
+        sourcename = "class definition"
         if option_data:
-            # Now list the options
-            sourcename = "class definition"
-
+            # List the options and details
             for option_item in option_data:
                 key = option_item["key"]
                 self.add_line(f"{indent}.. everett:option:: {key}", sourcename)
@@ -432,6 +431,10 @@ class ConfigDirective(Directive):
                     self.add_line(f"{indent}   {doc_line}", sourcename)
 
                 self.add_line("", sourcename)
+        else:
+            # There are no options
+            self.add_line(f"{indent}No configuration options.", sourcename)
+
         self.add_line("", sourcename)
 
 

@@ -16,6 +16,13 @@ class ComponentBasic:
         user = Option()
 
 
+class ComponentNoOptions:
+    """Basic component with no options."""
+
+    class Config:
+        pass
+
+
 class ComponentSubclass(ComponentBasic):
     """A different docstring."""
 

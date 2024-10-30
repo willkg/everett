@@ -115,6 +115,24 @@ class Test_autocomponentconfig:
         assert "WARNING" not in captured.out
         assert "WARNING" not in captured.err
 
+    def test_no_option_data(self, tmpdir, capsys):
+        rst = dedent(
+            """\
+        .. autocomponentconfig:: basic_component_config.ComponentNoOptions
+        """
+        )
+
+        assert run_sphinx(tmpdir, rst) == dedent(
+            """\
+            component basic_component_config.ComponentNoOptions
+
+               No configuration options.
+            """
+        )
+        captured = capsys.readouterr()
+        assert "WARNING" not in captured.out
+        assert "WARNING" not in captured.err
+
     def test_hide_name(self, tmpdir, capsys):
         # Test hide-name
         rst = dedent(
