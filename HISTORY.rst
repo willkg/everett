@@ -1,8 +1,8 @@
 History
 =======
 
-3.4.0 (in development)
-----------------------
+3.4.0 (October 30th, 2024)
+--------------------------
 
 Backwards incompatible changes:
 
@@ -19,6 +19,9 @@ Fixes and features:
   specified value domain. (#253)
 
 * Fix ``autocomponentconfig`` to support components with no options. (#244)
+
+* Add ``allow_empty`` option to ``ListOf`` parser that lets you specify whether
+  empty strings are a configuration error or not. (#268)
 
 
 3.3.0 (November 6th, 2023)

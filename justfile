@@ -37,8 +37,8 @@ docs: devenv
     SPHINXBUILD={{sphinxbuild}} make -e -C docs/ doctest
     SPHINXBUILD={{sphinxbuild}} make -e -C docs/ html
 
+# Build files for relase
 build: devenv
     rm -rf build/ dist/
     uv run python -m build
     uv run twine check dist/*
-    uv run check-manifest
