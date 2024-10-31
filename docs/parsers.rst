@@ -136,7 +136,7 @@ For example::
     from everett.manager import ConfigManager
 
     config = ConfigManager.basic_config()
-    DATABASE = {
+    DATABASES = {
         "default": config("DATABASE_URL", parser=dj_database_url.parse)
     }
 
@@ -151,7 +151,7 @@ With a default::
     from everett.manager import ConfigManager
 
     config = ConfigManager.basic_config()
-    DATABASE = {
+    DATABASES = {
         "default": config(
             "DATABASE_URL", default="sqlite:///my.db", parser=dj_database_url.parse
         )
