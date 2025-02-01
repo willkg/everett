@@ -420,7 +420,7 @@ class ConfigDirective(Directive):
                 )
                 if option_item["default"] is not NO_VALUE:
                     self.add_line(
-                        f"{indent}   :default: \"{option_item['default']}\"", sourcename
+                        f'{indent}   :default: "{option_item["default"]}"', sourcename
                     )
                 else:
                     self.add_line(f"{indent}   :required:", sourcename)
