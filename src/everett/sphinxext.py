@@ -379,7 +379,7 @@ class ConfigDirective(Directive):
 
         # Add content from the directive if there was any
         if more_content:
-            for line, src in zip(more_content.data, more_content.items):
+            for line, src in zip(more_content.data, more_content.items, strict=True):
                 self.add_line(indent + line, src[0], src[1])
             self.add_line("", "")
 
@@ -575,7 +575,7 @@ def build_table(table: list[list[str]]) -> list[str]:
     output.append(
         "  ".join(
             header + (" " * (width - len(header)))
-            for header, width in zip(table[0], col_size)
+            for header, width in zip(table[0], col_size, strict=True)
         )
     )
     output.append("  ".join("=" * width for width in col_size))
@@ -584,7 +584,8 @@ def build_table(table: list[list[str]]) -> list[str]:
     for row in table[1:]:
         output.append(
             "  ".join(
-                col + (" " * (width - len(col))) for col, width in zip(row, col_size)
+                col + (" " * (width - len(col)))
+                for col, width in zip(row, col_size, strict=True)
             )
         )
     output.append("  ".join("=" * width for width in col_size))
@@ -672,14 +673,14 @@ class AutoModuleConfigDirective(ConfigDirective):
                 #     "NAME": _config("option", default="foo", ...),
                 #     "NAME2": _config("option2", default="foo", ...),
                 # }
-                for key, val in zip(node.keys, node.values):
+                for key, val in zip(node.keys, node.values, strict=True):
                     if (
                         isinstance(key, ast.Constant)
                         and isinstance(val, ast.Call)
                         and isinstance(val.func, ast.Name)
                         and val.func.id == variable_name
                     ):
-                        config_nodes.append((key.value, val))
+                        config_nodes.append((str(key.value), val))
 
         CONFIG_ARGS = [
             "key",
@@ -692,7 +693,7 @@ class AutoModuleConfigDirective(ConfigDirective):
         def extract_value(source: str, val: ast.AST) -> tuple[str, str]:
             """Returns (category, value)"""
             if isinstance(val, ast.Constant):
-                return "constant", val.value
+                return "constant", str(val.value)
             if isinstance(val, ast.Name):
                 return "name", val.id
             if isinstance(val, ast.BinOp) and isinstance(val.op, ast.Add):

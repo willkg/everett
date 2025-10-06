@@ -6,7 +6,7 @@ readme = "README.rst"
 keywords = ["conf", "config", "configuration", "ini", "env", "yaml"]
 authors = [{name = "Will Kahn-Greene"}]
 license = {text = "MPLv2"}
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 dependencies = []
 classifiers = [
     "Development Status :: 5 - Production/Stable",
@@ -14,7 +14,6 @@ classifiers = [
     "License :: OSI Approved :: Mozilla Public License 2.0 (MPL 2.0)",
     "Natural Language :: English",
     "Programming Language :: Python :: 3 :: Only",
-    "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
@@ -58,7 +57,7 @@ build-backend = "setuptools.build_meta"
 
 
 [tool.ruff]
-target-version = "py39"
+target-version = "py310"
 src = ["src"]
 line-length = 88
 
@@ -75,7 +74,7 @@ docstring-quotes = "double"
 
 
 [tool.mypy]
-python_version = "3.9"
+python_version = "3.10"
 disallow_untyped_defs = true
 
 [[tool.mypy.overrides]]
@@ -102,19 +101,17 @@ filterwarnings = [
 legacy_tox_ini = """
 [tox]
 envlist =
-    py39
-    py39-doctest
-    py39-lint
-    py39-typecheck
     py310
     py311
     py312
     py313
+    py310-doctest
+    py310-lint
+    py310-typecheck
 uv_python_preference = only-managed
 
 [gh-actions]
 python =
-    3.9: py39
     3.10: py310
     3.11: py311
     3.12: py312
@@ -124,19 +121,20 @@ python =
 extras = dev,ini,sphinx,yaml
 commands = pytest {posargs} tests/
 
-[testenv:py39-doctest]
+[testenv:py310-doctest]
+basepython = python3.10
 commands = pytest --doctest-modules src/
 
-[testenv:py39-lint]
+[testenv:py310-lint]
 allowlist_externals = ruff
-basepython = python3.9
+basepython = python3.10
 changedir = {toxinidir}
 commands =
     ruff format --check tests docs examples
     ruff check src tests docs examples
 
-[testenv:py39-typecheck]
-basepython = python3.9
+[testenv:py310-typecheck]
+basepython = python3.10
 changedir = {toxinidir}
 commands =
     mypy src/everett/
