@@ -1,6 +1,23 @@
 History
 =======
 
+3.5.0 (October 15th, 2025)
+--------------------------
+
+Backwards incompatibel changes:
+
+* Drop support for Python 3.9. (#282)
+
+* Deprecate Everett.
+
+  I encourage you to switch from Everett to pydantic-settings.
+  See https://github.com/willkg/everett/issues/278
+
+Fixes and features:
+
+* Add support for Python 3.14. (#283)
+
+
 3.4.0 (October 30th, 2024)
 --------------------------
 
