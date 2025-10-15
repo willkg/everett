@@ -5,6 +5,8 @@
 Everett
 =======
 
+**Status 2025-10-15: This project is deprecated.**
+
 Everett is a Python configuration library for your app.
 
 :Code:          https://github.com/willkg/everett
